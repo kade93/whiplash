@@ -1,0 +1,3 @@
+#!/bin/bash
+# 커밋 전: 키·토큰·개인정보·금지 파일이 섞였으면 막는다.  건너뛰려면 git commit --no-verify
+exec "$(git rev-parse --show-toplevel)/tools/secrets-check.sh" --staged

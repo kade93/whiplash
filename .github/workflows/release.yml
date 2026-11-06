@@ -13,6 +13,8 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+      - name: 비밀·개인정보 검사
+        run: bash tools/secrets-check.sh && bash tools/secrets-check.sh --history
       - name: Build
         run: ./build.sh
       - name: Sign and notarize (if secrets exist)

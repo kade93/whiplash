@@ -2,6 +2,11 @@
 # Whiplash 빌드.  ./build.sh            → build/Whiplash.app 만들기
 #               ./build.sh --install  → ~/Applications 에 넣고 바로 실행
 set -euo pipefail
+# 커밋 전 비밀·개인정보 검사 훅을 켠다 (새로 클론해도 자동)
+[ -d .git ] && git config core.hooksPath .githooks 2>/dev/null
+# 서명: 키체인에 Apple Development 인증서가 있으면 그걸로 (서명이 빌드마다 같아야 키체인 「항상 허용」이 유지된다). 없으면 임시 서명.
+SIGN_ID="${SIGN_ID:-$(security find-identity -v -p codesigning 2>/dev/null | grep -o '"Apple Development[^"]*"' | head -1 | tr -d '"')}"
+[ -n "$SIGN_ID" ] && echo "▸ 서명: $SIGN_ID" || SIGN_ID="-"
 cd "$(dirname "$0")"
 
 if ! command -v swiftc >/dev/null 2>&1; then
@@ -27,10 +32,10 @@ cp Resources/*.wav "$APP/Contents/Resources/"
 iconutil -c icns AppIcon.iconset -o "$APP/Contents/Resources/AppIcon.icns"
 if [[ "${1:-}" == "--sandbox" ]]; then
   # 앱스토어판처럼 샌드박스 안에서 돌려 보기 (임시 서명)
-  codesign --force --sign - --entitlements Whiplash.entitlements "$APP"
+  codesign --force --sign "${SIGN_ID:--}" --entitlements Whiplash.entitlements "$APP"
   echo "▸ 샌드박스 서명함 (로컬 테스트용)"
 else
-  codesign --force --sign - "$APP" >/dev/null 2>&1 || true
+  codesign --force --sign "${SIGN_ID:--}" "$APP" >/dev/null 2>&1 || true
 fi
 echo "▸ 완료: $APP"
 

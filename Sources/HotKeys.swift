@@ -6,7 +6,7 @@ import Carbon.HIToolbox
 // 예: {"hide": "ctrl+alt+h", "roam": "ctrl+alt+a", ...}  비워 두면("") 그 단축키는 끈다.
 
 enum HotAction: String, CaseIterable {
-    case hide, roam, small, cage, whip, gather, panel
+    case hide, roam, small, cage, whip, whipAll, gather, panel
 
     var title: String {
         switch self {
@@ -15,6 +15,7 @@ enum HotAction: String, CaseIterable {
         case .small:  return t("작게 / 크게")
         case .cage:   return t("당근밭에 박기 / 뽑기")
         case .whip:   return t("쉬는 애 아무나 채찍")
+        case .whipAll: return t("쉬는 애 전부 채찍")
         case .gather: return t("이리 와 (커서 자리로 모이기)")
         case .panel:  return t("풀어놓을 때 채찍질 창도 보기")
         }
@@ -27,6 +28,7 @@ enum HotAction: String, CaseIterable {
         case .small:  return "ctrl+alt+m"
         case .cage:   return "ctrl+alt+c"
         case .whip:   return "ctrl+alt+w"
+        case .whipAll: return "ctrl+alt+shift+w"
         case .gather: return "ctrl+alt+g"
         case .panel:  return "ctrl+alt+p"
         }

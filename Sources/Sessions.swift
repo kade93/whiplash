@@ -101,10 +101,14 @@ struct AgentSession: Equatable {
 
     // 기록 파일에서 (없으면 비어 있음)
     var lastPrompt = ""
+    var lastReply = ""         // 마지막으로 한 말 (끝부분) — "…할까요?"
+    var question = ""          // AskUserQuestion·계획 승인으로 물어본 것
+    var options: [String] = [] // 그 질문의 선택지
     var activity = ""          // "실행 중 · 세션 상태 확인"
     var chore: Chore = .none
     var waiting: Waiting = .none
     var costUSD = 0.0
+    var tokens = 0             // 세션 누적 토큰 (입력+출력+캐시 쓰기, 캐시 읽기 제외)
     var linesAdded = 0
     var linesRemoved = 0
     var transcript: URL? = nil
@@ -123,11 +127,15 @@ final class SessionReader {
     private struct Tail {
         var size: UInt64 = 0
         var lastPrompt = ""
+        var lastReply = ""
+        var question = ""
+        var options: [String] = []
         var aiTitle = ""
         var activity = ""
         var chore: Chore = .none
         var waiting: AgentSession.Waiting = .none
         var cost = 0.0
+        var tokens = 0
         var added = 0
         var removed = 0
         var strikeUntil: Date? = nil
@@ -171,10 +179,14 @@ final class SessionReader {
                 s.transcript = t
                 let tail = refreshTail(sessionId: sid, url: t)
                 s.lastPrompt = tail.lastPrompt
+                s.lastReply = tail.lastReply
+                s.question = tail.question
+                s.options = tail.options
                 s.activity = tail.activity
                 s.chore = tail.chore
                 s.waiting = tail.waiting
                 s.costUSD = tail.cost
+                s.tokens = tail.tokens
                 s.linesAdded = tail.added
                 s.linesRemoved = tail.removed
                 s.strikeUntil = tail.strikeUntil
@@ -296,6 +308,13 @@ final class SessionReader {
                 }
             case "cost-state":
                 tail.cost = (r["totalCostUSD"] as? Double) ?? tail.cost
+                if let mu = r["modelUsage"] as? [String: Any] {
+                    var n = 0
+                    for case let (_, u as [String: Any]) in mu {
+                        for k in ["inputTokens", "outputTokens", "cacheCreationInputTokens"] { n += (u[k] as? Int) ?? Int((u[k] as? Double) ?? 0) }
+                    }
+                    if n > 0 { tail.tokens = n }
+                }
                 tail.added = (r["totalLinesAdded"] as? Int) ?? tail.added
                 tail.removed = (r["totalLinesRemoved"] as? Int) ?? tail.removed
             case "assistant", "user":
@@ -309,16 +328,28 @@ final class SessionReader {
                         last = .toolResult
                     } else {
                         last = .prompt
+                        tail.lastReply = ""; tail.question = ""; tail.options = []      // 새 지시가 오면 지난 말은 끝
                     }
                 } else if let blocks = m["content"] as? [[String: Any]] {
                     for b in blocks {
                         switch b["type"] as? String {
                         case "tool_use":
                             let name = (b["name"] as? String) ?? "?"
-                            last = .tool(name: name, detail: toolDetail(name, b["input"] as? [String: Any] ?? [:]))
+                            let input = b["input"] as? [String: Any] ?? [:]
+                            last = .tool(name: name, detail: toolDetail(name, input))
+                            if name == "AskUserQuestion", let qs = input["questions"] as? [[String: Any]], let q = qs.first {
+                                tail.question = (q["question"] as? String) ?? ""
+                                tail.options = ((q["options"] as? [[String: Any]]) ?? []).compactMap { $0["label"] as? String }
+                            } else if name == "ExitPlanMode" {
+                                tail.question = t("계획을 세웠어요. 이대로 진행할까요?")
+                                tail.options = [t("진행해"), t("계획 고치자")]
+                            } else {
+                                tail.question = ""; tail.options = []
+                            }
                         case "text":
                             if let t = b["text"] as? String, !t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 last = .text
+                                tail.lastReply = replyTail(t)
                             }
                         default: break
                         }
@@ -342,6 +373,17 @@ final class SessionReader {
             tail.waiting = ["AskUserQuestion", "ExitPlanMode"].contains(name) ? .question : .permission
             tail.chore = Chore.of(tool: name)
         }
+    }
+
+    /// 답의 끝부분만: 마지막 문단 (코드 블록·표 제외), 200자 안으로
+    private static func replyTail(_ text: String) -> String {
+        let paras = text.components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("```") && !$0.hasPrefix("|") }
+        guard var p = paras.last else { return "" }
+        p = p.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "\n", with: " ")
+        if p.hasPrefix("- ") || p.hasPrefix("* ") { p = String(p.dropFirst(2)) }
+        return p.count > 200 ? "…" + String(p.suffix(200)) : p
     }
 
     // MARK: 도구 이름을 사람 말로
@@ -403,6 +445,13 @@ func fmtAgo(_ d: Date?) -> String {
     if s < 3600 { return tf("%d분", s / 60) }
     if s < 86400 { return tf("%d시간 %d분", s / 3600, s % 3600 / 60) }
     return tf("%d일", s / 86400)
+}
+
+/// 1.2M · 340k · 980
+func fmtTokens(_ n: Int) -> String {
+    if n >= 1_000_000 { return String(format: "%.1fM", Double(n) / 1_000_000) }
+    if n >= 1_000 { return String(format: "%dk", n / 1_000) }
+    return String(n)
 }
 
 func fmtUSD(_ v: Double) -> String {

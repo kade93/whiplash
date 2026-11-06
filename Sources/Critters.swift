@@ -13,7 +13,59 @@ final class CritterManager: ObservableObject {
     static func size(small: Bool) -> NSSize { small ? NSSize(width: 52, height: 42) : NSSize(width: 140, height: 78) }
     static func cell(small: Bool) -> CGFloat { small ? 1.5 : 2.5 }
     static let alpha: CGFloat = 0.84                 // 살짝 투명
-    static let cageSize = NSSize(width: 480, height: 250)
+    static let cageWidth: CGFloat = 480
+    /// 당근밭 창 크기: 줄 수에 따라 (2줄 = 250). 10마리 넘으면 당근 없는 줄이 아래에 늘어난다.
+    static func cageSize(count: Int) -> NSSize {
+        let rows = max(carrotSlots / fieldCols, Int(ceil(Double(max(count, 1)) / Double(fieldCols))))
+        return NSSize(width: cageWidth, height: fieldTop + CGFloat(rows) * fieldRowPitch + 14)
+    }
+
+    // MARK: 당근밭 규칙
+    // 당근은 늘 10개 (= 5시간 쿼터 10% 씩). 남은 당근 = ceil(10 × 남은 쿼터%). 오른쪽부터 뽑혀 나간다.
+    // 애들은 왼쪽 당근부터 한 마리씩 앉는다 → 당근이 줄면 오른쪽 애부터 굶고, 0개면 전부 파업.
+    static let carrotSlots = 10
+    static let fieldCols = 5
+    static let fieldTop: CGFloat = 44          // 머리글 아래부터
+    static let fieldRowPitch: CGFloat = 96
+
+    static func carrotsAlive(_ q: Quota?, enabled: Bool) -> Int {
+        guard enabled, let w = q?.fiveHour else { return carrotSlots }
+        return max(0, min(carrotSlots, Int(ceil(Double(carrotSlots) * w.remaining / 100 - 1e-9))))
+    }
+
+    static var fieldPitch: CGFloat { (cageWidth - 24) / CGFloat(fieldCols) }
+
+    /// i번째 자리의 캐릭터 창 왼쪽 위 (당근밭 창 왼쪽 위 기준, SwiftUI 좌표). 10번째 넘어가면 당근 없는 셋째 줄.
+    static func fieldSlotTop(_ i: Int, size: NSSize) -> CGPoint {
+        let col = i % fieldCols, row = i / fieldCols
+        let x = 12 + CGFloat(col) * fieldPitch + (fieldPitch - size.width) / 2
+        return CGPoint(x: x.rounded(), y: (fieldTop + CGFloat(row) * fieldRowPitch).rounded())
+    }
+
+    /// 당근밭 창 안에서 당근이 심긴 자리 (SwiftUI 좌표): 발 바로 아래
+    static func carrotRect(_ i: Int, size: NSSize) -> CGRect {
+        let o = fieldSlotTop(i, size: size)
+        let w: CGFloat = 15, h: CGFloat = 24                       // 5×8 픽셀 × 3
+        return CGRect(x: o.x + size.width / 2 - w / 2, y: o.y + size.height - 6, width: w, height: h)
+    }
+
+    /// 사람이 바쁘면 스르륵 사라진다 (창은 그대로, 알파 0 + 마우스 무시). 움직임도 쉰다.
+    private(set) var dodged = false
+    func setDodged(_ on: Bool) {
+        guard on != dodged else { return }
+        dodged = on
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = on ? 0.5 : 0.35
+            for w in windows.values { w.animator().alphaValue = on ? 0 : Self.alpha }
+            if let c = cage { c.animator().alphaValue = on ? 0 : 1 }
+        }
+        for w in windows.values { w.ignoresMouseEvents = on }
+        cage?.ignoresMouseEvents = on
+        if on, model.hoverWhipID != nil { model.hoverWhipID = nil }
+    }
+
+    @Published private(set) var hungry: Set<String> = []       // 당근 없는 자리에 앉은 애들
+    private var lastAlive: Int? = nil
     private static let fps = 15.0
     private static let speed: CGFloat = 55          // 초당 px
 
@@ -61,8 +113,34 @@ final class CritterManager: ObservableObject {
                   ProcessInfo.processInfo.systemUptime + 6)
         for id in movers.keys { movers[id]?.target = nil }
     }
+    /// 지금 떠 있는 캐릭터 창 틀 (화면 좌표) — 휘둘러 지나간 애 찾기용
+    func frames() -> [String: NSRect] {
+        guard !dodged else { return [:] }
+        return windows.filter { $0.value.isVisible }.mapValues { $0.frame }
+    }
     var firstContentView: NSView? { windows.values.first?.contentView }
+    var firstAlpha: CGFloat { windows.values.first?.alphaValue ?? -1 }
     var cageContentView: NSView? { (cage?.isVisible ?? false) ? cage?.contentView : nil }
+
+    /// 개발용: 당근밭 창 + 그 위에 앉은 애들을 한 장으로 합성
+    func fieldComposite() -> NSImage? {
+        guard let c = cage, c.isVisible, let cv = c.contentView else { return nil }
+        func rep(_ v: NSView) -> NSBitmapImageRep? {
+            guard let r = v.bitmapImageRepForCachingDisplay(in: v.bounds) else { return nil }
+            v.cacheDisplay(in: v.bounds, to: r); return r
+        }
+        let img = NSImage(size: c.frame.size)
+        img.lockFocus()
+        rep(cv)?.draw(in: NSRect(origin: .zero, size: c.frame.size))
+        for (id, w) in windows.sorted(by: { $0.key < $1.key }) {
+            guard let v = w.contentView, let r = rep(v) else { continue }
+            let o = NSPoint(x: w.frame.minX - c.frame.minX, y: w.frame.minY - c.frame.minY)
+            r.draw(in: NSRect(origin: o, size: w.frame.size))
+            NSLog("EOHANG field seat %@ at %@ hungry=%d", id, NSStringFromPoint(o), hungry.contains(id) ? 1 : 0)
+        }
+        img.unlockFocus()
+        return img
+    }
 
     init(model: Model) {
         self.model = model
@@ -78,8 +156,9 @@ final class CritterManager: ObservableObject {
         let wanted = (model.roaming && !model.hidden) ? model.snapshot.groups : []
         var changed = false
         if FloatingPanel.debugMouse { NSLog("EOHANG sync roaming=%d hidden=%d groups=%d windows=%d", model.roaming ? 1 : 0, model.hidden ? 1 : 0, model.snapshot.groups.count, windows.count) }
-        if small != model.critterSmall {                  // 크기가 바뀌면 전부 다시 만든다
-            small = model.critterSmall
+        let wantSmall = model.critterSmall || model.caged   // 당근밭에선 늘 작게 (당근 한 개에 한 마리)
+        if small != wantSmall {                           // 크기가 바뀌면 전부 다시 만든다
+            small = wantSmall
             removeAll()
             changed = true
         }
@@ -135,6 +214,7 @@ final class CritterManager: ObservableObject {
     }
 
     private func make(_ g: AgentGroup, level: NSWindow.Level) {
+        defer { if dodged, let w = windows[g.id] { w.alphaValue = 0; w.ignoresMouseEvents = true } }
         let size = Self.size(small: small)
         let area = currentBounds(for: nil, size: size)
         let origin = NSPoint(x: CGFloat.random(in: area.x), y: CGFloat.random(in: area.y))
@@ -173,10 +253,10 @@ final class CritterManager: ObservableObject {
             if let c = cage, c.isVisible { c.orderOut(nil) }
             return
         }
+        let want = Self.cageSize(count: windows.count)
         if cage == nil {
             let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
-            let frame = NSRect(x: screen.maxX - Self.cageSize.width - 24, y: screen.minY + 24,
-                               width: Self.cageSize.width, height: Self.cageSize.height)
+            let frame = NSRect(x: screen.maxX - want.width - 24, y: screen.minY + 24, width: want.width, height: want.height)
             let c = Self.panel(frame: frame, level: level)
             c.onContextMenu = { [weak self] _, e in self?.onContextMenu?(nil, e) }
             c.hasShadow = true
@@ -191,6 +271,9 @@ final class CritterManager: ObservableObject {
             cage = c
         }
         cage?.level = level
+        if let c = cage, c.frame.size != want {                  // 줄이 늘면 아래로 자란다 (윗변 고정)
+            c.setFrame(NSRect(x: c.frame.minX, y: c.frame.maxY - want.height, width: want.width, height: want.height), display: true)
+        }
         if !(cage?.isVisible ?? false) { cage?.orderFrontRegardless() }
     }
 
@@ -228,10 +311,23 @@ final class CritterManager: ObservableObject {
         platforms = out
     }
 
+    /// 남은 당근 수가 줄면 그 자리 애가 당근을 뽑아 먹는다 (펄쩍 + 아삭). 자리에 당근이 없으면 굶는 중.
+    private func updateCarrots(caged: Bool) {
+        let alive = Self.carrotsAlive(model.quota, enabled: model.quotaEnabled)
+        let ids = windows.keys.sorted()
+        if caged, let last = lastAlive, alive < last {
+            for i in alive..<last where i < ids.count { hop(ids[i]) }
+            NSSound(named: "Pop")?.play()
+        }
+        lastAlive = alive
+        let h: Set<String> = caged && model.quotaEnabled ? Set(ids.enumerated().filter { $0.offset >= alive }.map { $0.element }) : []
+        if h != hungry { hungry = h }
+    }
+
     // MARK: 움직임
 
     private func tick() {
-        guard !menuOpen else { return }                 // 오른쪽 클릭 메뉴를 고르는 동안 가만히
+        guard !menuOpen, !dodged else { return }        // 메뉴를 고르는 동안·숨어 있는 동안 가만히
         let now = ProcessInfo.processInfo.systemUptime
         if now - platformsAt > 2 { platformsAt = now; refreshPlatforms() }
         let groups = Dictionary(model.snapshot.groups.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
@@ -239,6 +335,7 @@ final class CritterManager: ObservableObject {
         let size = Self.size(small: small)
         let caged = model.caged && (cage?.isVisible ?? false)
         if let s = summon, now > s.until { summon = nil }
+        updateCarrots(caged: caged)
 
         for (id, w) in windows {
             guard !w.isDragging, let g = groups[id] else { continue }
@@ -253,7 +350,7 @@ final class CritterManager: ObservableObject {
                 if let s = summon, m.target == nil {           // 부르면 커서 둘레 격자 자리로 (겹치지 않게)
                     let ids = windows.keys.sorted()
                     let i = ids.firstIndex(of: id) ?? 0
-                    let cols = max(1, Int(ceil(sqrt(Double(ids.count)))))
+                    let cols = ids.count <= 10 ? max(1, ids.count) : max(1, Int(ceil(sqrt(Double(ids.count)))))   // 10마리까지는 한 줄로 (줄 세워 놓고 한 번에 후려치기)
                     let col = CGFloat(i % cols) - CGFloat(cols - 1) / 2, row = CGFloat(i / cols)
                     let t = CGPoint(x: min(max(s.point.x + col * (size.width + 6), xr.lowerBound), xr.upperBound),
                                     y: min(max(s.point.y - row * (size.height + 4), yr.lowerBound), yr.upperBound))
@@ -300,13 +397,11 @@ final class CritterManager: ObservableObject {
                 }
             }
 
-            if caged, m.hopStart == nil {                  // 당근밭: 마리수만큼 자리를 정해 박아 둔다
+            if caged, m.hopStart == nil, let c = cage {    // 당근밭: 왼쪽 당근부터 한 마리씩 앉는다
                 let ids = windows.keys.sorted()
                 let i = ids.firstIndex(of: id) ?? 0
-                let cols = max(1, Int((xr.upperBound - xr.lowerBound + size.width) / (size.width + 4)))
-                let col = i % cols, row = i / cols
-                let slot = CGPoint(x: min(xr.lowerBound + CGFloat(col) * (size.width + 4), xr.upperBound),
-                                   y: max(yr.lowerBound, yr.upperBound - CGFloat(row) * (size.height * 0.75)))
+                let rel = Self.fieldSlotTop(i, size: size)
+                let slot = CGPoint(x: c.frame.minX + rel.x, y: c.frame.maxY - rel.y - size.height)
                 let dx = slot.x - o.x, dy = slot.y - o.y
                 let d = hypot(dx, dy)
                 if d > step { o.x += dx / d * step; o.y += dy / d * step; if facingLeft[id] != (dx < 0) { facingLeft[id] = dx < 0 } }
@@ -415,13 +510,20 @@ struct CritterView: View {
                     SpriteTile(kind: g.kind, awake: g.awake,
                                bob: g.awake && model.tick % 2 == 1,
                                sweat: g.awake && g.cpu >= 1.0, cell: CritterManager.cell(small: small), chore: chore(g, strike: strike),
-                               boxed: model.critterBox, hot: st.hot, angry: model.isAngry(g.id))
+                               boxed: model.critterBox && !model.caged, hot: st.hot, angry: model.isAngry(g.id))
                         .scaleEffect(x: critters.facingLeft[id] == true ? -1 : 1)
                 }
                 .opacity(g.id == Model.ghostID ? 0.55 : 1)
                 .whipHover(model.hoverWhipID == g.id)
                 .sentFlash(model.lastSent[g.id])
                 .overlay(alignment: .topTrailing) { WaitBadge(tone: st.tone, small: small).offset(x: small ? 6 : 8, y: small ? -6 : -8) }
+                .overlay(alignment: .bottomLeading) {
+                    if critters.hungry.contains(g.id) && !strike {
+                        Text("🥕✕").font(.system(size: 8)).padding(.horizontal, 3).padding(.vertical, 1)
+                            .background(Capsule().fill(Color.black.opacity(0.6)))
+                            .help(t("자리에 당근이 없어요 — 쿼터가 줄어 굶는 중"))
+                    }
+                }
                 .whipTarget(g.id, on: model.canWhip(g))
                 .clickTarget(g.id)
                 .help(rowTooltip(model, g))
@@ -454,33 +556,48 @@ struct FieldView: View {
 
     var body: some View {
         let n = model.snapshot.groups.count
-        let carrots = 14
         let five = model.quota?.fiveHour
+        let alive = CritterManager.carrotsAlive(model.quota, enabled: model.quotaEnabled)
+        let hungry = max(0, n - alive)
+        let size = CritterManager.size(small: true)
+        let cageSize = CritterManager.cageSize(count: n)
+        let rows = Int((cageSize.height - CritterManager.fieldTop - 14) / CritterManager.fieldRowPitch)
         ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 12, style: .continuous).fill(soil.opacity(0.95))
-            // 두둑: 가로 줄무늬
-            Canvas { ctx, size in
-                var y: CGFloat = 60
-                while y < size.height - 6 {
-                    ctx.fill(Path(CGRect(x: 8, y: y, width: size.width - 16, height: 3)), with: .color(soilDark.opacity(0.7)))
-                    y += 18
+            // 두둑: 줄마다 가로 흙더미, 자리마다 당근 (뽑히면 흙만)
+            Canvas { ctx, sz in
+                for row in 0..<rows {
+                    let y = CritterManager.fieldTop + CGFloat(row) * CritterManager.fieldRowPitch + size.height + 8
+                    ctx.fill(Path(roundedRect: CGRect(x: 10, y: y, width: sz.width - 20, height: 14), cornerRadius: 7), with: .color(soilDark.opacity(0.8)))
                 }
-                ctx.stroke(Path(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 2, dy: 2), cornerRadius: 11), with: .color(wood), lineWidth: 3)
+                ctx.stroke(Path(roundedRect: CGRect(origin: .zero, size: sz).insetBy(dx: 2, dy: 2), cornerRadius: 11), with: .color(wood), lineWidth: 3)
             }
             .allowsHitTesting(false)
-            // 뒷줄 당근: 당근밭 보기를 켰으면 남은 쿼터만큼, 아니면 장식
-            HStack(spacing: 4) {
-                ForEach(0..<carrots, id: \.self) { i in
-                    let alive = five.map { Double(i) < Double(carrots) * $0.remaining / 100 - 0.001 } ?? true
-                    PixelArt(rows: alive ? ToolArt.carrot : ToolArt.carrotEaten, cell: 2)
-                }
+            ForEach(0..<CritterManager.carrotSlots, id: \.self) { i in
+                let r = CritterManager.carrotRect(i, size: size)
+                PixelArt(rows: i < alive ? ToolArt.carrot : ToolArt.carrotEaten, cell: 3)
+                    .frame(width: r.width, height: r.height)
+                    .offset(x: r.minX, y: r.minY)
             }
-            .padding(.leading, 14)
-            .padding(.top, 30)
+            .allowsHitTesting(false)
+            // 자리마다 누가 얼마나 먹었나: 🥕1.4 · $39 (세션 먹이값 비율)
+            let seated = model.snapshot.groups.sorted { $0.id < $1.id }
+            ForEach(Array(seated.enumerated()), id: \.element.id) { i, g in
+                let o = CritterManager.fieldSlotTop(i, size: size)
+                let pitch = CritterManager.fieldPitch
+                Text(seatLabel(g))
+                    .font(.system(size: 8, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Color(hex: 0xFFF1DC).opacity(0.9))
+                    .lineLimit(1)
+                    .frame(width: pitch - 6)
+                    .offset(x: o.x + size.width / 2 - (pitch - 6) / 2, y: o.y + size.height + 24)
+                    .help(rowTooltip(model, g))
+            }
             .allowsHitTesting(false)
             HStack {
-                Text(five.map { $0.utilization >= 100 ? t("🥕 당근밭 다 뽑힘 · 파업!") : tf("🥕 당근밭 %d%% 남음 · %@", Int($0.remaining), $0.resetsAt.map { fmtAgoFuture($0) } ?? "") }
-                     ?? tf("당근밭 · %d마리", n))
+                Text(model.quotaEnabled && five != nil
+                     ? (model.quota?.summary ?? "") + (hungry > 0 ? tf(" · %d마리 굶는 중", hungry) : "")
+                     : tf("당근밭 · %d마리", n))
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(Color(hex: 0xFFF1DC))
                 Spacer()
@@ -499,10 +616,19 @@ struct FieldView: View {
             .padding(.horizontal, 12)
             .padding(.top, 8)
         }
-        .frame(width: CritterManager.cageSize.width, height: CritterManager.cageSize.height)
+        .frame(width: cageSize.width, height: cageSize.height)
         .contentShape(Rectangle())
         .coordinateSpace(name: "root")
         .onPreferenceChange(NoDragKey.self) { onNoDrag($0) }
         .help(t("끌어서 옮길 수 있어요. 애들은 여기 자기 자리에 박혀 있어요."))
+    }
+
+    private func seatLabel(_ g: AgentGroup) -> String {
+        guard let s = g.session else { return g.kind.title }
+        var parts: [String] = []
+        if let c = model.carrotsEaten(g) { parts.append(String(format: "🥕%.1f", c)) }
+        if s.costUSD > 0 { parts.append(fmtUSD(s.costUSD)) }
+        if parts.isEmpty { parts.append(s.name.isEmpty ? g.label : s.name) }
+        return parts.joined(separator: " · ")
     }
 }

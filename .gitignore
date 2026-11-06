@@ -1,5 +1,37 @@
+# 빌드 산출물
 build/
 *.dSYM
-.DS_Store
-embedded.provisionprofile
+*.dmg
+*.pkg
+*.zip
+*.icns
 AppIcon.iconset.bak/
+.DS_Store
+
+# 서명·공증·배포 비밀 (절대 올리지 않는다)
+*.p12
+*.cer
+*.pem
+*.key
+*.keychain*
+*.provisionprofile
+*.mobileprovision
+embedded.provisionprofile
+.env
+.env.*
+*.secret
+secrets.*
+*.secrets
+AuthKey_*.p8
+notary*.json
+
+# 내 맥에서만 쓰는 설정·기록
+hotkeys.json
+whips.json
+whip-words.txt
+whips/
+*.log
+*.jsonl
+snap*.png
+.claude/settings.local.json
+.claude/*.local.*

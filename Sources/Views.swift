@@ -85,7 +85,7 @@ struct SettingsMenu: View {
                 }
             }
         }
-        Toggle(t("당근밭 보기 — 남은 쿼터 (Claude 로그인 키체인 읽기)"), isOn: $model.quotaEnabled)
+        Toggle(t("남은 쿼터 보기 🥕 (Claude 로그인 키체인 읽기)"), isOn: $model.quotaEnabled)
         Toggle(t("⌥ 누른 채로만 채찍 (오작동 방지)"), isOn: $model.whipNeedsOption)
         Toggle(t("캐릭터 뒤 물빛 칸"), isOn: $model.critterBox)
         Toggle(t("모두 숨기기 (메뉴 막대 채찍으로 되돌림)"), isOn: $model.hidden)
@@ -311,7 +311,7 @@ struct FullView: View {
     }
 }
 
-/// 당근밭: 남은 쿼터만큼 당근이 남아 있다. 쿼터를 쓸수록 오른쪽부터 뽑혀 나간다.
+/// 남은 쿼터: 세션(5시간)은 당근 그림으로, 주간·모델별은 막대로.
 struct CarrotField: View {
     @ObservedObject var model: Model
     private let count = 12
@@ -322,9 +322,10 @@ struct CarrotField: View {
         let seven = q?.sevenDay
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text(t("당근밭"))
+                Text(t("세션"))
                     .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
                     .frame(width: 34, alignment: .leading)
+                    .help(t("세션 (5시간) 남은 쿼터 — 당근 1개 = 10%"))
                 HStack(spacing: 2) {
                     ForEach(0..<count, id: \.self) { i in
                         let alive = five.map { Double(i) < Double(count) * $0.remaining / 100 - 0.001 } ?? true
@@ -339,14 +340,20 @@ struct CarrotField: View {
                     .lineLimit(1)
             }
             if let seven = seven {
-                UsageLine(title: t("7일"), parts: [BarPart(color: seven.utilization >= 90 ? hotColor : Color(hex: 0xF28C28), value: seven.utilization / 100)],
-                          value: tf("%d%% 씀 · %@", Int(seven.utilization), seven.resetsAt.map { fmtAgoFuture($0) } ?? ""))
+                UsageLine(title: t("주간"), parts: [BarPart(color: seven.utilization >= 90 ? hotColor : Color(hex: 0xF28C28), value: seven.utilization / 100)],
+                          value: tf("%d%% 남음 · %@", Int(seven.remaining), seven.resetsAt.map { fmtAgoFuture($0) } ?? ""))
+                    .help(seven.title)
+            }
+            ForEach(q?.extras ?? [], id: \.key) { w in
+                UsageLine(title: w.shortTitle, parts: [BarPart(color: w.utilization >= 90 ? hotColor : Color(hex: 0xC97BFF), value: w.utilization / 100)],
+                          value: tf("%d%% 남음 · %@", Int(w.remaining), w.resetsAt.map { fmtAgoFuture($0) } ?? ""))
+                    .help(w.title)
             }
             if let e = q?.error {
                 Text(e).font(.system(size: 9)).foregroundStyle(hotColor).lineLimit(2)
             }
         }
-        .help(t("5시간 창 남은 쿼터 = 남은 당근. 다 뽑히면 애들이 파업해요. 5분마다 Claude 사용량을 조회해요 (키체인의 Claude Code 로그인으로)."))
+        .help(t("남은 쿼터 — 세션(5시간)·주간·모델별. 세션 쿼터가 바닥나면 애들이 파업해요. 5분마다 Claude 사용량을 조회해요 (키체인의 Claude Code 로그인으로)."))
         .padding(.vertical, 2)
     }
 
@@ -559,6 +566,7 @@ struct AgentRow: View {
     private func subtitle(_ g: AgentGroup) -> String {
         guard let s = g.session, !s.name.isEmpty else { return g.label }
         var parts = [g.label]
+        if let c = model.carrotsEaten(g) { parts.append(String(format: "🥕%.1f", c)) }
         if s.costUSD > 0 { parts.append(fmtUSD(s.costUSD)) }
         if s.linesAdded + s.linesRemoved > 0 { parts.append("+\(s.linesAdded) −\(s.linesRemoved)") }
         return parts.joined(separator: " · ")
@@ -576,7 +584,9 @@ func rowTooltip(_ model: Model, _ g: AgentGroup) -> String {
         }
         if let st = s.startedAt { lines.append(tf("세션 시작 %@ 전 · %@", fmtAgo(st), s.isDesktop ? t("Claude 앱") : t("터미널"))) }
         var money: [String] = []
+        if let c = model.carrotsEaten(g) { money.append(tf("먹은 당근 %.1f개 (세션 먹이값 비율)", c)) }
         if s.costUSD > 0 { money.append(tf("먹이값 %@", fmtUSD(s.costUSD))) }
+        if s.tokens > 0 { money.append(tf("토큰 %@", fmtTokens(s.tokens))) }
         if s.linesAdded + s.linesRemoved > 0 { money.append(tf("고친 줄 +%d −%d", s.linesAdded, s.linesRemoved)) }
         if !money.isEmpty { lines.append(money.joined(separator: " · ")) }
     }

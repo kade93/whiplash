@@ -116,7 +116,7 @@ Dock 에도 아이콘이 떠요(기본). 누르면 채찍질 창이 보이고, �
 
 ## 당근밭과 파업 (채찍과 당근)
 
-메뉴 막대 채찍 → 「당근밭 보기 — 남은 쿼터」를 켜면 채찍질 창에 **당근밭**이 생겨요. 당근 12개 = 5시간 창의 남은 쿼터.
+메뉴 막대 채찍 → 「남은 쿼터 보기 — 남은 쿼터」를 켜면 채찍질 창에 **당근밭**이 생겨요. 당근 12개 = 5시간 창의 남은 쿼터.
 쿼터를 쓸수록 오른쪽부터 당근이 뽑혀 흙만 남고, 아래에 7일 창 막대와 리셋 시각이 붙어요. 80%를 넘으면 노랗게, 다 쓰면 빨갛게.
 
 - 조회는 Claude Code 의 `/usage` 와 같은 방식이에요: 키체인의 Claude Code 로그인 토큰으로 `api.anthropic.com/api/oauth/usage` 를 5분마다.
@@ -259,3 +259,16 @@ Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) �
 
 `Sources/Monitor.swift`의 `AgentMatcher.match`에 한 줄 넣으면 돼요.
 실행 파일 경로(`path`), 이름(`name`), node·python일 때 명령줄(`args`)로 판별해요.
+
+## 재미 요소
+
+이스터에그·상황별 반응·데모 장면(줄 세워 놓고 한 번에 후려치기) 목록은 [docs/FUN.md](docs/FUN.md) (영어 먼저, 한국어 뒤).
+
+## 개인정보·비밀 관리
+
+저장소에는 코드·문서·아이콘·소리만 올라간다. 내 맥의 설정(`hotkeys.json`, `whips/`), 로그, Claude 대화 기록(`*.jsonl`), 서명 인증서(`*.p12`, `*.p8`), 키 파일은 `.gitignore` 로 막혀 있다.
+
+- **커밋 전 검사**: `.githooks/pre-commit` 이 올라갈 파일에서 API 키·토큰·개인 키·비밀번호·홈 경로(`/Users/…`)·개인 이메일·금지 파일을 찾으면 커밋을 막는다. `./build.sh` 가 훅을 켜 두며, 직접 켜려면 `git config core.hooksPath .githooks`.
+- **전체 검사**: `tools/secrets-check.sh` (작업 트리), `tools/secrets-check.sh --history` (모든 커밋). 릴리스 워크플로도 빌드 전에 둘 다 돌린다.
+- **앱 자체**: 키체인의 Claude 토큰은 사용량 요청에만 쓰고 저장·로그하지 않는다. 세션 키 파일은 읽기만 한다. 디버그 로그(`EOHANG …`)에 토큰·대화 내용을 찍지 않는다.
+- 커밋 작성자 이메일은 깃 설정을 따른다. 저장소를 공개할 생각이면 `git config user.email <id>@users.noreply.github.com` 으로 바꿔 두는 게 좋다.

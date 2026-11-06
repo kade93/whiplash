@@ -17,10 +17,7 @@ enum Lang: String, CaseIterable {
 
     static var current: Lang = {
         if let saved = UserDefaults.standard.string(forKey: "lang"), let l = Lang(rawValue: saved) { return l }
-        let pref = Locale.preferredLanguages.first ?? "ko"
-        if pref.hasPrefix("ja") { return .ja }
-        if pref.hasPrefix("ko") { return .ko }
-        return .en
+        return .en                                   // 기본은 영어 (설정 ▸ 언어에서 바꿈)
     }() {
         didSet { UserDefaults.standard.set(current.rawValue, forKey: "lang") }
     }
@@ -85,6 +82,62 @@ enum L10n {
         "앱 아이콘으로 보기": ("Show app icons", "アプリアイコンで表示"),
         "저장공간 다시 재기": ("Rescan storage", "ストレージを再計測"),
         "채찍질 설정": ("Whiplash settings", "Whiplash設定"),
+        "설정": ("Settings", "設定"),
+        "쉬는 애 전부 채찍": ("Whip everyone idle", "休んでる子を全員鞭"),
+        "세션": ("Session", "セッション"),
+        "주간": ("Weekly", "週間"),
+        "세션 (5시간)": ("Session (5 hours)", "セッション（5時間）"),
+        "주간 (모든 모델)": ("Weekly (all models)", "週間（全モデル）"),
+        "주간 · ": ("Weekly · ", "週間 · "),
+        "🥕 남은 쿼터 조회 중…": ("🥕 Checking remaining quota…", "🥕 残りクォータを確認中…"),
+        "🥕 쿼터 다 씀 · 파업!": ("🥕 Quota exhausted · strike!", "🥕 クォータ切れ · ストライキ！"),
+        "🥕 남은 쿼터 %d%%": ("🥕 Quota left %d%%", "🥕 残りクォータ %d%%"),
+        "주간 %d%%": ("weekly %d%%", "週間 %d%%"),
+        "%d%% 남음 · %@": ("%d%% left · %@", "%d%% 残り · %@"),
+        "세션 (5시간) 남은 쿼터 — 당근 1개 = 10%": ("Session (5-hour) quota left — one carrot = 10%", "セッション（5時間）の残りクォータ — ニンジン1本 = 10%"),
+        "남은 쿼터 — 세션(5시간)·주간·모델별. 세션 쿼터가 바닥나면 애들이 파업해요. 5분마다 Claude 사용량을 조회해요 (키체인의 Claude Code 로그인으로).": ("Remaining quota — session (5h), weekly, per model. When the session quota runs out the critters strike. Checked every 5 minutes with the Claude Code login from the Keychain.", "残りクォータ — セッション（5時間）・週間・モデル別。セッションのクォータが尽きるとキャラがストライキ。キーチェーンの Claude Code ログインで 5 分ごとに確認。"),
+        "남은 쿼터 보기 🥕 (Claude 로그인 키체인 읽기)": ("Show remaining quota 🥕 (reads Claude login from Keychain)", "残りクォータを表示 🥕（キーチェーンの Claude ログインを読む）"),
+        "남은 쿼터 보기 — 세션·주간·모델별, 🥕 당근은 그림": ("Show remaining quota — session, weekly, per model; 🥕 carrots are just the picture", "残りクォータを表示 — セッション・週間・モデル別、🥕 ニンジンは絵だけ"),
+        "계획을 세웠어요. 이대로 진행할까요?": ("I drafted a plan. Go ahead with it?", "計画を立てました。このまま進めますか？"),
+        "진행해": ("Go ahead", "進めて"),
+        "계획 고치자": ("Revise the plan", "計画を直そう"),
+        "응, 해": ("Yes, do it", "うん、やって"),
+        "하지 마": ("Don't", "やめて"),
+        "계속해": ("Keep going", "続けて"),
+        "일할 때 알아서 숨기 (마우스·타자 바쁘면)": ("Hide while I'm busy (fast mouse or typing)", "作業中は自動で隠れる（マウス・タイピングが忙しいと）"),
+        // 환영 창
+        "맥에서 돌아가는 AI 에이전트들이 캐릭터로 돌아다녀요. 뭘 하는지 보고, 채찍질하고, 지시를 보내세요.": ("The AI agents running on your Mac roam around as critters. See what they do, crack the whip, send instructions.", "Mac で動く AI エージェントがキャラクターになって歩き回ります。何をしているか見て、鞭を打ち、指示を送りましょう。"),
+        "채찍질": ("Whip", "鞭"),
+        "쉬는 캐릭터 위에 잠깐 머문 뒤 마우스를 좌우로 휙휙 세 번. 「찰싹!」 하고 하던 일을 이어가요.": ("Hover over an idle critter, then swipe the mouse left-right three times. Whack! It picks its work back up.", "休んでいるキャラの上に少し止まってから、マウスを左右に 3 回ビュン。「ピシッ！」と作業を再開します。"),
+        "지시 보내기": ("Send instruction", "指示を送る"),
+        "캐릭터를 제자리 클릭하면 입력창. 쓰고 ⏎ 누르면 그 세션에 바로 들어가요.": ("Click a critter in place for an input box. Type and press ⏎ to deliver it to that session.", "キャラをその場でクリックすると入力欄。書いて ⏎ でそのセッションに届きます。"),
+        "보기 전환": ("Views", "表示切替"),
+        "메뉴 막대의 채찍 아이콘, 또는 %@ 풀어놓기 · %@ 모두 숨기기 · %@ 당근밭.": ("The whip icon in the menu bar, or %@ roam · %@ hide all · %@ carrot field.", "メニューバーの鞭アイコン、または %@ 放す · %@ すべて隠す · %@ ニンジン畑。"),
+        "세션 제목과 상태를 보려면 홈 폴더 읽기를 한 번 허용해야 해요.": ("Allow reading your home folder once to see session titles and status.", "セッション名と状態を見るには、ホームフォルダの読み取りを一度許可してください。"),
+        "허용됨": ("Allowed", "許可済み"),
+        "홈 폴더 허용…": ("Allow home folder…", "ホームフォルダを許可…"),
+        "당근밭 보기 — 남은 쿼터를 당근으로": ("Show carrots — remaining quota as carrots", "ニンジン畑を表示 — 残りクォータをニンジンで"),
+        "Claude Code 로그인 토큰을 키체인에서 읽어요. 켜면 macOS가 키체인 허용을 한 번 물어요.": ("Reads the Claude Code login token from the Keychain. macOS will ask once to allow it.", "Claude Code のログイントークンをキーチェーンから読みます。オンにすると macOS が一度確認します。"),
+        "맥을 켜면 메뉴 막대에 조용히 올라와요. 나중에 설정에서 바꿀 수 있어요.": ("Starts quietly in the menu bar when you log in. Change it later in Settings.", "ログイン時にメニューバーに静かに常駐します。あとで設定から変更できます。"),
+        "그 밖의 권한은 필요 없어요. 모든 정보는 이 맥 안에만 있어요.": ("No other permissions are needed. Everything stays on this Mac.", "ほかの権限は不要です。すべての情報はこの Mac の中だけにあります。"),
+        "시작하기": ("Get started", "はじめる"),
+        "🥕 %d/%d · %d%% 씀 · %@": ("🥕 %d/%d · %d%% used · %@", "🥕 %d/%d · %d%% 使用 · %@"),
+        "%d%% 씀 · %@": ("%d%% used · %@", "%d%% 使用 · %@"),
+        "먹은 당근 %.1f개 (세션 먹이값 비율)": ("Carrots eaten %.1f (by session cost share)", "食べたニンジン %.1f本（セッション費用の割合）"),
+        "토큰 %@": ("Tokens %@", "トークン %@"),
+        " · %d마리 굶는 중": (" · %d starving", " · %d匹が空腹"),
+        "자리에 당근이 없어요 — 쿼터가 줄어 굶는 중": ("No carrot at this seat — starving as the quota runs low", "この席にニンジンがありません — クォータが減って空腹"),
+        "잠깐 — 키체인 허용 창이 떠요": ("Heads up — a Keychain prompt is coming", "ちょっと待って — キーチェーンの確認が出ます"),
+        "남은 쿼터는 Claude Code 가 키체인에 넣어 둔 로그인 토큰으로 조회해요. 곧 macOS 가 「Whiplash 가 키체인 항목을 쓰려 한다」며 Mac 로그인 비밀번호를 물어요 (Claude 로그인이 아니에요). 「항상 허용」을 누르면 다음부턴 안 물어요. 토큰은 조회에만 쓰고 저장하지 않아요.":
+            ("Remaining quota is read with the login token Claude Code keeps in your Keychain. macOS will now ask for your Mac login password because Whiplash wants to use that Keychain item (this is not a Claude login). Choose Always Allow and it won't ask again. The token is only used for the request and never stored.",
+             "残りクォータは Claude Code がキーチェーンに保存したログイントークンで取得します。これから macOS が「Whiplash がキーチェーン項目を使おうとしている」として Mac のログインパスワードを求めます（Claude のログインではありません）。「常に許可」を選べば次回から聞かれません。トークンは取得にだけ使い、保存しません。"),
+        "알겠어요": ("Got it", "わかった"),
+        "키체인에 Claude Code 로그인 정보가 없어요 — Claude Code 에서 /login 먼저": ("No Claude Code login in Keychain — run /login in Claude Code first", "キーチェーンに Claude Code のログインがありません — Claude Code で /login を先に"),
+        "키체인 접근을 거부했어요 — 「당근밭 보기」를 껐다 켜고 「항상 허용」": ("Keychain access was denied — toggle Show carrots off and on, then choose Always Allow", "キーチェーンのアクセスが拒否されました — ニンジン畑表示を入れ直して「常に許可」を"),
+        "더 보기": ("More", "その他"),
+        "채찍 면역": ("Whip immunity", "鞭の免疫"),
+        "채찍 일감": ("Whip tasks", "鞭タスク"),
+        "간격 — %d분마다": ("Interval — every %d min", "間隔 — %d分ごと"),
 
         // 크리터 · 우리
         "Claude (꺼짐) · 휘두르면 깨워요": ("Claude (off) · swing to wake", "Claude（オフ）· 振って起こす"),
@@ -227,7 +280,6 @@ enum L10n {
         "7일": ("7 days", "7日"),
         "조회 중…": ("Checking…", "確認中…"),
         "다 뽑힘 · 파업!": ("All gone · strike!", "全部なくなった · ストライキ!"),
-        "%d%% 남음 · %@": ("%d%% left · %@", "%d%% 残り · %@"),
         "%d%% 씀 · %@": ("%d%% used · %@", "%d%% 使用 · %@"),
         "지금": ("now", "今"),
         "%d분 뒤": ("in %dm", "%d分後"),
@@ -241,7 +293,6 @@ enum L10n {
         "🥕 당근밭 다 뽑힘 · 파업!": ("🥕 Carrots all gone · strike!", "🥕 ニンジン全滅 · ストライキ!"),
         "🥕 당근밭 %d%% 남음 · %@": ("🥕 Carrots %d%% left · %@", "🥕 ニンジン %d%% 残り · %@"),
         "5시간 창 남은 쿼터 = 남은 당근. 다 뽑히면 애들이 파업해요. 5분마다 Claude 사용량을 조회해요 (키체인의 Claude Code 로그인으로).": ("Remaining 5-hour quota = remaining carrots. When they're gone, the critters strike. Usage is checked every 5 minutes using your Claude Code login from the Keychain.", "5時間枠の残りクォータ = 残りニンジン。なくなるとみんなストライキ。5分ごとにキーチェーンのClaude Codeログインで使用量を確認します。"),
-        "키체인에서 Claude Code 로그인 정보를 못 읽었어요": ("Couldn't read the Claude Code login from the Keychain", "キーチェーンからClaude Codeのログイン情報を読めません"),
         "사용량 조회 실패 (HTTP %d)": ("Usage check failed (HTTP %d)", "使用量の確認に失敗 (HTTP %d)"),
         "사용량 응답을 못 읽었어요": ("Couldn't read the usage response", "使用量の応答を読めません"),
         "사용량 조회 실패: %@": ("Usage check failed: %@", "使用量の確認に失敗: %@"),

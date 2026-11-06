@@ -49,7 +49,16 @@ On first launch the App Store edition asks for access to your home folder. Choos
 
 ## 3. Getting started
 
-On launch, Whiplash automatically:
+On first launch a welcome window opens once. It shows the three basic controls and offers two options, both changeable later under **Settings ▸**.
+
+| Option | Description |
+|---|---|
+| Show remaining quota | Displays the remaining quota as carrots. Turning it on triggers a one-time macOS Keychain prompt (see 5.4). Direct-download edition only. |
+| Open at login | Registers Whiplash as a login item. |
+
+In the App Store edition the window has an **Allow home folder…** button that grants access to session information. No other system permission is required in either edition.
+
+Whiplash then automatically:
 
 - detects agent processes (every 2 seconds, or every 15 seconds while the window is hidden),
 - reads Claude Code session files (title, activity, running cost),
@@ -83,12 +92,27 @@ Each session becomes a character in its own transparent window and walks around 
 - Sessions that need you show a badge above the head (`!` `?` `✋`) and hop periodically.
 - Characters keep their distance and never overlap.
 - Drag a character to move it. Double-click to bring the app running that session (Claude app or Terminal) to the front.
+- When the mouse moves fast or you keep typing for about 3 seconds, the characters fade out; after 8 quiet seconds they return (**Settings ▸ Hide while I'm busy**, on by default). They stay while the pointer is over a character or while in the carrot field. Only the time of the last key press is checked, never its content, and no permission is needed.
 
 Turn on **Roam small** to show small characters without name tags.
 
-### 4.3 Pen
+### 4.3 Carrot field
 
-**Put in the pen** opens a fenced window at one side of the screen. All characters walk into it and stay inside. Drag the fence to move it; press **Let out** to release.
+**Plant in the carrot field** opens a field window at one side of the screen. All characters walk in and take their own seats. Drag the window to move it; press **Pull out** to release. In the field, characters are always shown small.
+
+Field rules
+
+| Item | Rule |
+|---|---|
+| Carrots | Always 10 (5 × 2 rows). One carrot = 10% of the 5-hour quota |
+| Remaining carrots | ⌈10 × remaining quota ratio⌉. Example: 75% used → 3 carrots |
+| Pulled from | The right end |
+| Seating | Characters sit one per carrot from the left. The 11th onward sit on a third row without carrots |
+| Starving | A character whose carrot is gone shows 🥕✕; the header reads "n starving" |
+| Eating | When the usage check (every 5 minutes) removes a carrot, the character at that seat hops and a sound plays |
+| Strike | At 0 carrots (quota exhausted) every Claude character goes on strike (see 5.4) |
+
+If **Show remaining quota** (Settings) is off, all 10 carrots are shown as decoration.
 
 ## 5. Status display
 
@@ -122,6 +146,20 @@ Idle sessions show why they stopped and for how long. States that need your inpu
 
 When a session uses more than 1.5 CPU cores or more than 2 GB (or 10% of total) memory, its row and bars turn red and steam appears above the character. The header counts overloaded sessions.
 
+### 5.4 Remaining quota (🥕 carrots)
+
+Turn on **Settings ▸ Show remaining quota** to display the remaining quota of your Claude subscription split into session (5-hour), weekly (all models) and per-model weekly (such as Fable) windows. The session window is drawn as ten carrots, the others as bars. Carrots disappear as the quota fills up; when it is exhausted the characters go on strike.
+
+The lookup uses the token Claude Code stores in the Keychain when you log in. The first time, macOS shows a prompt asking for your **"login" Keychain password**. This is not a Claude login; it authorizes Whiplash to read the Keychain item, and the password is normally the same as your Mac login password. Choose **Always Allow** and it will not ask again.
+
+| Situation | What to do |
+|---|---|
+| Password not accepted | The login Keychain password differs from your Mac password (it happens after a password change). Fix it in Keychain Access → login → Change Password, or click **Deny**; only the carrot field is then unavailable. |
+| Asked every time | A changed signature triggers a new prompt. `build.sh` signs with an Apple Development certificate when one is in your Keychain, so the signature stays the same across builds. If you deny, the app stops asking for that run; toggle **Show remaining quota** off and on to retry. |
+| "No Claude Code login" | Run `/login` in Claude Code first. |
+
+If `~/.claude/.credentials.json` exists it is used instead of the Keychain and no prompt appears. The token is used only for the request and never stored. This feature is available in the direct-download edition only.
+
 ## 6. Controlling sessions
 
 ### 6.1 Send an instruction
@@ -132,6 +170,15 @@ Click a character or session row in place (without dragging) to open an input fi
 - Busy sessions read it after the current turn.
 - On success the character flashes green and a sound plays.
 
+One or two lines of context for that session appear above the field.
+
+| Display | Meaning |
+|---|---|
+| ❓ question + option buttons | The session is waiting on a question (AskUserQuestion) or plan approval. A button sends that option as the reply. |
+| 💬 last words | The tail of the session's last message (usually "…shall I?"). For idle sessions, quick replies **Yes, do it / Don't / Keep going** are shown. |
+
+Options and last words are read from the transcript and cleared when a new instruction is sent.
+
 ### 6.2 Whip
 
 Tells an idle or busy session to keep working.
@@ -141,6 +188,10 @@ Tells an idle or busy session to keep working.
 2. Swipe the pointer left and right across the character three times within one second.
 
 Alternatively press ⌃⌥W (random idle session) or right-click → **Whip — pick a task**.
+
+**Several at once**
+- Press ⌃⌥G (Come here) to line the critters up, then swing the pointer once across the row quickly (about 700 px/s or faster). Every critter you pass is whipped at the same time, and the sounds are layered per critter.
+- ⌃⌥⇧W or the menu item **Whip everyone idle** sends the whip message to every idle session. Immune sessions are skipped.
 
 **What happens**
 - Claude Code sessions receive a short message (default: `Whack! (Whiplash) Keep going with what you were doing. If you're done, pick the next thing and do it.`). Change it under **Auto-whip → Edit whip words…**.
@@ -186,23 +237,33 @@ When Claude is not running, a **Claude (off)** character appears. Whip it to ope
 
 ### 7.1 Menu bar icon / Dock menu
 
+The menu bar icon and the Dock icon (right-click) show the same menu. Frequently used items are at the top level; everything else is under **Settings ▸**.
+
 | Item | Action |
 |---|---|
-| Hide all | Hide every window and character (⌃⌥H) |
-| Let loose — roam the screen | Toggle roaming (⌃⌥A) |
-| Roam small | Small characters without name tags (⌃⌥M) |
-| Put in the pen | Toggle the pen (⌃⌥C) |
+| Let loose — roam the screen / Show as window / Hide all | View switch. One of the three is checked (⌃⌥A / ⌃⌥H) |
 | Come here | Gather all characters at the pointer (⌃⌥G) |
+| Plant in the carrot field | Toggle the carrot field (⌃⌥C) |
 | Whip any idle one | Whip one idle session (⌃⌥W) |
-| Auto-whip | Period, interval and words |
-| Show list while roaming | Keep the list window during roaming (⌃⌥P) |
-| Show icon in Dock | Dock icon on/off |
-| Language | 한국어 / English / 日本語 |
-| Whip only while holding ⌥ | Accident prevention |
+| Auto-whip ▸ | Period, interval and words |
+| Settings ▸ | See below |
+| Quit Whiplash | Quit |
+
+**Settings ▸** items
+
+| Item | Action |
+|---|---|
+| Roam small (no name tags) | Small characters without name tags (⌃⌥M) |
 | Water tile behind critters | Background tile for roaming characters |
-| Show as window / Compact view / Always on top / Open at login | Window settings |
-| Edit whip tasks… / Open whip results folder | Helper agent tasks |
-| Edit hotkeys… / Reload hotkeys | Global hotkeys |
+| Show list while roaming | Keep the list window during roaming (⌃⌥P) |
+| Hide while I'm busy | Hide characters during fast mouse movement or typing; return when quiet |
+| Compact view / Always on top | Window settings |
+| Whip only while holding ⌥ | Accident prevention |
+| Show remaining quota — remaining quota | Enable quota lookup (a macOS Keychain prompt appears the first time, see 5.4) |
+| Whip tasks ▸ | Edit helper agent tasks, open results folder |
+| Theme ▸ / Language ▸ | Appearance and language |
+| Edit hotkeys… | Opens `hotkeys.json`; reloaded automatically after saving |
+| Show icon in Dock / Open at login | App settings |
 
 ### 7.2 Global hotkeys
 
@@ -216,9 +277,10 @@ Work regardless of the active app. No Accessibility permission needed.
 | ⌃⌥C | Pen / let out |
 | ⌃⌥G | Come here |
 | ⌃⌥W | Whip an idle session |
+| ⌃⌥⇧W | Whip every idle session |
 | ⌃⌥P | Show list while roaming |
 
-To change them, choose **Edit hotkeys…**, edit `hotkeys.json` using the form `"ctrl+alt+h"`, then choose **Reload hotkeys**. Modifiers: ctrl, alt (option), cmd, shift. An empty value disables that hotkey.
+To change them, choose **Settings ▸ Edit hotkeys…**, edit `hotkeys.json` using the form `"ctrl+alt+h"` and save. The file is reloaded the next time the menu opens. Modifiers: ctrl, alt (option), cmd, shift. An empty value disables that hotkey.
 
 ## 8. Configuration files
 

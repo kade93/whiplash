@@ -130,6 +130,25 @@ struct PromptView: View {
                 Text(g?.session?.isDesktop == true ? t("Claude 앱 세션") : t("터미널 세션"))
                     .font(.system(size: 9)).foregroundStyle(.tertiary)
             }
+            // 뭘 물어봤나 / 마지막에 뭐라 했나 — 한두 줄
+            if let s = g?.session {
+                if !s.question.isEmpty {
+                    Text("❓ " + s.question)
+                        .font(.system(size: 11, weight: .medium)).lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if !s.options.isEmpty {
+                        chips(s.options)
+                    }
+                } else if !s.lastReply.isEmpty {
+                    Text("💬 " + s.lastReply)
+                        .font(.system(size: 10.5)).foregroundStyle(.secondary).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .help(s.lastReply)
+                    if s.status != .busy {
+                        chips([t("응, 해"), t("하지 마"), t("계속해")])
+                    }
+                }
+            }
             HStack(spacing: 6) {
                 TextField(t("지시를 쳐서 바로 보내요 (⏎ 보내기 · esc 닫기)"), text: $text)
                     .textFieldStyle(.plain)
@@ -176,6 +195,22 @@ struct PromptView: View {
         .onAppear {
             focused = true
             if Paths.sandboxed { state = .failed(SessionMessenger.Failure.sandboxed.localizedDescription) }
+        }
+    }
+
+    /// 빠른 답 — 누르면 그 말이 바로 날아간다
+    private func chips(_ labels: [String]) -> some View {
+        HStack(spacing: 4) {
+            ForEach(labels, id: \.self) { l in
+                Button(l) { text = l; send() }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color(hex: 0xE07A5F))
+                    .padding(.horizontal, 7).padding(.vertical, 2)
+                    .background(Capsule().fill(Color(hex: 0xE07A5F).opacity(0.14)))
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
         }
     }
 

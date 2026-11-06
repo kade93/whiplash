@@ -67,6 +67,22 @@ final class Model: ObservableObject {
         }
     }
 
+    /// 여러 마리를 한 번에 때릴 때: 「짝」이 겹치고 「아야」가 돌림노래처럼 — 마릿수만큼 어긋나게 겹쳐 더 찰지게
+    static func playWhipChorus(_ n: Int) {
+        guard n > 1 else { playWhip(1); return }
+        let voices = min(n, 6)
+        for i in 0..<voices {
+            let delay = Double(i) * 0.055 + Double.random(in: 0...0.02)
+            let variant = i == 0 ? min(n, 3) : (i % 3) + 1
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                if let url = Bundle.main.url(forResource: "whip\(variant)", withExtension: "wav"), let snd = NSSound(contentsOf: url, byReference: true) {
+                    snd.volume = Float(max(0.45, 0.95 - Double(i) * 0.08))
+                    snd.play()
+                }
+            }
+        }
+    }
+
     /// 8초 안에 연타하면 횟수가 올라간다 (소리·리액션이 달라짐)
     private var hitStreak: [String: (count: Int, at: Date)] = [:]
     func hit(_ id: String) -> Int {
@@ -76,6 +92,11 @@ final class Model: ObservableObject {
         return n
     }
 
+    /// 일할 때(마우스 많이 움직이거나 타자) 돌아다니는 애들을 알아서 숨길지
+    @Published var autoDodge: Bool {
+        didSet { UserDefaults.standard.set(autoDodge, forKey: "autoDodge") }
+    }
+
     /// 채찍질에 ⌥ 키가 꼭 필요한지 (의도치 않은 채찍 방지)
     @Published var whipNeedsOption: Bool {
         didSet { UserDefaults.standard.set(whipNeedsOption, forKey: "whipNeedsOption") }
@@ -83,10 +104,24 @@ final class Model: ObservableObject {
 
     static let ghostID = "ghost:claude"
 
-    // 당근밭 (쿼터)
+    // 남은 쿼터 (당근은 그림일 뿐)
     @Published private(set) var quota: Quota? = nil
     @Published var quotaEnabled: Bool {
-        didSet { UserDefaults.standard.set(quotaEnabled, forKey: "quotaEnabled"); quotaEnabled ? startQuota() : stopQuota() }
+        didSet {
+            UserDefaults.standard.set(quotaEnabled, forKey: "quotaEnabled")
+            if quotaEnabled { explainKeychainOnce(); startQuota() } else { stopQuota() }
+        }
+    }
+    /// 처음 켤 때: 곧 뜨는 건 Claude 로그인이 아니라 macOS 키체인 허용 창이라고 미리 알려 준다
+    private func explainKeychainOnce() {
+        guard !UserDefaults.standard.bool(forKey: "quotaExplained"), ProcessInfo.processInfo.environment["WHIPLASH_FAKE_QUOTA"] == nil else { return }
+        UserDefaults.standard.set(true, forKey: "quotaExplained")
+        let a = NSAlert()
+        a.messageText = t("잠깐 — 키체인 허용 창이 떠요")
+        a.informativeText = t("남은 쿼터는 Claude Code 가 키체인에 넣어 둔 로그인 토큰으로 조회해요. 곧 macOS 가 「Whiplash 가 키체인 항목을 쓰려 한다」며 Mac 로그인 비밀번호를 물어요 (Claude 로그인이 아니에요). 「항상 허용」을 누르면 다음부턴 안 물어요. 토큰은 조회에만 쓰고 저장하지 않아요.")
+        a.addButton(withTitle: t("알겠어요"))
+        NSApp.activate(ignoringOtherApps: true)
+        a.runModal()
     }
     private var quotaTimer: Timer?
     private func startQuota() {
@@ -108,10 +143,23 @@ final class Model: ObservableObject {
                 self.quota = q
                 if q.exhausted && !wasExhausted { NSSound(named: "Sosumi")?.play() }     // 파업 시작
             case .failure(let e):
-                self.quota = Quota(fiveHour: self.quota?.fiveHour, sevenDay: self.quota?.sevenDay,
+                self.quota = Quota(windows: self.quota?.windows ?? [],
                                    fetchedAt: self.quota?.fetchedAt ?? Date(), error: e.localizedDescription)
+                // 키체인을 거부했거나 로그인이 없으면 다시 묻지 않는다 (5분마다 창이 뜨는 걸 막음). 「남은 쿼터 보기」를 껐다 켜면 다시 시도.
+                if case .denied = e { self.quotaTimer?.invalidate(); self.quotaTimer = nil }
+                if case .noToken = e { self.quotaTimer?.invalidate(); self.quotaTimer = nil }
             }
         }
+    }
+
+    /// 이 세션이 먹은 당근 (뽑힌 당근을 세션 먹이값 비율로 나눔). 쿼터 조회가 없거나 먹이값이 없으면 nil.
+    /// 먹이값은 세션 시작부터 누적이라 5시간 창과 딱 맞진 않다 — 「누가 많이 먹었나」 비교용.
+    func carrotsEaten(_ g: AgentGroup) -> Double? {
+        guard quotaEnabled, let five = quota?.fiveHour, let s = g.session, s.costUSD > 0 else { return nil }
+        let eaten = Double(CritterManager.carrotSlots) * five.utilization / 100
+        let total = snapshot.groups.compactMap { $0.session?.costUSD }.reduce(0, +)
+        guard total > 0 else { return nil }
+        return eaten * s.costUSD / total
     }
 
     /// 파업 중: 쿼터가 바닥났거나(사용량 조회) 그 세션이 429 를 맞았다
@@ -183,6 +231,7 @@ final class Model: ObservableObject {
         panelWithCritters = UserDefaults.standard.object(forKey: "panelWithCritters") as? Bool ?? false   // 기본: 둘 중 하나만
         dockIcon = UserDefaults.standard.object(forKey: "dockIcon") as? Bool ?? true
         whipNeedsOption = UserDefaults.standard.bool(forKey: "whipNeedsOption")
+        autoDodge = UserDefaults.standard.object(forKey: "autoDodge") as? Bool ?? true
         quotaEnabled = UserDefaults.standard.bool(forKey: "quotaEnabled")
         autoWhipInterval = UserDefaults.standard.object(forKey: "autoWhipInterval") as? TimeInterval ?? 600
         let until = UserDefaults.standard.double(forKey: "autoWhipUntil")
@@ -304,8 +353,8 @@ final class Model: ObservableObject {
     }
 
     /// task 가 nil 이면 아무 일이나 골라서 시킨다
-    func whip(_ g: AgentGroup, task: WhipTask? = nil) {
-        if isImmune(g) { NSSound(named: "Tink")?.play(); return }      // 면역: 맞지 않는다
+    func whip(_ g: AgentGroup, task: WhipTask? = nil, silent: Bool = false) {
+        if isImmune(g) { if !silent { NSSound(named: "Tink")?.play() }; return }      // 면역: 맞지 않는다
         let streak = hit(g.id)
         if onStrike(g) {                                                // 파업: 쿼터가 없는데 때리면 화만 낸다
             angry[g.id] = (Date().addingTimeInterval(8), t(streak >= 2 ? "쿼터 없다고!!" : "쿼터가 없어요!!"))
@@ -334,7 +383,7 @@ final class Model: ObservableObject {
             return
         }
         lastStrike[g.id] = Date()
-        Self.playWhip(streak)
+        if !silent { Self.playWhip(streak) }
         onStrike?(g.id)
         if ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil {   // 개발용: 소리만
             NSLog("EOHANG whip %@", g.id)
@@ -402,6 +451,23 @@ final class Model: ObservableObject {
     func whipRandom() {
         let targets = snapshot.groups.filter { canWhip($0) && !$0.id.hasPrefix("app:") }
         if let g = targets.randomElement() { whip(g) } else { NSSound(named: "Basso")?.play() }
+    }
+
+    /// 줄 세워 놓고 한 번에: 쉬는 애 전부 (소리는 겹쳐서 한 번)
+    func whipAll() {
+        let targets = snapshot.groups.filter { canWhip($0) && !$0.id.hasPrefix("app:") && !isImmune($0) }
+        guard !targets.isEmpty else { NSSound(named: "Basso")?.play(); return }
+        whipMany(targets.map { $0.id })
+    }
+
+    /// 마우스를 한 번 휘둘러 지나간 애들 전부
+    func whipMany(_ ids: [String]) {
+        var n = 0
+        for id in ids {
+            guard let g = snapshot.groups.first(where: { $0.id == id }), canWhip(g), !isImmune(g) else { continue }
+            whip(g, silent: true); n += 1
+        }
+        if n > 0 { Self.playWhipChorus(n) }
     }
 
     /// 마우스로 후려친 칸
