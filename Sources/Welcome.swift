@@ -37,7 +37,7 @@ struct WelcomeView: View {
             }
             Divider()
             VStack(alignment: .leading, spacing: 8) {
-                how(kind: .claudeCode, title: t("채찍질"), text: t("쉬는 캐릭터 위에 잠깐 머문 뒤 마우스를 좌우로 휙휙 세 번. 「찰싹!」 하고 하던 일을 이어가요."))
+                how(kind: .claudeCode, title: t("채찍질"), text: t("쉬는 캐릭터 위에 잠깐 머문 뒤 마우스를 좌우로 휙휙 두 번. 「찰싹!」 하고 하던 일을 이어가요."))
                 how(kind: .codex, title: t("지시 보내기"), text: t("캐릭터를 제자리 클릭하면 입력창. 쓰고 ⏎ 누르면 그 세션에 바로 들어가요."))
                 how(kind: .gemini, title: t("보기 전환"), text: tf("메뉴 막대의 채찍 아이콘, 또는 %@ 풀어놓기 · %@ 모두 숨기기 · %@ 당근밭.", "⌃⌥A", "⌃⌥H", "⌃⌥C"))
             }

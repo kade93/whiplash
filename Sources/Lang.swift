@@ -129,7 +129,7 @@ enum L10n {
         // 환영 창
         "맥에서 돌아가는 AI 에이전트들이 캐릭터로 돌아다녀요. 뭘 하는지 보고, 채찍질하고, 지시를 보내세요.": ("The AI agents running on your Mac roam around as critters. See what they do, crack the whip, send instructions.", "Mac で動く AI エージェントがキャラクターになって歩き回ります。何をしているか見て、鞭を打ち、指示を送りましょう。"),
         "채찍질": ("Whip", "鞭"),
-        "쉬는 캐릭터 위에 잠깐 머문 뒤 마우스를 좌우로 휙휙 세 번. 「찰싹!」 하고 하던 일을 이어가요.": ("Hover over an idle critter, then swipe the mouse left-right three times. Whack! It picks its work back up.", "休んでいるキャラの上に少し止まってから、マウスを左右に 3 回ビュン。「ピシッ！」と作業を再開します。"),
+        "쉬는 캐릭터 위에 잠깐 머문 뒤 마우스를 좌우로 휙휙 두 번. 「찰싹!」 하고 하던 일을 이어가요.": ("Hover over an idle critter, then swipe the mouse left-right twice. Whack! It picks its work back up.", "休んでいるキャラの上に少し止まってから、マウスを左右に 2 回ビュン。「ピシッ！」と作業を再開します。"),
         "지시 보내기": ("Send instruction", "指示を送る"),
         "캐릭터를 제자리 클릭하면 입력창. 쓰고 ⏎ 누르면 그 세션에 바로 들어가요.": ("Click a critter in place for an input box. Type and press ⏎ to deliver it to that session.", "キャラをその場でクリックすると入力欄。書いて ⏎ でそのセッションに届きます。"),
         "보기 전환": ("Views", "表示切替"),

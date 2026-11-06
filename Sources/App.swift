@@ -43,6 +43,8 @@ final class FloatingPanel: NSPanel {
     /// 전역 마우스 모니터가 화면 좌표로 넣어 준다 (키 창이 아니어도 받게)
     func trackSwing(screen p: NSPoint, time t: TimeInterval) {
         guard isVisible, frame.insetBy(dx: -30, dy: -30).contains(p) else { lastMove = nil; enteredAt = [:]; return }
+        // 위에 다른 창(어느 앱이든)이 덮여 있으면 그 자리는 안 맞는다
+        if frame.contains(p), NSWindow.windowNumber(at: p, belowWindowWithWindowNumber: 0) != windowNumber { lastMove = nil; return }
         trackSwing(local: CGPoint(x: p.x - frame.minX, y: frame.maxY - p.y), time: t)
     }
 
@@ -102,7 +104,7 @@ final class FloatingPanel: NSPanel {
         }
     }
 
-    /// 채찍질 = 캐릭터 위에 0.35초 머문 뒤(채찍 커서가 뜬 뒤), 가운데 선을 1초 안에 세 번 빠르게(초당 400px 이상) 가로지르기.
+    /// 채찍질 = 캐릭터 위에 0.25초 머문 뒤(채찍 커서가 뜬 뒤), 가운데 선을 0.8초 안에 두 번 빠르게(초당 400px 이상) 가로지르기 (가로든 세로든).
     /// 그냥 스쳐 지나가는 건 머물지도 않았고 한 번뿐이라 안 맞는다. 「⌥ 누른 채로만」을 켰으면 ⌥ 도 필요하다.
     private func trackSwing(local p: CGPoint, time t: TimeInterval) {
         if Self.debugMouse { NSLog("EOHANG move %@ targets=%d", NSStringFromPoint(p), whipTargets.count) }
@@ -117,19 +119,22 @@ final class FloatingPanel: NSPanel {
         guard speed >= 400 else { return }
 
         for (id, r) in whipTargets {
-            let band = r.insetBy(dx: -4, dy: -14)
-            let midY = (p.y + last.p.y) / 2
-            let a = last.p.x - r.midX, b = p.x - r.midX
-            guard midY >= band.minY, midY <= band.maxY,
-                  (a < 0 && b >= 0) || (a > 0 && b <= 0) else { continue }     // 가운데 선에 딱 걸친 샘플도 가로지른 것
-            guard let entered = enteredAt[id], t - entered >= 0.35 else {
+            // 가로로 휙휙(세로 가운데 선을 넘음) 또는 세로로 휙휙(가로 가운데 선을 넘음) — 줄 세워 놓으면 세로로 치는 게 편하다
+            let bandX = r.insetBy(dx: -4, dy: -14), bandY = r.insetBy(dx: -14, dy: -4)
+            let midY = (p.y + last.p.y) / 2, midX = (p.x + last.p.x) / 2
+            let ax = last.p.x - r.midX, bx = p.x - r.midX
+            let ay = last.p.y - r.midY, by = p.y - r.midY
+            let crossX = midY >= bandX.minY && midY <= bandX.maxY && ((ax < 0 && bx >= 0) || (ax > 0 && bx <= 0))
+            let crossY = midX >= bandY.minX && midX <= bandY.maxX && ((ay < 0 && by >= 0) || (ay > 0 && by <= 0))
+            guard crossX || crossY else { continue }                            // 가운데 선에 딱 걸친 샘플도 가로지른 것
+            guard let entered = enteredAt[id], t - entered >= 0.25 else {
                 if Self.debugMouse { NSLog("EOHANG cross %@ rejected: dwell %.2f", id, enteredAt[id].map { t - $0 } ?? -1) }
                 continue
             }
-            var list = (passes[id] ?? []).filter { t - $0 < 1.0 }
+            var list = (passes[id] ?? []).filter { t - $0 < 0.8 }
             list.append(t)
             if Self.debugMouse { NSLog("EOHANG cross %@ ok passes=%d", id, list.count) }
-            if list.count >= 3, t - (lastSwing[id] ?? 0) > 2 {
+            if list.count >= 2, t - (lastSwing[id] ?? 0) > 1.5 {
                 lastSwing[id] = t
                 list = []
                 if Self.debugMouse { NSLog("EOHANG swing! %@", id) }
@@ -564,6 +569,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let overID = frames.first { $0.value.contains(p) }?.key
             ?? NSApp.windows.compactMap { ($0 as? FloatingPanel)?.whipTargetID(screen: p) }.first
         guard let id = overID else { return false }
+        // 포인터 아래 맨 위 창이 우리 창이 아니면(다른 창이 덮음) 무시
+        let top = NSWindow.windowNumber(at: p, belowWindowWithWindowNumber: 0)
+        guard NSApp.window(withWindowNumber: top) != nil else { return false }
         let now = ProcessInfo.processInfo.systemUptime
         guard now >= flickCooldownUntil else { return true }
         let mag = abs(flickAcc)
@@ -950,7 +958,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for l in Lang.allCases {
             langMenu.addItem(menuItem(l.title, on: Lang.current == l) { Lang.current = l; m.objectWillChange.send() })
         }
-        menu.addItem(submenu(t("언어"), langMenu))
+        menu.addItem(submenu("Language", langMenu))
         menu.addItem(menuItem(t("단축키 편집…")) { _ = HotKeys.loadCombos(); NSWorkspace.shared.open(HotKeys.file) })
         menu.addItem(.separator())
         menu.addItem(menuItem(t("Dock 에 아이콘 보이기"), on: m.dockIcon) { m.dockIcon.toggle() })

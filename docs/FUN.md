@@ -11,7 +11,7 @@ Everything in Whiplash that exists only because it made us laugh. Use this list 
 
 **Trackpad feel.** Every hit also gives a haptic "thunk" on the trackpad, one per critter when several are hit. And you can whip with a two-finger flick: hover a critter and flick sideways; keep the flick going (about 260 px) and the whole row it stands in gets whipped.
 
-No pointer gymnastics needed for the row: the per-critter whip (hover, then three swipes) is for picking one out. ⌃⌥⇧W does the same thing from the keyboard: **Whip everyone idle**.
+No pointer gymnastics needed for the row: the per-critter whip (hover, then two swipes) is for picking one out. ⌃⌥⇧W does the same thing from the keyboard: **Whip everyone idle**.
 
 ## Whip with your body
 
@@ -80,7 +80,7 @@ Working critters swing a tool that matches what the session is doing right now: 
 
 **트랙패드 손맛.** 맞을 때마다 트랙패드가 「툭」 하고 울려요(여러 마리면 연타). 두 손가락 튕김으로도 때릴 수 있어요: 캐릭터 위에서 옆으로 휙 튕기면 그 애, 길게(260px쯤) 튕기면 그 애가 선 줄 전부.
 
-한 마리만 골라 때릴 땐 전처럼 머문 뒤 세 번 흔들면 되고, 키보드로는 ⌃⌥⇧W 「쉬는 애 전부 채찍」.
+한 마리만 골라 때릴 땐 전처럼 머문 뒤 두 번 흔들면 되고, 키보드로는 ⌃⌥⇧W 「쉬는 애 전부 채찍」.
 
 ## 몸으로 때리기
 

@@ -184,8 +184,8 @@ Options and last words are read from the transcript and cleared when a new instr
 Tells an idle or busy session to keep working.
 
 **How**
-1. Hover over the character for about 0.3 s. The character highlights and a whip appears next to the pointer.
-2. Swipe the pointer left and right across the character three times within one second.
+1. Hover over the character for about 0.25 s. The character highlights and a whip appears next to the pointer.
+2. Swipe the pointer across the character twice within 0.8 seconds, sideways or up and down. For a lined-up row, up-and-down is easiest.
 
 Alternatively press ⌃⌥W (random idle session) or right-click → **Whip — pick a task**.
 
@@ -326,7 +326,7 @@ Window positions, view mode, language and the immunity list are stored in the ap
 |---|---|
 | Menu bar icon not visible | On Macs with a notch, a full menu bar hides items. ⌘-drag another app's icon out, or use the Dock icon. |
 | No session titles | Check your Claude Code version. The App Store edition needs home folder access (menu → Allow home folder access…). |
-| Whip does not trigger | Hover briefly, then swipe across the character three times. Busy sessions only react; the message is read after the turn. Check whether ⌥-only mode is on. |
+| Whip does not trigger | Hover briefly, then swipe across the character twice. Busy sessions only react; the message is read after the turn. Check whether ⌥-only mode is on. |
 | Cannot send a message | Read the error under the input field. Not available in the App Store edition. |
 | Characters cover my windows | Use Roam small, the pen, or the window view. |
 | Hotkey conflicts | Change the combination under Edit hotkeys…. |

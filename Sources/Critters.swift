@@ -116,7 +116,12 @@ final class CritterManager: ObservableObject {
     /// 지금 떠 있는 캐릭터 창 틀 (화면 좌표) — 휘둘러 지나간 애 찾기용
     func frames() -> [String: NSRect] {
         guard !dodged else { return [:] }
-        return windows.filter { $0.value.isVisible }.mapValues { $0.frame }
+        // 가운데가 다른 창(어느 앱이든)에 덮인 애는 뺀다 — 덮인 채로 지나가도 안 맞게
+        return windows.filter { id, w in
+            guard w.isVisible else { return false }
+            let c = NSPoint(x: w.frame.midX, y: w.frame.midY)
+            return NSWindow.windowNumber(at: c, belowWindowWithWindowNumber: 0) == w.windowNumber
+        }.mapValues { $0.frame }
     }
     var firstContentView: NSView? { windows.values.first?.contentView }
     var firstAlpha: CGFloat { windows.values.first?.alphaValue ?? -1 }
