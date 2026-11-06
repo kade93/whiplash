@@ -9,7 +9,10 @@
 - 네이티브 Swift. 2초마다 한 번 재고, 창이 가려지면 15초로 늦춤. 일하는 캐릭터가 없으면 애니메이션 타이머도 꺼짐
 - 맨 아래 「어항 자체」 줄에 이 앱이 쓰는 자원이 그대로 보임
 
-사용자용 설명서: [docs/USER-GUIDE.ko.md](docs/USER-GUIDE.ko.md) · [docs/USER-GUIDE.en.md](docs/USER-GUIDE.en.md)
+사용자용 설명서: [한국어](docs/USER-GUIDE.ko.md) · [English](docs/USER-GUIDE.en.md) · [日本語](docs/USER-GUIDE.ja.md) · [개인정보 처리방침](docs/PRIVACY.md)
+
+배포는 두 갈래예요. **전체 기능판**은 GitHub Releases(태그 `v*` 를 푸시하면 Actions 가 빌드해 zip 을 붙임, 인증서 시크릿이 있으면 서명·공증),
+**관람용**은 Mac App Store(샌드박스라 채찍 메시지·지시 보내기·오토 채찍 없음, 앱 안에서 전체 기능판 링크를 안내).
 
 ## 설치 (처음 한 번)
 

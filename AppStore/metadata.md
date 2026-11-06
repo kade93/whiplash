@@ -14,8 +14,8 @@ App Store Connect 에 붙여 넣을 글과 체크리스트. 바꿔도 되는 건
 | 가격 | 무료 (인앱 결제 없음) |
 | 연령 | 4+ |
 | 저작권 | © 2026 Kade |
-| 지원 URL | https://urbanism.kr/whiplash (만들어야 함) |
-| 개인정보 처리방침 URL | https://urbanism.kr/whiplash/privacy (아래 글 올리면 됨) |
+| 지원 URL | https://github.com/kade93/whiplash |
+| 개인정보 처리방침 URL | https://github.com/kade93/whiplash/blob/main/docs/PRIVACY.md |
 | 암호화 | 사용 안 함 (ITSAppUsesNonExemptEncryption = NO, plist에 들어 있음) |
 
 ## 설명 (KR)
@@ -97,7 +97,7 @@ Settings are stored only on your Mac.
 - [x] `./build.sh --sandbox` 로 샌드박스판 로컬 테스트 (2026-11-05): 프로세스 목록·CPU·메모리 OK (sysctl + taskinfo), 홈 폴더 허용 → 세션 제목 붙는지는 직접 확인
 - [ ] `./release.sh appstore` → .pkg → Transporter 업로드
 - [ ] 스크린샷 5장, 1024 아이콘(assets/icon-1024.png — 자동으로 들어감)
-- [ ] 지원 URL·개인정보 URL 페이지 올리기
+- [ ] GitHub 저장소 공개 후 지원 URL·개인정보 URL 확인 (docs/PRIVACY.md)
 - [ ] 심사 노트 + 데모 영상 첨부 (에이전트 없는 환경에서 심사할 수 있으니 꼭)
 
 ## 샌드박스 실험 결과 (2026-11-06)
