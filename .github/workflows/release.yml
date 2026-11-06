@@ -11,6 +11,8 @@ permissions:
 jobs:
   build:
     runs-on: macos-14
+    env:
+      HAS_CERT: ${{ secrets.MAC_CERT_P12_BASE64 != '' }}     # 스텝 if 에서는 secrets 를 못 쓴다 → job env 로
     steps:
       - uses: actions/checkout@v4
       - name: 비밀·개인정보 검사
@@ -18,7 +20,7 @@ jobs:
       - name: Build
         run: ./build.sh
       - name: Sign and notarize (if secrets exist)
-        if: ${{ secrets.MAC_CERT_P12_BASE64 != '' }}
+        if: ${{ env.HAS_CERT == 'true' }}
         env:
           MAC_CERT_P12_BASE64: ${{ secrets.MAC_CERT_P12_BASE64 }}
           MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
