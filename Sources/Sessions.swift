@@ -61,6 +61,7 @@ enum Chore: Equatable {
     case web       // 지구본
     case think     // 생각 풍선
     case answer    // 말풍선
+    case strike    // 피켓 (파업)
 
     static func of(tool: String) -> Chore {
         switch tool {
@@ -107,6 +108,8 @@ struct AgentSession: Equatable {
     var linesAdded = 0
     var linesRemoved = 0
     var transcript: URL? = nil
+    var strikeUntil: Date? = nil      // 쿼터 바닥(429) → 파업. 리셋 시각을 모르면 1시간
+    var onStrike: Bool { strikeUntil.map { $0 > Date() } ?? false }
 
     var needsYou: Bool { status == .idle && waiting != .none }
     var isDesktop: Bool { entrypoint == "claude-desktop" }
@@ -127,6 +130,7 @@ final class SessionReader {
         var cost = 0.0
         var added = 0
         var removed = 0
+        var strikeUntil: Date? = nil
     }
 
     private var tails: [String: Tail] = [:]
@@ -173,6 +177,7 @@ final class SessionReader {
                 s.costUSD = tail.cost
                 s.linesAdded = tail.added
                 s.linesRemoved = tail.removed
+                s.strikeUntil = tail.strikeUntil
                 if s.name.isEmpty { s.name = tail.aiTitle }
             }
             out[pid] = s
@@ -267,6 +272,28 @@ final class SessionReader {
                 if let p = r["lastPrompt"] as? String { tail.lastPrompt = p }
             case "ai-title":
                 if let t = r["aiTitle"] as? String { tail.aiTitle = t }
+            case "system":
+                // 쿼터 바닥: api_error 에 429 또는 rateLimits
+                if (r["subtype"] as? String) == "api_error", let e = r["error"] as? [String: Any] {
+                    let status = (e["status"] as? Int) ?? 0
+                    let text = ((e["formatted"] as? String) ?? "").lowercased()
+                    let limits = e["rateLimits"] as? [String: Any]
+                    if status == 429 || limits != nil || text.contains("rate limit") || text.contains("usage limit") {
+                        var until = Date().addingTimeInterval(3600)
+                        if let l = limits {
+                            if let n = (l["resetsAt"] as? Double) ?? (l["resets_at"] as? Double) {
+                                until = Date(timeIntervalSince1970: n > 1e12 ? n / 1000 : n)
+                            } else if let sec = (l["retryAfter"] as? Double) ?? (l["retry_after"] as? Double) {
+                                until = Date().addingTimeInterval(sec)
+                            }
+                        }
+                        if let ts = r["timestamp"] as? String, let when = ISO8601DateFormatter().date(from: ts),
+                           Date().timeIntervalSince(when) > 6 * 3600 { break }      // 오래된 기록은 무시
+                        tail.strikeUntil = until
+                    }
+                } else if (r["subtype"] as? String) != "api_error" {
+                    break
+                }
             case "cost-state":
                 tail.cost = (r["totalCostUSD"] as? Double) ?? tail.cost
                 tail.added = (r["totalLinesAdded"] as? Int) ?? tail.added
@@ -275,6 +302,7 @@ final class SessionReader {
                 if (r["isSidechain"] as? Bool) == true || (r["isMeta"] as? Bool) == true { continue }
                 guard let m = r["message"] as? [String: Any] else { continue }
                 touched = true
+                if type == "assistant" { tail.strikeUntil = nil }        // 답이 나오면 파업 끝
                 if type == "user" {
                     if let blocks = m["content"] as? [[String: Any]],
                        blocks.contains(where: { ($0["type"] as? String) == "tool_result" }) {

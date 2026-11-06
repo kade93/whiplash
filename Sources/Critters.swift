@@ -38,6 +38,7 @@ final class CritterManager: ObservableObject {
     private var platformsAt: TimeInterval = 0
     var onChange: (() -> Void)?
     var onClick: ((String, NSPoint) -> Void)?
+    var onContextMenu: ((String?, NSEvent) -> Void)?
     private var menuOpen = false                     // 메뉴가 열려 있으면 아무도 안 움직인다
     private var menuObservers: [NSObjectProtocol] = []
 
@@ -145,6 +146,7 @@ final class CritterManager: ObservableObject {
         root.onWhipTargets = { [weak p] rects in p?.whipTargets = rects }
         root.onClickTargets = { [weak p] rects in p?.clickTargets = rects }
         p.onClick = { [weak self] id, pt in self?.onClick?(id, pt) }
+        p.onContextMenu = { [weak self] hit, e in self?.onContextMenu?(hit ?? id, e) }
         let host = NSHostingView(rootView: root)
         host.sizingOptions = []
         let owner = WhipCursorOwner()
@@ -176,6 +178,7 @@ final class CritterManager: ObservableObject {
             let frame = NSRect(x: screen.maxX - Self.cageSize.width - 24, y: screen.minY + 24,
                                width: Self.cageSize.width, height: Self.cageSize.height)
             let c = Self.panel(frame: frame, level: level)
+            c.onContextMenu = { [weak self] _, e in self?.onContextMenu?(nil, e) }
             c.hasShadow = true
             c.alphaValue = 1
             var root = CageView(model: model)
@@ -368,8 +371,10 @@ struct CritterView: View {
         let size = CritterManager.size(small: small)
         VStack(spacing: 2) {
             if let g = model.snapshot.groups.first(where: { $0.id == id }) {
+                let strike = model.onStrike(g)
                 let st = RowStatus.of(g, job: g.whipJob, memTotal: model.snapshot.memTotal, immune: model.isImmune(g),
-                                      angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil)
+                                      angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil,
+                                      strike: strike ? (g.session?.strikeUntil ?? model.quota?.fiveHour?.resetsAt ?? Date().addingTimeInterval(3600)) : nil)
                 if !small {                                   // 이름표는 머리 위 (발이 창 윗변에 닿게)
                     Text(name(g))
                         .font(.system(size: 9, weight: .bold))
@@ -393,7 +398,7 @@ struct CritterView: View {
                 StrikeTile(strike: model.lastStrike[g.id], angryLine: model.isAngry(g.id) ? model.angry[g.id]?.line : nil) {
                     SpriteTile(kind: g.kind, awake: g.awake,
                                bob: g.awake && model.tick % 2 == 1,
-                               sweat: g.awake && g.cpu >= 1.0, cell: CritterManager.cell(small: small), chore: chore(g),
+                               sweat: g.awake && g.cpu >= 1.0, cell: CritterManager.cell(small: small), chore: chore(g, strike: strike),
                                boxed: model.critterBox, hot: st.hot, angry: model.isAngry(g.id))
                         .scaleEffect(x: critters.facingLeft[id] == true ? -1 : 1)
                 }
@@ -408,13 +413,6 @@ struct CritterView: View {
         }
         .frame(width: size.width, height: size.height, alignment: .bottom)
         .contentShape(Rectangle())
-        .contextMenu {
-            if let g = model.snapshot.groups.first(where: { $0.id == id }) {
-                RowMenu(model: model, group: g)
-            } else {
-                AquariumMenu(model: model)
-            }
-        }
         .coordinateSpace(name: "root")
         .onPreferenceChange(NoDragKey.self) { onNoDrag($0) }
         .onPreferenceChange(WhipTargetKey.self) { onWhipTargets($0) }
@@ -464,7 +462,6 @@ struct CageView: View {
         }
         .frame(width: CritterManager.cageSize.width, height: CritterManager.cageSize.height)
         .contentShape(Rectangle())
-        .contextMenu { AquariumMenu(model: model) }
         .coordinateSpace(name: "root")
         .onPreferenceChange(NoDragKey.self) { onNoDrag($0) }
         .help(t("끌어서 옮길 수 있어요. 애들은 이 안에서만 돌아다녀요."))

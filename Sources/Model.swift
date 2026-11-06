@@ -78,6 +78,43 @@ final class Model: ObservableObject {
 
     static let ghostID = "ghost:claude"
 
+    // 당근밭 (쿼터)
+    @Published private(set) var quota: Quota? = nil
+    @Published var quotaEnabled: Bool {
+        didSet { UserDefaults.standard.set(quotaEnabled, forKey: "quotaEnabled"); quotaEnabled ? startQuota() : stopQuota() }
+    }
+    private var quotaTimer: Timer?
+    private func startQuota() {
+        quotaTimer?.invalidate()
+        let timer = Timer(timeInterval: 300, repeats: true) { [weak self] _ in self?.refreshQuota() }
+        timer.tolerance = 30
+        RunLoop.main.add(timer, forMode: .common)
+        quotaTimer = timer
+        refreshQuota()
+    }
+    private func stopQuota() { quotaTimer?.invalidate(); quotaTimer = nil; quota = nil }
+    func refreshQuota() {
+        guard quotaEnabled, !Paths.sandboxed else { return }
+        QuotaReader.fetch { [weak self] r in
+            guard let self = self else { return }
+            switch r {
+            case .success(let q):
+                let wasExhausted = self.quota?.exhausted ?? false
+                self.quota = q
+                if q.exhausted && !wasExhausted { NSSound(named: "Sosumi")?.play() }     // 파업 시작
+            case .failure(let e):
+                self.quota = Quota(fiveHour: self.quota?.fiveHour, sevenDay: self.quota?.sevenDay,
+                                   fetchedAt: self.quota?.fetchedAt ?? Date(), error: e.localizedDescription)
+            }
+        }
+    }
+
+    /// 파업 중: 쿼터가 바닥났거나(사용량 조회) 그 세션이 429 를 맞았다
+    func onStrike(_ g: AgentGroup) -> Bool {
+        if g.session?.onStrike == true { return true }
+        return (quota?.exhausted ?? false) && (g.kind == .claudeCode || g.kind == .claudeApp) && g.id != Self.ghostID
+    }
+
     /// 화남: 내 차례(답·질문·허락 기다림)인데 자꾸 때리면. id → (언제까지, 말풍선)
     @Published private(set) var angry: [String: (until: Date, line: String)] = [:]
     func isAngry(_ id: String) -> Bool { angry[id].map { $0.until > Date() } ?? false }
@@ -140,6 +177,7 @@ final class Model: ObservableObject {
         panelWithCritters = UserDefaults.standard.object(forKey: "panelWithCritters") as? Bool ?? false   // 기본: 둘 중 하나만
         dockIcon = UserDefaults.standard.object(forKey: "dockIcon") as? Bool ?? true
         whipNeedsOption = UserDefaults.standard.bool(forKey: "whipNeedsOption")
+        quotaEnabled = UserDefaults.standard.bool(forKey: "quotaEnabled")
         autoWhipInterval = UserDefaults.standard.object(forKey: "autoWhipInterval") as? TimeInterval ?? 600
         let until = UserDefaults.standard.double(forKey: "autoWhipUntil")
         autoWhipUntil = until > Date().timeIntervalSince1970 ? Date(timeIntervalSince1970: until) : nil
@@ -171,6 +209,7 @@ final class Model: ObservableObject {
         s.resume()
         storageTimer = s
         if autoWhipUntil != nil { startAutoTimer() }
+        if quotaEnabled { startQuota() }
     }
 
     // MARK: - 오토 채찍질
@@ -205,7 +244,7 @@ final class Model: ObservableObject {
         var struck = false
         for g in snapshot.groups {
             guard let s = g.session, s.status == .idle, s.waiting != .permission, s.socketPath != nil,
-                  g.whipJob == nil, !Paths.sandboxed, !immune.contains(s.sessionId) else { continue }
+                  g.whipJob == nil, !Paths.sandboxed, !immune.contains(s.sessionId), !onStrike(g) else { continue }
             if let last = lastAutoWhip[g.id], now.timeIntervalSince(last) < autoWhipInterval { continue }
             if let since = s.statusSince, now.timeIntervalSince(since) < 60 { continue }   // 방금 멈춘 애는 숨 돌리게
             lastAutoWhip[g.id] = now
@@ -262,6 +301,13 @@ final class Model: ObservableObject {
     func whip(_ g: AgentGroup, task: WhipTask? = nil) {
         if isImmune(g) { NSSound(named: "Tink")?.play(); return }      // 면역: 맞지 않는다
         let streak = hit(g.id)
+        if onStrike(g) {                                                // 파업: 쿼터가 없는데 때리면 화만 낸다
+            angry[g.id] = (Date().addingTimeInterval(8), t(streak >= 2 ? "쿼터 없다고!!" : "쿼터가 없어요!!"))
+            lastStrike[g.id] = Date()
+            Self.playAngry()
+            onStrike?(g.id)
+            return
+        }
         // 내 차례인데 (할 일이 없거나 결정을 기다리는데) 자꾸 때리면 화낸다. 메시지도 안 보낸다.
         if let s = g.session, s.needsYou, streak >= 2 {
             let rude = streak >= 3                        // 두 번째는 존댓말, 세 번째부터 반말

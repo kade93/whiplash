@@ -75,7 +75,7 @@ Whiplash is a desktop companion that visualises locally running AI coding agents
   `~/.claude/projects/**/*.jsonl`. The user grants access to their home folder once via NSOpenPanel
   (security-scoped bookmark). Nothing is written there, nothing is uploaded anywhere.
 - Global hotkeys use RegisterEventHotKey (no Accessibility permission needed).
-- No accounts, no network, no analytics.
+- No accounts, no network, no analytics. (The quota "carrot field" feature exists only in the direct-download edition and is not compiled into App Store behavior: the sandbox build hides it.)
 
 Reviewer tip: without Claude Code installed the aquarium shows "no agents running"; the roaming
 critters and menus can still be exercised. A demo video is attached.

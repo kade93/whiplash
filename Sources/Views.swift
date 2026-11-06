@@ -80,6 +80,7 @@ struct AquariumMenu: View {
         Toggle(t("우리에 가두기"), isOn: $model.caged)
         Toggle(t("풀어놓을 때 채찍질 창도 보기"), isOn: $model.panelWithCritters)
         Toggle(t("Dock 에 아이콘 보이기"), isOn: $model.dockIcon)
+        Toggle(t("당근밭 보기 — 남은 쿼터 (Claude 로그인 키체인 읽기)"), isOn: $model.quotaEnabled)
         Toggle(t("⌥ 누른 채로만 채찍 (오작동 방지)"), isOn: $model.whipNeedsOption)
         Toggle(t("캐릭터 뒤 물빛 칸"), isOn: $model.critterBox)
         Toggle(t("모두 숨기기 (메뉴 막대 채찍으로 되돌림)"), isOn: $model.hidden)
@@ -176,7 +177,6 @@ struct WidgetView: View {
         .onPreferenceChange(ClickTargetKey.self) { rects in onClickTargets(rects) }
         .fixedSize()
         .contentShape(Rectangle())
-        .contextMenu { AquariumMenu(model: model) }
     }
 }
 
@@ -190,6 +190,7 @@ struct FullView: View {
         VStack(alignment: .leading, spacing: 10) {
             header(s)
             summary(s)
+            if model.quotaEnabled { CarrotField(model: model) }
             if s.groups.isEmpty {
                 EmptyAquarium()
             } else {
@@ -211,6 +212,7 @@ struct FullView: View {
         let working = s.groups.filter { $0.awake }.count
         let waiting = s.groups.filter { $0.session?.needsYou == true }.count
         let hot = s.groups.filter { $0.overloaded(memTotal: s.memTotal) }.count
+        let striking = s.groups.filter { model.onStrike($0) }.count
         return HStack(alignment: .center, spacing: 6) {
             TrafficLights(model: model)
                 .padding(.trailing, 2)
@@ -228,6 +230,10 @@ struct FullView: View {
                 }
                 if hot > 0 {
                     Text(tf("· %d 과부하", hot))
+                        .font(.system(size: 10, weight: .bold)).foregroundStyle(hotColor)
+                }
+                if striking > 0 {
+                    Text(tf("· %d 파업", striking))
                         .font(.system(size: 10, weight: .bold)).foregroundStyle(hotColor)
                 }
             }
@@ -300,6 +306,62 @@ struct FullView: View {
     }
 }
 
+/// 당근밭: 남은 쿼터만큼 당근이 남아 있다. 쿼터를 쓸수록 오른쪽부터 뽑혀 나간다.
+struct CarrotField: View {
+    @ObservedObject var model: Model
+    private let count = 12
+
+    var body: some View {
+        let q = model.quota
+        let five = q?.fiveHour
+        let seven = q?.sevenDay
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Text(t("당근밭"))
+                    .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                    .frame(width: 34, alignment: .leading)
+                HStack(spacing: 2) {
+                    ForEach(0..<count, id: \.self) { i in
+                        let alive = five.map { Double(i) < Double(count) * $0.remaining / 100 - 0.001 } ?? true
+                        PixelArt(rows: alive ? ToolArt.carrot : ToolArt.carrotEaten, cell: 1.5)
+                            .opacity(q == nil ? 0.35 : 1)
+                    }
+                }
+                Spacer(minLength: 0)
+                Text(fieldText(five))
+                    .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(five.map { $0.utilization >= 100 ? AnyShapeStyle(hotColor) : ($0.utilization >= 80 ? AnyShapeStyle(waitColor) : AnyShapeStyle(.primary)) } ?? AnyShapeStyle(.tertiary))
+                    .lineLimit(1)
+            }
+            if let seven = seven {
+                UsageLine(title: t("7일"), parts: [BarPart(color: seven.utilization >= 90 ? hotColor : Color(hex: 0xF28C28), value: seven.utilization / 100)],
+                          value: tf("%d%% 씀 · %@", Int(seven.utilization), seven.resetsAt.map { fmtAgoFuture($0) } ?? ""))
+            }
+            if let e = q?.error {
+                Text(e).font(.system(size: 9)).foregroundStyle(hotColor).lineLimit(2)
+            }
+        }
+        .help(t("5시간 창 남은 쿼터 = 남은 당근. 다 뽑히면 애들이 파업해요. 5분마다 Claude 사용량을 조회해요 (키체인의 Claude Code 로그인으로)."))
+        .padding(.vertical, 2)
+    }
+
+    private func fieldText(_ w: Quota.Window?) -> String {
+        guard let w = w else { return t("조회 중…") }
+        if w.utilization >= 100 { return t("다 뽑힘 · 파업!") }
+        let reset = w.resetsAt.map { fmtAgoFuture($0) } ?? ""
+        return tf("%d%% 남음 · %@", Int(w.remaining), reset)
+    }
+}
+
+/// "2시간 뒤" 처럼 앞으로 남은 시간
+func fmtAgoFuture(_ d: Date) -> String {
+    let s = Int(d.timeIntervalSinceNow)
+    if s <= 0 { return t("지금") }
+    if s < 3600 { return tf("%d분 뒤", s / 60) }
+    if s < 86400 { return tf("%d시간 %d분 뒤", s / 3600, s % 3600 / 60) }
+    return tf("%d일 뒤", s / 86400)
+}
+
 struct UsageLine: View {
     let title: String
     let parts: [BarPart]
@@ -330,9 +392,13 @@ struct RowStatus {
     let tone: AgentSession.Waiting
     var hot = false
 
-    static func of(_ g: AgentGroup, job: WhipJob?, memTotal: UInt64 = 0, immune: Bool = false, angry: String? = nil) -> RowStatus {
+    static func of(_ g: AgentGroup, job: WhipJob?, memTotal: UInt64 = 0, immune: Bool = false, angry: String? = nil, strike: Date? = nil) -> RowStatus {
         if g.id == Model.ghostID { return RowStatus(text: t("자는 중 · 휘두르면 깨워요"), color: nil, tone: .none) }
         if let line = angry { return RowStatus(text: "😠 " + line, color: hotColor, tone: .none) }
+        if let until = strike {
+            let f = DateFormatter(); f.dateFormat = "HH:mm"
+            return RowStatus(text: tf("✊ 파업 중 · %@ 까지", f.string(from: until)), color: hotColor, tone: .none)
+        }
         if immune {
             var r = of(g, job: job, memTotal: memTotal, immune: false)
             r = RowStatus(text: "🛡 " + r.text, color: r.color, tone: r.tone, hot: r.hot)
@@ -361,8 +427,9 @@ struct RowStatus {
     }
 }
 
-/// 일하는 캐릭터가 들 연장: 세션이 알려 주면 그 일, 모르면 망치
-func chore(_ g: AgentGroup) -> Chore {
+/// 일하는 캐릭터가 들 연장: 세션이 알려 주면 그 일, 모르면 망치. 파업이면 피켓.
+func chore(_ g: AgentGroup, strike: Bool = false) -> Chore {
+    if strike { return .strike }
     guard g.awake else { return .none }
     if g.whipJob != nil { return .run }
     if let c = g.session?.chore, c != .none { return c }
@@ -419,8 +486,10 @@ struct AgentRow: View {
         let g = group
         let snap = model.snapshot
         let n = Double(max(snap.ncpu, 1))
+        let strike = model.onStrike(g)
         let st = RowStatus.of(g, job: g.whipJob, memTotal: snap.memTotal, immune: model.isImmune(g),
-                              angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil)
+                              angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil,
+                              strike: strike ? (g.session?.strikeUntil ?? model.quota?.fiveHour?.resetsAt ?? Date().addingTimeInterval(3600)) : nil)
         let canWhip = model.canWhip(g)
         let barColor = st.hot ? hotColor : g.kind.barColor
 
@@ -428,7 +497,7 @@ struct AgentRow: View {
             StrikeTile(strike: model.lastStrike[g.id], angryLine: model.isAngry(g.id) ? model.angry[g.id]?.line : nil) {
                 SpriteTile(kind: g.kind, awake: g.awake,
                            bob: g.awake && model.tick % 2 == 1,
-                           sweat: g.awake && g.cpu >= 1.0, cell: 3, chore: chore(g), hot: st.hot, angry: model.isAngry(g.id))
+                           sweat: g.awake && g.cpu >= 1.0, cell: 3, chore: chore(g, strike: strike), hot: st.hot, angry: model.isAngry(g.id))
             }
             .whipHover(model.hoverWhipID == g.id)
             .sentFlash(model.lastSent[g.id])
@@ -474,7 +543,6 @@ struct AgentRow: View {
         .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
             .fill(st.hot ? hotColor.opacity(0.14) : (st.tone == .none ? Color.primary.opacity(0.05) : waitColor.opacity(0.13))))
         .help(rowTooltip(model, g))
-        .contextMenu { RowMenu(model: model, group: g) }
     }
 
     private func title(_ g: AgentGroup) -> String {
@@ -626,13 +694,15 @@ struct CompactView: View {
                     .help(t("지금 돌아가는 에이전트가 없어요"))
             }
             ForEach(s.groups) { g in
+                let strike = model.onStrike(g)
                 let st = RowStatus.of(g, job: g.whipJob, memTotal: s.memTotal, immune: model.isImmune(g),
-                                      angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil)
+                                      angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil,
+                                      strike: strike ? (g.session?.strikeUntil ?? Date().addingTimeInterval(3600)) : nil)
                 VStack(spacing: 3) {
                     let tile = StrikeTile(strike: model.lastStrike[g.id], angryLine: model.isAngry(g.id) ? model.angry[g.id]?.line : nil) {
                         SpriteTile(kind: g.kind, awake: g.awake,
                                    bob: g.awake && model.tick % 2 == 1,
-                                   sweat: g.awake && g.cpu >= 1.0, cell: 2, chore: chore(g), hot: st.hot, angry: model.isAngry(g.id))
+                                   sweat: g.awake && g.cpu >= 1.0, cell: 2, chore: chore(g, strike: strike), hot: st.hot, angry: model.isAngry(g.id))
                     }
                     .whipHover(model.hoverWhipID == g.id)
                     .sentFlash(model.lastSent[g.id])

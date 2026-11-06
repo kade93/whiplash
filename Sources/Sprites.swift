@@ -379,9 +379,40 @@ enum ToolArt {
             "..KK...",
             "..K....",
         ]
+        case .strike: return [          // 피켓: 「파업」 팻말
+            "KKKKKKKKK",
+            "KPPPPPPPK",
+            "KPKKPKKPK",
+            "KPPPPPPPK",
+            "KKKKKKKKK",
+            "....W....",
+            "....W....",
+            "....W....",
+        ]
         case .delegate, .none: return []
         }
     }
+
+    static let carrot = [            // 당근 (5×8)
+        "..G..",
+        ".GGG.",
+        "G.G.G",
+        ".OOO.",
+        ".OOO.",
+        ".OOO.",
+        "..O..",
+        "..O..",
+    ]
+    static let carrotEaten = [       // 뽑힌 자리: 흙만
+        ".....",
+        ".....",
+        ".....",
+        ".....",
+        ".....",
+        ".....",
+        "..D..",
+        ".DDD.",
+    ]
 
     static func color(_ ch: Character) -> Color? {
         switch ch {
@@ -393,6 +424,8 @@ enum ToolArt {
         case "R": return Color(hex: 0xE98A8A)
         case "B": return Color(hex: 0x5FA8E0)
         case "G": return Color(hex: 0x7DB676)
+        case "O": return Color(hex: 0xF28C28)
+        case "D": return Color(hex: 0x8B6B4A)
         default:  return nil
         }
     }
@@ -439,7 +472,7 @@ struct ToolInHand: View {
                 PixelArt(rows: ToolArt.rows(chore), cell: unit)
             }
         }
-        .rotationEffect(.degrees(bob ? -28 : 6), anchor: .bottomLeading)
+        .rotationEffect(.degrees(chore == .strike ? (bob ? -8 : 8) : (bob ? -28 : 6)), anchor: .bottomLeading)
         .animation(.easeOut(duration: 0.18), value: bob)
     }
 }
@@ -468,10 +501,10 @@ struct SpriteTile: View {
                 }
             }
             .overlay(alignment: .bottomTrailing) {
-                if awake { ToolInHand(chore: chore, bob: bob, cell: cell).offset(x: cell * 1.5, y: cell * 0.5) }
+                if awake || chore == .strike { ToolInHand(chore: chore, bob: bob, cell: cell).offset(x: cell * 1.5, y: cell * 0.5) }
             }
             .overlay(alignment: .bottomLeading) {
-                if awake {
+                if awake && chore != .strike {
                     PixelArt(rows: ToolArt.chain, cell: max(1, (cell * 0.6).rounded()))
                         .offset(x: -cell * 1.2, y: cell * 0.8)
                 }

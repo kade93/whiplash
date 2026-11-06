@@ -21,6 +21,7 @@ final class FloatingPanel: NSPanel {
     var onDoubleClick: (() -> Void)?
     var onSwing: ((String) -> Void)?
     var onClick: ((String, NSPoint) -> Void)?        // 제자리 클릭한 칸 id, 화면 좌표
+    var onContextMenu: ((String?, NSEvent) -> Void)? // 오른쪽 클릭: 칸 id(없으면 nil) — SwiftUI 메뉴 대신 NSMenu (깜빡임 방지)
     var noDragRects: [CGRect] = []
     var whipTargets: [String: CGRect] = [:]
     var clickTargets: [String: CGRect] = [:]
@@ -53,6 +54,12 @@ final class FloatingPanel: NSPanel {
     }
 
     override func sendEvent(_ event: NSEvent) {
+        // 오른쪽 클릭(또는 ⌃-클릭): SwiftUI contextMenu 대신 AppKit 메뉴 (모델이 바뀌어도 안 깜빡인다)
+        if event.type == .rightMouseDown || (event.type == .leftMouseDown && event.modifierFlags.contains(.control)),
+           let handler = onContextMenu {
+            handler(hitTarget(event.locationInWindow), event)
+            return
+        }
         if event.type == .leftMouseDown && !event.modifierFlags.contains(.control) && !onButton(event) {
             if event.clickCount == 2 {
                 onDoubleClick?()
@@ -79,6 +86,12 @@ final class FloatingPanel: NSPanel {
             }
         }
         super.sendEvent(event)
+    }
+
+    private func hitTarget(_ local: NSPoint) -> String? {
+        guard let height = contentView?.bounds.height else { return nil }
+        let flipped = CGPoint(x: local.x, y: height - local.y)
+        return clickTargets.first { $0.value.insetBy(dx: -2, dy: -2).contains(flipped) }?.key
     }
 
     private func click(at local: NSPoint, screen: NSPoint) {
@@ -194,6 +207,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         root.onClickTargets = { [weak panel] rects in panel?.clickTargets = rects }
         panel.onSwing = { [weak self] id in self?.model.whip(id: id) }
         panel.onClick = { [weak self] id, p in self?.openPrompt(for: id, near: p) }
+        panel.onContextMenu = { [weak self] id, e in self?.showContextMenu(for: id, event: e) }
         effect.addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .activeAlways, .inVisibleRect],
                                               owner: effect, userInfo: nil))
         let host = NSHostingView(rootView: root)
@@ -224,6 +238,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         critters = CritterManager(model: model)
         critters.onChange = { [weak self] in self?.refreshVisibility() }
         critters.onClick = { [weak self] id, p in self?.openPrompt(for: id, near: p) }
+        critters.onContextMenu = { [weak self] id, e in self?.showContextMenu(for: id, event: e) }
         if let text = ProcessInfo.processInfo.environment["EOHANG_SEND_TEST"] {      // 개발용: 6초 뒤 첫 세션에 보내 본다
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in
                 guard let self = self, let g = self.model.snapshot.groups.first(where: { $0.session != nil }) else { NSLog("EOHANG send-test: 세션 없음"); return }
@@ -360,6 +375,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             scheduleRefit()
         }
         model.setVisible(!model.hidden && (roamingOut || panel.occlusionState.contains(.visible)))
+    }
+
+    // MARK: 오른쪽 클릭 메뉴 (AppKit)
+    // SwiftUI contextMenu 는 모델이 바뀔 때마다 다시 그려져 깜빡인다. NSMenu 는 열린 채로 고정.
+
+    func showContextMenu(for id: String?, event: NSEvent) {
+        guard let window = event.window, let view = window.contentView else { return }
+        let menu = NSMenu()
+        let m = model
+        if let id = id, let g = m.snapshot.groups.first(where: { $0.id == id }) {
+            if g.id == Model.ghostID {
+                menu.addItem(menuItem(t("Claude 앱 열기")) { m.wakeClaude(dir: nil) })
+                let term = NSMenu()
+                for d in m.recentProjects() { term.addItem(menuItem((d as NSString).lastPathComponent) { m.wakeClaude(dir: d) }) }
+                term.addItem(.separator())
+                term.addItem(menuItem(t("홈 폴더에서")) { m.wakeClaude(dir: Paths.home) })
+                let termItem = NSMenuItem(title: t("터미널에서 claude 열기"), action: nil, keyEquivalent: "")
+                termItem.submenu = term
+                menu.addItem(termItem)
+                menu.addItem(.separator())
+            }
+            if m.canWhip(g), !g.id.hasPrefix("app:"), g.id != Model.ghostID, !Paths.sandboxed {
+                let tasks = NSMenu()
+                for task in m.tasks { tasks.addItem(menuItem(task.title) { m.whip(g, task: task) }) }
+                let tasksItem = NSMenuItem(title: t("채찍 — 일감 골라 시키기"), action: nil, keyEquivalent: "")
+                tasksItem.submenu = tasks
+                menu.addItem(tasksItem)
+                menu.addItem(.separator())
+            }
+            if let s = g.session {
+                let head = NSMenuItem(title: s.name.isEmpty ? g.label : s.name, action: nil, keyEquivalent: "")
+                head.isEnabled = false
+                menu.addItem(head)
+                menu.addItem(menuItem(m.isImmune(g) ? t("채찍 면역 풀기") : t("채찍 면역 (손·오토 채찍 다 안 맞음)"), on: m.isImmune(g)) { m.toggleImmune(g) })
+                if Paths.sandboxed {
+                    menu.addItem(menuItem(t("전체 기능판 받기… (채찍 메시지·지시 보내기·오토 채찍)")) { Paths.openFullEdition() })
+                } else {
+                    let hint = NSMenuItem(title: t("제자리 클릭 → 지시 보내기"), action: nil, keyEquivalent: "")
+                    hint.isEnabled = false
+                    menu.addItem(hint)
+                }
+                menu.addItem(menuItem(t("창 앞으로")) { m.bringToFront(g) })
+                menu.addItem(menuItem(t("폴더 열기")) { m.openFolder(g) })
+                if !s.lastPrompt.isEmpty { menu.addItem(menuItem(t("마지막 지시 복사")) { m.copyPrompt(g) }) }
+                if s.transcript != nil { menu.addItem(menuItem(t("대화 기록 파일 열기")) { m.openTranscript(g) }) }
+                if s.status == .busy && !s.isDesktop && !Paths.sandboxed {
+                    menu.addItem(.separator())
+                    menu.addItem(menuItem(t("하던 일 멈추기 (Ctrl-C)")) { m.interrupt(g) })
+                }
+            } else if g.id != Model.ghostID {
+                menu.addItem(menuItem(t("창 앞으로")) { m.bringToFront(g) })
+                if g.dir != nil { menu.addItem(menuItem(t("폴더 열기")) { m.openFolder(g) }) }
+            }
+            menu.addItem(.separator())
+        }
+        if m.roaming {
+            menu.addItem(menuItem(m.caged ? t("우리 풀어주기") : t("우리에 가두기"), key: .cage) { m.caged.toggle() })
+            menu.addItem(menuItem(t("채찍질 창으로 모으기"), key: .roam) { m.roaming = false })
+            menu.addItem(menuItem(m.critterSmall ? t("크게 풀어놓기") : t("작게 풀어놓기"), key: .small) { m.critterSmall.toggle() })
+        } else {
+            menu.addItem(menuItem(t("풀어놓기 — 화면 돌아다니기"), key: .roam) { m.roaming = true; m.hidden = false })
+        }
+        menu.addItem(menuItem(t("모두 숨기기"), key: .hide) { m.hidden = true })
+        menu.addItem(.separator())
+        let settings = NSMenu()
+        menuNeedsUpdate(settings)
+        let settingsItem = NSMenuItem(title: t("채찍질 설정"), action: nil, keyEquivalent: "")
+        settingsItem.submenu = settings
+        menu.addItem(settingsItem)
+        NSMenu.popUpContextMenu(menu, with: event, for: view)
     }
 
     // MARK: 지시 입력창
@@ -589,6 +674,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                               action: nil, keyEquivalent: "")
         head.isEnabled = false
         menu.addItem(head)
+        if m.quotaEnabled, let five = m.quota?.fiveHour {
+            let q = NSMenuItem(title: five.utilization >= 100 ? t("🥕 당근밭 다 뽑힘 · 파업!") : tf("🥕 당근밭 %d%% 남음 · %@", Int(five.remaining), five.resetsAt.map { fmtAgoFuture($0) } ?? ""),
+                               action: nil, keyEquivalent: "")
+            q.isEnabled = false
+            menu.addItem(q)
+        }
         menu.addItem(.separator())
         menu.addItem(menuItem(t("모두 숨기기"), on: m.hidden, key: .hide) { m.hidden.toggle() })
         menu.addItem(menuItem(t("풀어놓기 — 화면 돌아다니기"), on: m.roaming, key: .roam) { m.roaming.toggle(); if m.roaming { m.hidden = false } })
@@ -629,6 +720,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let langItem = NSMenuItem(title: t("언어"), action: nil, keyEquivalent: "")
         langItem.submenu = langMenu
         menu.addItem(langItem)
+        if !Paths.sandboxed {
+            menu.addItem(menuItem(t("당근밭 보기 — 남은 쿼터 (Claude 로그인 키체인 읽기)"), on: m.quotaEnabled) { m.quotaEnabled.toggle() })
+        }
         menu.addItem(menuItem(t("⌥ 누른 채로만 채찍 (오작동 방지)"), on: m.whipNeedsOption) { m.whipNeedsOption.toggle() })
         menu.addItem(menuItem(t("캐릭터 뒤 물빛 칸"), on: m.critterBox) { m.critterBox.toggle() })
         menu.addItem(.separator())
