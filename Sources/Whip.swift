@@ -80,7 +80,7 @@ final class WhipRunner {
     static let resultsFolder = folder.appendingPathComponent("whips", isDirectory: true)
     static let timeout: TimeInterval = 15 * 60
 
-    private let queue = DispatchQueue(label: "kr.urbanism.eohang.whip", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "kr.urbanism.whiplash.whip", qos: .userInitiated)
     private var resolved: [String: String] = [:]
 
     static func canRun(_ kind: AgentKind) -> Bool { cliName(kind) != nil }
@@ -302,7 +302,7 @@ final class WhipCursorOwner: NSResponder {
     weak var panel: FloatingPanel?
     private var showing = false
 
-    static let debug = ProcessInfo.processInfo.environment["EOHANG_DEBUG_MOUSE"] != nil
+    static let debug = ProcessInfo.processInfo.environment["WHIPLASH_DEBUG_MOUSE"] != nil
 
     private func update(_ from: String) {
         let want = !(panel?.whipTargets.isEmpty ?? true)

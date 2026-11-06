@@ -25,7 +25,7 @@ final class Model: ObservableObject {
     @Published var caged: Bool {
         didSet { UserDefaults.standard.set(caged, forKey: "caged") }
     }
-    /// 모두 숨기기: 어항도 캐릭터도 안 보임 (메뉴 막대 아이콘으로 되돌림)
+    /// 모두 숨기기: 창도 캐릭터도 안 보임 (메뉴 막대 아이콘으로 되돌림)
     @Published var hidden: Bool {
         didSet { UserDefaults.standard.set(hidden, forKey: "hidden") }
     }
@@ -159,8 +159,8 @@ final class Model: ObservableObject {
 
     private let sampler = ProcessSampler()
     private let sessionReader = SessionReader()      // sampleQueue 에서만 쓴다
-    private let sampleQueue = DispatchQueue(label: "kr.urbanism.eohang.sample", qos: .utility)
-    private let storageQueue = DispatchQueue(label: "kr.urbanism.eohang.storage", qos: .background)
+    private let sampleQueue = DispatchQueue(label: "kr.urbanism.whiplash.sample", qos: .utility)
+    private let storageQueue = DispatchQueue(label: "kr.urbanism.whiplash.storage", qos: .background)
     private var sampleTimer: DispatchSourceTimer?
     private var storageTimer: DispatchSourceTimer?
     private var animTimer: Timer?
@@ -278,7 +278,7 @@ final class Model: ObservableObject {
                 if newValue { try SMAppService.mainApp.register() }
                 else { try SMAppService.mainApp.unregister() }
             } catch {
-                NSLog("Eohang login item: \(error)")
+                NSLog("Whiplash login item: \(error)")
             }
             objectWillChange.send()
         }
@@ -330,7 +330,7 @@ final class Model: ObservableObject {
         lastStrike[g.id] = Date()
         Self.playWhip(streak)
         onStrike?(g.id)
-        if ProcessInfo.processInfo.environment["EOHANG_DRY_WHIP"] != nil {   // 개발용: 소리만
+        if ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil {   // 개발용: 소리만
             NSLog("EOHANG whip %@", g.id)
             return
         }
@@ -485,7 +485,7 @@ final class Model: ObservableObject {
 
     func dismiss(_ r: WhipResult) { results.removeAll { $0.id == r.id } }
 
-    /// 어항을 닫을 때 채찍 맞고 일하던 녀석들도 같이 멈춘다
+    /// Whiplash 를 닫을 때 채찍 맞고 일하던 녀석들도 같이 멈춘다
     func stopJobs() {
         for pid in jobs.keys { kill(pid, SIGTERM) }
     }
@@ -526,7 +526,7 @@ final class Model: ObservableObject {
     /// Claude 가 하나도 안 떠 있으면 「자는 클로드」 유령 칸을 하나 보여 준다 (휘두르면 깨움)
     private func withGhost(_ incoming: Snapshot) -> Snapshot {
         let claudeUp = incoming.groups.contains { ($0.kind == .claudeCode || $0.kind == .claudeApp) && $0.id != Self.ghostID }
-        let force = ProcessInfo.processInfo.environment["EOHANG_GHOST"] != nil
+        let force = ProcessInfo.processInfo.environment["WHIPLASH_GHOST"] != nil
         guard !claudeUp || force else { return incoming }
         var s = incoming
         s.groups.append(AgentGroup(id: Self.ghostID, kind: .claudeCode, label: t("꺼져 있어요"), rootPID: 0, start: 0))

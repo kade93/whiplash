@@ -69,15 +69,15 @@ func fmtCores(_ c: Double) -> String { tf("%.1f코어", c) }
 
 // MARK: - 루트
 
-/// 어항 전체 메뉴. 줄 메뉴 안에도 하위 메뉴로 들어간다.
-struct AquariumMenu: View {
+/// 채찍질 설정 메뉴. 줄 메뉴 안에도 하위 메뉴로 들어간다.
+struct SettingsMenu: View {
     @ObservedObject var model: Model
     @AppStorage("useAppIcons") private var useAppIcons = false   // 기본은 캐릭터
 
     var body: some View {
         Toggle(t("풀어놓기 — 화면 돌아다니기"), isOn: $model.roaming)
         Toggle(t("작게 풀어놓기 (이름표 없이)"), isOn: $model.critterSmall)
-        Toggle(t("우리에 가두기"), isOn: $model.caged)
+        Toggle(t("당근밭에 박아두기"), isOn: $model.caged)
         Toggle(t("풀어놓을 때 채찍질 창도 보기"), isOn: $model.panelWithCritters)
         Toggle(t("Dock 에 아이콘 보이기"), isOn: $model.dockIcon)
         Toggle(t("당근밭 보기 — 남은 쿼터 (Claude 로그인 키체인 읽기)"), isOn: $model.quotaEnabled)
@@ -192,7 +192,7 @@ struct FullView: View {
             summary(s)
             if model.quotaEnabled { CarrotField(model: model) }
             if s.groups.isEmpty {
-                EmptyAquarium()
+                EmptyField()
             } else {
                 VStack(spacing: 6) {
                     ForEach(s.groups) { g in
@@ -628,7 +628,7 @@ struct RowMenu: View {
         Divider()
         // 자주 쓰는 것은 바로
         if model.roaming {
-            Button(model.caged ? t("우리 풀어주기") : t("우리에 가두기")) { model.caged.toggle() }
+            Button(model.caged ? t("당근밭에서 뽑기") : t("당근밭에 박아두기")) { model.caged.toggle() }
             Button(t("채찍질 창으로 모으기")) { model.roaming = false }
             Button(model.critterSmall ? t("크게 풀어놓기") : t("작게 풀어놓기")) { model.critterSmall.toggle() }
         } else {
@@ -636,7 +636,7 @@ struct RowMenu: View {
         }
         Button(t("모두 숨기기")) { model.hidden = true }
         Divider()
-        Menu(t("채찍질 설정")) { AquariumMenu(model: model) }
+        Menu(t("채찍질 설정")) { SettingsMenu(model: model) }
     }
 }
 
@@ -661,7 +661,7 @@ struct MeterLine: View {
     }
 }
 
-struct EmptyAquarium: View {
+struct EmptyField: View {
     var body: some View {
         VStack(spacing: 6) {
             HStack(spacing: 4) {

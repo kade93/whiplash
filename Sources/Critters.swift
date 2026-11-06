@@ -13,7 +13,7 @@ final class CritterManager: ObservableObject {
     static func size(small: Bool) -> NSSize { small ? NSSize(width: 52, height: 42) : NSSize(width: 140, height: 78) }
     static func cell(small: Bool) -> CGFloat { small ? 1.5 : 2.5 }
     static let alpha: CGFloat = 0.84                 // 살짝 투명
-    static let cageSize = NSSize(width: 460, height: 290)
+    static let cageSize = NSSize(width: 480, height: 250)
     private static let fps = 15.0
     private static let speed: CGFloat = 55          // 초당 px
 
@@ -73,7 +73,7 @@ final class CritterManager: ObservableObject {
         ]
     }
 
-    /// 지금 어항에 있는 에이전트와 창 목록을 맞춘다
+    /// 지금 목록에 있는 에이전트와 창 목록을 맞춘다
     func sync(level: NSWindow.Level) {
         let wanted = (model.roaming && !model.hidden) ? model.snapshot.groups : []
         var changed = false
@@ -181,13 +181,13 @@ final class CritterManager: ObservableObject {
             c.onContextMenu = { [weak self] _, e in self?.onContextMenu?(nil, e) }
             c.hasShadow = true
             c.alphaValue = 1
-            var root = CageView(model: model)
+            var root = FieldView(model: model)
             root.onNoDrag = { [weak c] rects in c?.noDragRects = rects }
             let host = NSHostingView(rootView: root)
             host.sizingOptions = []
             c.contentView = host
-            if !c.setFrameUsingName("EohangCage") { c.setFrame(frame, display: false) }
-            c.setFrameAutosaveName("EohangCage")
+            if !c.setFrameUsingName("WhiplashField") { c.setFrame(frame, display: false) }
+            c.setFrameAutosaveName("WhiplashField")
             cage = c
         }
         cage?.level = level
@@ -198,8 +198,8 @@ final class CritterManager: ObservableObject {
     private func currentBounds(for w: NSWindow?, size: NSSize) -> (x: ClosedRange<CGFloat>, y: ClosedRange<CGFloat>) {
         let area: NSRect
         if model.caged, let c = cage, c.isVisible {
-            area = NSRect(x: c.frame.minX + 8, y: c.frame.minY + 8,
-                          width: c.frame.width - 16, height: c.frame.height - 44)
+            area = NSRect(x: c.frame.minX + 10, y: c.frame.minY + 8,
+                          width: c.frame.width - 20, height: c.frame.height - 70)
         } else {
             area = ((w?.screen ?? NSScreen.main)?.visibleFrame ?? w?.frame) ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
         }
@@ -300,6 +300,22 @@ final class CritterManager: ObservableObject {
                 }
             }
 
+            if caged, m.hopStart == nil {                  // 당근밭: 마리수만큼 자리를 정해 박아 둔다
+                let ids = windows.keys.sorted()
+                let i = ids.firstIndex(of: id) ?? 0
+                let cols = max(1, Int((xr.upperBound - xr.lowerBound + size.width) / (size.width + 4)))
+                let col = i % cols, row = i / cols
+                let slot = CGPoint(x: min(xr.lowerBound + CGFloat(col) * (size.width + 4), xr.upperBound),
+                                   y: max(yr.lowerBound, yr.upperBound - CGFloat(row) * (size.height * 0.75)))
+                let dx = slot.x - o.x, dy = slot.y - o.y
+                let d = hypot(dx, dy)
+                if d > step { o.x += dx / d * step; o.y += dy / d * step; if facingLeft[id] != (dx < 0) { facingLeft[id] = dx < 0 } }
+                else { o = slot }
+                o.x = o.x.rounded(); o.y = o.y.rounded()
+                if o != w.frame.origin { w.setFrameOrigin(o) }
+                movers[id] = m
+                continue
+            }
             if let hs = m.hopStart {                      // 뛰는 중이면 (채찍·내 차례) 다른 건 안 한다
                 let t = now - hs
                 if t >= 0.4 {
@@ -426,29 +442,52 @@ struct CritterView: View {
     }
 }
 
-// MARK: - 우리 (울타리)
+// MARK: - 당근밭 (애들을 마리수만큼 박아 두는 곳)
 
-struct CageView: View {
+struct FieldView: View {
     @ObservedObject var model: Model
     var onNoDrag: ([CGRect]) -> Void = { _ in }
 
-    private let wood = Color(hex: 0x8B5A2B)
+    private let soil = Color(hex: 0x9C6B3C)
+    private let soilDark = Color(hex: 0x7A5230)
+    private let wood = Color(hex: 0x6E4322)
 
     var body: some View {
         let n = model.snapshot.groups.count
+        let carrots = 14
+        let five = model.quota?.fiveHour
         ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(hex: 0xEADFC8).opacity(0.93))
-            Fence(wood: wood)
+            RoundedRectangle(cornerRadius: 12, style: .continuous).fill(soil.opacity(0.95))
+            // 두둑: 가로 줄무늬
+            Canvas { ctx, size in
+                var y: CGFloat = 60
+                while y < size.height - 6 {
+                    ctx.fill(Path(CGRect(x: 8, y: y, width: size.width - 16, height: 3)), with: .color(soilDark.opacity(0.7)))
+                    y += 18
+                }
+                ctx.stroke(Path(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 2, dy: 2), cornerRadius: 11), with: .color(wood), lineWidth: 3)
+            }
+            .allowsHitTesting(false)
+            // 뒷줄 당근: 당근밭 보기를 켰으면 남은 쿼터만큼, 아니면 장식
+            HStack(spacing: 4) {
+                ForEach(0..<carrots, id: \.self) { i in
+                    let alive = five.map { Double(i) < Double(carrots) * $0.remaining / 100 - 0.001 } ?? true
+                    PixelArt(rows: alive ? ToolArt.carrot : ToolArt.carrotEaten, cell: 2)
+                }
+            }
+            .padding(.leading, 14)
+            .padding(.top, 30)
+            .allowsHitTesting(false)
             HStack {
-                Text(tf("우리 · %d마리", n))
+                Text(five.map { $0.utilization >= 100 ? t("🥕 당근밭 다 뽑힘 · 파업!") : tf("🥕 당근밭 %d%% 남음 · %@", Int($0.remaining), $0.resetsAt.map { fmtAgoFuture($0) } ?? "") }
+                     ?? tf("당근밭 · %d마리", n))
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(wood)
+                    .foregroundStyle(Color(hex: 0xFFF1DC))
                 Spacer()
                 Button {
                     model.caged = false
                 } label: {
-                    Text("풀어주기")
+                    Text(t("뽑아주기"))
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 7).padding(.vertical, 2)
@@ -464,31 +503,6 @@ struct CageView: View {
         .contentShape(Rectangle())
         .coordinateSpace(name: "root")
         .onPreferenceChange(NoDragKey.self) { onNoDrag($0) }
-        .help(t("끌어서 옮길 수 있어요. 애들은 이 안에서만 돌아다녀요."))
-    }
-}
-
-/// 픽셀 울타리: 테두리를 따라 말뚝
-struct Fence: View {
-    let wood: Color
-    var body: some View {
-        Canvas { ctx, size in
-            let r = CGRect(origin: .zero, size: size).insetBy(dx: 3, dy: 3)
-            ctx.stroke(Path(roundedRect: r, cornerRadius: 10), with: .color(wood), lineWidth: 3)
-            let post = CGSize(width: 4, height: 12)
-            var x = r.minX + 14
-            while x < r.maxX - 10 {
-                ctx.fill(Path(CGRect(x: x, y: r.maxY - post.height + 1, width: post.width, height: post.height)), with: .color(wood))
-                ctx.fill(Path(CGRect(x: x, y: r.minY + 24, width: post.width, height: post.height)), with: .color(wood.opacity(0.35)))
-                x += 18
-            }
-            var y = r.minY + 36
-            while y < r.maxY - 16 {
-                ctx.fill(Path(CGRect(x: r.minX - 1, y: y, width: post.height, height: post.width)), with: .color(wood))
-                ctx.fill(Path(CGRect(x: r.maxX - post.height + 1, y: y, width: post.height, height: post.width)), with: .color(wood))
-                y += 18
-            }
-        }
-        .allowsHitTesting(false)
+        .help(t("끌어서 옮길 수 있어요. 애들은 여기 자기 자리에 박혀 있어요."))
     }
 }

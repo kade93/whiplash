@@ -36,9 +36,9 @@ enum SessionMessenger {
         let env = ProcessInfo.processInfo.environment
         var path = session.socketPath
         var token: String? = nil
-        if let fake = env["EOHANG_FAKE_SOCK"] { path = fake; token = env["EOHANG_FAKE_TOKEN"] ?? "test" }   // 개발용 가짜 서버
+        if let fake = env["WHIPLASH_FAKE_SOCK"] { path = fake; token = env["WHIPLASH_FAKE_TOKEN"] ?? "test" }   // 개발용 가짜 서버
         guard let sock = path, !sock.isEmpty else { return .failure(.noSocket) }
-        if Paths.sandboxed && env["EOHANG_FAKE_SOCK"] == nil { return .failure(.sandboxed) }
+        if Paths.sandboxed && env["WHIPLASH_FAKE_SOCK"] == nil { return .failure(.sandboxed) }
         if token == nil {
             guard let k = session.keyFile, let data = try? Data(contentsOf: k),
                   let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],

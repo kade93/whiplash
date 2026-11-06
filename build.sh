@@ -38,7 +38,7 @@ if [[ "${1:-}" == "--install" ]]; then
   # /Applications 에 쓸 수 있으면 거기(파인더「응용 프로그램」에 보임), 아니면 ~/Applications
   DEST="/Applications"
   [[ -w "$DEST" ]] || { DEST="$HOME/Applications"; mkdir -p "$DEST"; }
-  pkill -x Eohang 2>/dev/null || true
+  pkill -x Eohang 2>/dev/null || true   # 옛 이름 (설치된 적 있으면)
   pkill -x Whiplash 2>/dev/null || true
   rm -rf "$HOME/Applications/Eohang.app" "$HOME/Applications/A장관리.app" "$HOME/Applications/Whiplash.app" "/Applications/Whiplash.app" 2>/dev/null || true
   cp -R "$APP" "$DEST/"

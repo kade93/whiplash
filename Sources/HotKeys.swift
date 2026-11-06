@@ -2,7 +2,7 @@ import AppKit
 import Carbon.HIToolbox
 
 // MARK: - 전역 단축키
-// 어느 앱을 쓰고 있어도 먹는다. 설정은 ~/Library/Application Support/Eohang/hotkeys.json
+// 어느 앱을 쓰고 있어도 먹는다. 설정은 ~/Library/Application Support/Whiplash/hotkeys.json
 // 예: {"hide": "ctrl+alt+h", "roam": "ctrl+alt+a", ...}  비워 두면("") 그 단축키는 끈다.
 
 enum HotAction: String, CaseIterable {
@@ -13,7 +13,7 @@ enum HotAction: String, CaseIterable {
         case .hide:   return t("모두 숨기기 / 보이기")
         case .roam:   return t("풀어놓기 / 채찍질 창")
         case .small:  return t("작게 / 크게")
-        case .cage:   return t("우리에 가두기 / 풀어주기")
+        case .cage:   return t("당근밭에 박기 / 뽑기")
         case .whip:   return t("쉬는 애 아무나 채찍")
         case .gather: return t("이리 와 (커서 자리로 모이기)")
         case .panel:  return t("풀어놓을 때 채찍질 창도 보기")

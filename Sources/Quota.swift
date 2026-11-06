@@ -37,7 +37,7 @@ enum QuotaReader {
     }
 
     static func fetch(completion: @escaping (Result<Quota, Failure>) -> Void) {
-        if let fake = ProcessInfo.processInfo.environment["EOHANG_FAKE_QUOTA"], let u = Double(fake) {   // 개발용
+        if let fake = ProcessInfo.processInfo.environment["WHIPLASH_FAKE_QUOTA"], let u = Double(fake) {   // 개발용
             let q = Quota(fiveHour: .init(utilization: u, resetsAt: Date().addingTimeInterval(3600 * 2.3)),
                           sevenDay: .init(utilization: u * 0.6, resetsAt: Date().addingTimeInterval(86400 * 3)), fetchedAt: Date())
             DispatchQueue.main.async { completion(.success(q)) }

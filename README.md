@@ -1,5 +1,7 @@
 # Whiplash (위플래쉬)
 
+옛 이름: AI 어항 → A장관리 → Whiplash. 폴더는 `~/Desktop/whiplash`(옛 `eohang` 은 심볼릭 링크).
+
 맥에서 돌아가는 AI 에이전트(Claude Code, Codex, Cursor, Gemini CLI …)가
 **지금 무슨 일을 하고 있는지, 누가 내 답을 기다리는지, CPU·메모리·저장공간을 얼마나 물고 있는지**
 픽셀 바다 친구들로 보여 주는 작은 떠 있는 창.
@@ -233,10 +235,10 @@ Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) �
 
 ## 개발용
 
-- `EOHANG_SNAPSHOT=/경로.png` 환경변수로 띄우면 5초 뒤 창 모습을 PNG로 저장해요 (화면 캡처 권한 없이도 확인).
-- `EOHANG_SWING_TEST=1` 이면 6초 뒤 첫 쉬는 캐릭터에 가짜 마우스 이벤트를 보내 휘두르기 감지만 로그로 확인해요 (채찍은 안 때림).
-- `EOHANG_DRY_WHIP=1` 이면 채찍이 소리·애니메이션만 하고 에이전트는 안 띄워요. `EOHANG_DEBUG_MOUSE=1` 은 마우스 이동·감지 로그.
-- `EOHANG_FAKE_SOCK=/경로.sock EOHANG_FAKE_TOKEN=x EOHANG_SEND_TEST="글"` 이면 6초 뒤 첫 세션 대신 그 소켓으로 보내 봐요 (프로토콜 검증용).
+- `WHIPLASH_SNAPSHOT=/경로.png` 환경변수로 띄우면 5초 뒤 창 모습을 PNG로 저장해요 (화면 캡처 권한 없이도 확인).
+- `WHIPLASH_SWING_TEST=1` 이면 6초 뒤 첫 쉬는 캐릭터에 가짜 마우스 이벤트를 보내 휘두르기 감지만 로그로 확인해요 (채찍은 안 때림).
+- `WHIPLASH_DRY_WHIP=1` 이면 채찍이 소리·애니메이션만 하고 에이전트는 안 띄워요. `WHIPLASH_DEBUG_MOUSE=1` 은 마우스 이동·감지 로그.
+- `WHIPLASH_FAKE_SOCK=/경로.sock WHIPLASH_FAKE_TOKEN=x WHIPLASH_SEND_TEST="글"` 이면 6초 뒤 첫 세션 대신 그 소켓으로 보내 봐요 (프로토콜 검증용).
 - 샌드박스판을 한 번이라도 띄우면 컨테이너가 생겨서 그 뒤로 `defaults write kr.urbanism.whiplash …` 는 컨테이너 쪽 설정에 써져요.
   전 기능판 설정을 만질 땐 `defaults write ~/Library/Preferences/kr.urbanism.whiplash.plist …` 처럼 경로로.
 

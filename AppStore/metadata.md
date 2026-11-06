@@ -63,7 +63,7 @@ claude code,codex,cursor,gemini,ai agent,monitor,cpu,pixel,pet,desktop,tamagotch
 4. 채찍질 순간 「짝!」 (StrikeTile 애니메이션 중)
 5. 메뉴 막대 채찍 메뉴 + 단축키
 
-찍는 법: `EOHANG_SNAPSHOT=/경로.png` 로 실행하면 창 자체를 PNG로 저장. 바탕화면 포함 장면은 ⇧⌘5.
+찍는 법: `WHIPLASH_SNAPSHOT=/경로.png` 로 실행하면 창 자체를 PNG로 저장. 바탕화면 포함 장면은 ⇧⌘5.
 
 ## 심사 노트 (Review Notes)
 

@@ -4,7 +4,7 @@ import Combine
 
 @main
 @MainActor
-enum EohangApp {
+enum WhiplashApp {
     static func main() {
         let app = NSApplication.shared
         let delegate = AppDelegate()
@@ -38,7 +38,7 @@ final class FloatingPanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    static let debugMouse = ProcessInfo.processInfo.environment["EOHANG_DEBUG_MOUSE"] != nil
+    static let debugMouse = ProcessInfo.processInfo.environment["WHIPLASH_DEBUG_MOUSE"] != nil
 
     /// 전역 마우스 모니터가 화면 좌표로 넣어 준다 (키 창이 아니어도 받게)
     func trackSwing(screen p: NSPoint, time t: TimeInterval) {
@@ -170,7 +170,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var refitPending = false
 
     static let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
-    private static let autosaveName = "EohangPanel"
+    private static let autosaveName = "WhiplashPanel"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 이미 떠 있으면 하나만
@@ -239,7 +239,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         critters.onChange = { [weak self] in self?.refreshVisibility() }
         critters.onClick = { [weak self] id, p in self?.openPrompt(for: id, near: p) }
         critters.onContextMenu = { [weak self] id, e in self?.showContextMenu(for: id, event: e) }
-        if let text = ProcessInfo.processInfo.environment["EOHANG_SEND_TEST"] {      // 개발용: 6초 뒤 첫 세션에 보내 본다
+        if let text = ProcessInfo.processInfo.environment["WHIPLASH_SEND_TEST"] {      // 개발용: 6초 뒤 첫 세션에 보내 본다
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in
                 guard let self = self, let g = self.model.snapshot.groups.first(where: { $0.session != nil }) else { NSLog("EOHANG send-test: 세션 없음"); return }
                 self.model.send(text, to: g) { r in NSLog("EOHANG send-test %@ → %@", g.id, String(describing: r)) }
@@ -251,12 +251,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         installMouseMonitor()
         model.onDockIconChange = { on in NSApp.setActivationPolicy(on ? .regular : .accessory) }
         if model.dockIcon { NSApp.setActivationPolicy(.regular) }
-        if Paths.sandboxed && !Paths.hasHomeAccess && ProcessInfo.processInfo.environment["EOHANG_NO_PROMPT"] == nil {
+        if Paths.sandboxed && !Paths.hasHomeAccess && ProcessInfo.processInfo.environment["WHIPLASH_NO_PROMPT"] == nil {
             Paths.requestHomeAccess()
         }
         NSLog("Whiplash sandboxed=%d homeAccess=%d home=%@", Paths.sandboxed ? 1 : 0, Paths.hasHomeAccess ? 1 : 0, Paths.home)
-        if ProcessInfo.processInfo.environment["EOHANG_DEBUG_PROC"] != nil { ProcessProbe.log() }
-        if ProcessInfo.processInfo.environment["EOHANG_DEBUG_SOCK"] != nil {      // 개발용: 세션 소켓에 connect 만 (아무것도 안 보냄)
+        if ProcessInfo.processInfo.environment["WHIPLASH_DEBUG_PROC"] != nil { ProcessProbe.log() }
+        if ProcessInfo.processInfo.environment["WHIPLASH_DEBUG_SOCK"] != nil {      // 개발용: 세션 소켓에 connect 만 (아무것도 안 보냄)
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
                 guard let s = self?.model.snapshot.groups.compactMap({ $0.session }).first(where: { $0.socketPath != nil }),
                       let path = s.socketPath else { NSLog("EOHANG sock-probe: 세션 없음 (homeAccess=%d)", Paths.hasHomeAccess ? 1 : 0); return }
@@ -284,28 +284,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         model.start()
         scheduleRefit()
 
-        // 개발용: EOHANG_SNAPSHOT=/경로.png 로 띄우면 5초 뒤 화면을 그 파일로 저장
-        if ProcessInfo.processInfo.environment["EOHANG_SWING_TEST"] != nil {
+        // 개발용: WHIPLASH_SNAPSHOT=/경로.png 로 띄우면 5초 뒤 화면을 그 파일로 저장
+        if ProcessInfo.processInfo.environment["WHIPLASH_SWING_TEST"] != nil {
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in self?.swingTest() }
         }
-        if ProcessInfo.processInfo.environment["EOHANG_PROMPT_TEST"] != nil {        // 개발용: 4초 뒤 첫 세션 입력창 열기
+        if ProcessInfo.processInfo.environment["WHIPLASH_PROMPT_TEST"] != nil {        // 개발용: 4초 뒤 첫 세션 입력창 열기
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
                 guard let self = self, let g = self.model.snapshot.groups.first(where: { $0.session != nil }) else { return }
                 self.openPrompt(for: g.id, near: NSPoint(x: 600, y: 500))
             }
         }
-        if ProcessInfo.processInfo.environment["EOHANG_ANGRY_TEST"] != nil {        // 개발용: 내 차례인 세션을 두 번 때려 화내는 모습
+        if ProcessInfo.processInfo.environment["WHIPLASH_ANGRY_TEST"] != nil {        // 개발용: 내 차례인 세션을 두 번 때려 화내는 모습
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { [weak self] in
                 guard let self = self, let g = self.model.snapshot.groups.first(where: { $0.session?.needsYou == true }) else { NSLog("EOHANG angry-test: 대상 없음"); return }
                 self.model.whip(g); self.model.whip(g)
             }
         }
-        if let path = ProcessInfo.processInfo.environment["EOHANG_SNAPSHOT"] {
+        if let path = ProcessInfo.processInfo.environment["WHIPLASH_SNAPSHOT"] {
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in self?.saveSnapshot(to: path) }
         }
     }
 
-    /// 개발용: EOHANG_SWING_TEST=1 이면 6초 뒤 첫 쉬는 캐릭터 위로 가짜 마우스 이벤트를 보내 감지만 확인 (채찍은 안 때림)
+    /// 개발용: WHIPLASH_SWING_TEST=1 이면 6초 뒤 첫 쉬는 캐릭터 위로 가짜 마우스 이벤트를 보내 감지만 확인 (채찍은 안 때림)
     private func swingTest() {
         guard let panel = panel, let (id, r) = panel.whipTargets.first else { NSLog("EOHANG swing-test: 대상 없음"); return }
         panel.onSwing = { hit in NSLog("EOHANG swing-test: 감지 %@ (기대 %@)", hit, id) }
@@ -362,7 +362,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    /// 풀어놓았고 크리터가 하나라도 있으면 어항 창은 숨긴다. 「모두 숨기기」면 전부 숨긴다.
+    /// 풀어놓았고 크리터가 하나라도 있으면 채찍질 창은 숨긴다. 「모두 숨기기」면 전부 숨긴다.
     /// 재는 박자는 크리터가 보이는 동안도 빠르게.
     private func refreshVisibility() {
         guard let panel = panel else { return }
@@ -431,7 +431,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(.separator())
         }
         if m.roaming {
-            menu.addItem(menuItem(m.caged ? t("우리 풀어주기") : t("우리에 가두기"), key: .cage) { m.caged.toggle() })
+            menu.addItem(menuItem(m.caged ? t("당근밭에서 뽑기") : t("당근밭에 박아두기"), key: .cage) { m.caged.toggle() })
             menu.addItem(menuItem(t("채찍질 창으로 모으기"), key: .roam) { m.roaming = false })
             menu.addItem(menuItem(m.critterSmall ? t("크게 풀어놓기") : t("작게 풀어놓기"), key: .small) { m.critterSmall.toggle() })
         } else {
@@ -586,7 +586,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         item.menu = menu
         statusItem = item
-        if ProcessInfo.processInfo.environment["EOHANG_DEBUG_STATUS"] != nil {
+        if ProcessInfo.processInfo.environment["WHIPLASH_DEBUG_STATUS"] != nil {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 NSLog("EOHANG status visible=%d length=%.0f window=%@ screen=%@ image=%@",
                       item.isVisible ? 1 : 0, item.length,
@@ -684,7 +684,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(menuItem(t("모두 숨기기"), on: m.hidden, key: .hide) { m.hidden.toggle() })
         menu.addItem(menuItem(t("풀어놓기 — 화면 돌아다니기"), on: m.roaming, key: .roam) { m.roaming.toggle(); if m.roaming { m.hidden = false } })
         menu.addItem(menuItem(t("작게 풀어놓기 (이름표 없이)"), on: m.critterSmall, key: .small) { m.critterSmall.toggle() })
-        menu.addItem(menuItem(t("우리에 가두기"), on: m.caged, key: .cage) { m.caged.toggle(); if m.caged { m.roaming = true; m.hidden = false } })
+        menu.addItem(menuItem(t("당근밭에 박아두기"), on: m.caged, key: .cage) { m.caged.toggle(); if m.caged { m.roaming = true; m.hidden = false } })
         menu.addItem(menuItem(t("이리 와 — 커서 자리로 모이기"), key: .gather) { [weak self] in m.hidden = false; m.roaming = true; self?.critters.gatherToMouse() })
         menu.addItem(menuItem(t("쉬는 애 아무나 채찍"), key: .whip) { m.whipRandom() })
         let auto = NSMenu()
