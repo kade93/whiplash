@@ -260,6 +260,10 @@ Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) �
 `Sources/Monitor.swift`의 `AgentMatcher.match`에 한 줄 넣으면 돼요.
 실행 파일 경로(`path`), 이름(`name`), node·python일 때 명령줄(`args`)로 판별해요.
 
+## 몸으로 때리기 · 리모트
+
+에어팟 고개 휙, 카메라 손 휘두르기, 입으로 「화츅!」, 아이폰·아이패드·애플워치 리모트(Whiplash Remote 앱, [WhiplashRemote/](WhiplashRemote/README.md)). 설정 ▸ 몸으로 때리기에서 켠다.
+
 ## 재미 요소
 
 이스터에그·상황별 반응·데모 장면(줄 세워 놓고 한 번에 후려치기) 목록은 [docs/FUN.md](docs/FUN.md) (영어 먼저, 한국어 뒤).

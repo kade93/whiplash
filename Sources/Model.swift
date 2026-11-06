@@ -67,8 +67,19 @@ final class Model: ObservableObject {
         }
     }
 
+    /// 트랙패드 「툭」. 여러 마리면 소리와 같은 간격으로 연타.
+    static func haptic(_ n: Int = 1) {
+        let performer = NSHapticFeedbackManager.defaultPerformer
+        for i in 0..<min(max(n, 1), 6) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.055) {
+                performer.perform(i == 0 ? .levelChange : .generic, performanceTime: .now)
+            }
+        }
+    }
+
     /// 여러 마리를 한 번에 때릴 때: 「짝」이 겹치고 「아야」가 돌림노래처럼 — 마릿수만큼 어긋나게 겹쳐 더 찰지게
     static func playWhipChorus(_ n: Int) {
+        haptic(n)
         guard n > 1 else { playWhip(1); return }
         let voices = min(n, 6)
         for i in 0..<voices {
@@ -91,6 +102,13 @@ final class Model: ObservableObject {
         hitStreak[id] = (n, now)
         return n
     }
+
+    /// 몸으로 때리기: 에어팟 고개 휙 · 카메라 손 휘두르기 · 아이폰/워치 리모트 (켤 때만 센서·카메라·네트워크를 연다)
+    @Published var headFlickOn: Bool { didSet { UserDefaults.standard.set(headFlickOn, forKey: "headFlickOn"); onBodyWhipChange?() } }
+    @Published var handCamOn: Bool { didSet { UserDefaults.standard.set(handCamOn, forKey: "handCamOn"); onBodyWhipChange?() } }
+    @Published var remoteOn: Bool { didSet { UserDefaults.standard.set(remoteOn, forKey: "remoteOn"); onBodyWhipChange?() } }
+    @Published var mouthOn: Bool { didSet { UserDefaults.standard.set(mouthOn, forKey: "mouthOn"); onBodyWhipChange?() } }
+    var onBodyWhipChange: (() -> Void)?
 
     /// 일할 때(마우스 많이 움직이거나 타자) 돌아다니는 애들을 알아서 숨길지
     @Published var autoDodge: Bool {
@@ -232,6 +250,10 @@ final class Model: ObservableObject {
         dockIcon = UserDefaults.standard.object(forKey: "dockIcon") as? Bool ?? true
         whipNeedsOption = UserDefaults.standard.bool(forKey: "whipNeedsOption")
         autoDodge = UserDefaults.standard.object(forKey: "autoDodge") as? Bool ?? true
+        headFlickOn = UserDefaults.standard.bool(forKey: "headFlickOn")
+        handCamOn = UserDefaults.standard.bool(forKey: "handCamOn")
+        remoteOn = UserDefaults.standard.bool(forKey: "remoteOn")
+        mouthOn = UserDefaults.standard.bool(forKey: "mouthOn")
         quotaEnabled = UserDefaults.standard.bool(forKey: "quotaEnabled")
         autoWhipInterval = UserDefaults.standard.object(forKey: "autoWhipInterval") as? TimeInterval ?? 600
         let until = UserDefaults.standard.double(forKey: "autoWhipUntil")
@@ -383,7 +405,7 @@ final class Model: ObservableObject {
             return
         }
         lastStrike[g.id] = Date()
-        if !silent { Self.playWhip(streak) }
+        if !silent { Self.playWhip(streak); Self.haptic(1) }
         onStrike?(g.id)
         if ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil {   // 개발용: 소리만
             NSLog("EOHANG whip %@", g.id)

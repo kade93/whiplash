@@ -48,7 +48,7 @@ struct Variant {
 func render(_ v: Variant) -> [Double] {
     let n = Int(sr * v.length)
     var out = [Double](repeating: 0, count: n)
-    var lp = 0.0, prevNoise = 0.0
+    var lp = 0.0, prevNoise = 0.0, tail = 0.0
     seed = 0x9E3779B97F4A7C15
     for i in 0..<n {
         let t = Double(i) / sr
@@ -57,9 +57,9 @@ func render(_ v: Variant) -> [Double] {
         // 바람: 저역 노이즈, 컷오프와 음량이 함께 올라간다 (후-)
         if t < v.whoosh {
             let u = t / v.whoosh
-            let a = 0.05 + 0.9 * u
+            let a = 0.05 + 0.95 * u
             lp += a * (raw - lp)
-            s += lp * pow(u, 1.6) * 0.55
+            s += lp * pow(u, 1.8) * 0.65
         }
         for c in v.cracks {
             let tc = t - (v.whoosh + c)
@@ -68,17 +68,20 @@ func render(_ v: Variant) -> [Double] {
             let sweep = min(tc, 0.010) / 0.010
             let f = 2800 * v.pitch * pow(250 / 2800, sweep)
             s += sin(2 * .pi * f * tc) * env(tc, start: 0, tau: 0.006) * 1.0
-            // 크랙: 하이패스 노이즈
+            // 크랙: 하이패스 노이즈 — 진짜 채찍처럼 아주 짧고 세게, 2ms 뒤에 한 번 더 (이중 파열)
             let hp = raw - prevNoise * 0.93
-            s += hp * env(tc, start: 0.0005, tau: 0.009) * 0.9
-            // 둔탁음
-            s += sin(2 * .pi * 70 * v.pitch * tc) * env(tc, start: 0.002, tau: 0.04) * 0.5
-            // 꼬리
-            s += raw * env(tc, start: 0.012, tau: 0.06) * 0.10
+            s += hp * env(tc, start: 0.0005, tau: 0.007) * 1.7
+            s += hp * env(tc, start: 0.0025, tau: 0.005) * 1.1
+            // 둔탁음 (몸통)
+            s += sin(2 * .pi * 70 * v.pitch * tc) * env(tc, start: 0.002, tau: 0.035) * 0.45
+            // 꼬리: 방 울림 — 저역으로 갈수록 길게
+            tail += 0.12 * (raw - tail)
+            s += tail * env(tc, start: 0.010, tau: 0.16) * 0.28
+            s += raw * env(tc, start: 0.012, tau: 0.05) * 0.10
         }
         prevNoise = raw
-        s += voice.sample(t: t, offset: v.whoosh, syllables: v.syllables)
-        out[i] = tanh(s * 1.35) * 0.92
+        s += voice.sample(t: t, offset: v.whoosh, syllables: v.syllables) * 0.8
+        out[i] = tanh(s * 1.25) * 0.95
     }
     return out
 }

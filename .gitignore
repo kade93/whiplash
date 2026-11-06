@@ -35,3 +35,8 @@ whips/
 snap*.png
 .claude/settings.local.json
 .claude/*.local.*
+
+# Xcode (WhiplashRemote 은 project.yml 에서 xcodegen 으로 생성)
+*.xcodeproj
+xcuserdata/
+DerivedData/

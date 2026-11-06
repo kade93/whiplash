@@ -9,5 +9,14 @@
     <true/>
     <key>com.apple.security.files.bookmarks.app-scope</key>
     <true/>
+    <!-- 몸으로 때리기: 카메라 손 휘두르기 · 아이폰/워치 리모트 (켤 때만) -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+    <key>com.apple.security.network.server</key>
+    <true/>
+    <key>com.apple.security.network.client</key>
+    <true/>
 </dict>
 </plist>

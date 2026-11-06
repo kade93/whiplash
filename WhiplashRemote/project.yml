@@ -1,0 +1,59 @@
+# Whiplash Remote — iPhone + Apple Watch companion.  Generate: xcodegen generate   (brew install xcodegen)
+# Flick the phone like a whip (or snap your wrist with the Watch), or tap the big button: the Mac whips every idle agent
+# and the phone plays the crack itself for instant feedback. The phone finds the Mac over Bonjour (_whiplash._udp) and
+# sends one UDP line; the Watch relays through the phone with WatchConnectivity.
+name: WhiplashRemote
+options:
+  bundleIdPrefix: kr.urbanism
+  deploymentTarget:
+    iOS: "17.0"
+    watchOS: "10.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: ""           # set your team in Xcode (Signing & Capabilities) before running on a device
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.3"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  WhiplashRemote:
+    type: application
+    platform: iOS
+    sources: [iOS, Shared]      # iOS/Resources 의 whip*.wav 도 같이 (폰에서 즉시 소리)
+    dependencies:
+      - target: WhiplashRemoteWatch
+    info:
+      path: iOS/Info.plist
+      properties:
+        CFBundleDisplayName: Whiplash Remote
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSLocalNetworkUsageDescription: Finds your Mac running Whiplash on the local network to crack the whip.
+        NSBonjourServices: ["_whiplash._udp"]
+        NSMotionUsageDescription: Detects a flick so you can whip by swinging the phone.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: kr.urbanism.whiplash.remote
+        TARGETED_DEVICE_FAMILY: "1,2"   # iPhone + iPad
+  WhiplashRemoteWatch:
+    type: application                # 단일 타깃 워치 앱 (watchOS 7+)
+    platform: watchOS
+    sources: [Watch, Shared]
+    info:
+      path: Watch/Info.plist
+      properties:
+        CFBundleDisplayName: Whiplash
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: kr.urbanism.whiplash.remote
+        NSMotionUsageDescription: Detects a wrist snap so you can whip by flicking your wrist.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: kr.urbanism.whiplash.remote.watchkitapp
+        TARGETED_DEVICE_FAMILY: "4"
+schemes:
+  WhiplashRemote:
+    build:
+      targets: { WhiplashRemote: all }
+  WhiplashRemoteWatch:
+    build:
+      targets: { WhiplashRemoteWatch: all }

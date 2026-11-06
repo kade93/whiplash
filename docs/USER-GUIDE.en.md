@@ -189,6 +189,10 @@ Tells an idle or busy session to keep working.
 
 Alternatively press ⌃⌥W (random idle session) or right-click → **Whip — pick a task**.
 
+**Trackpad**
+- Each hit triggers trackpad haptic feedback (repeated for several critters).
+- Two-finger flick: hover a critter and flick sideways to whip it. A long flick (about 260 px or more) whips every critter in the same row. Mouse wheels do not count.
+
 **Several at once**
 - Press ⌃⌥G (Come here) to line the critters up, then swing the pointer once across the row quickly (about 700 px/s or faster). Every critter you pass is whipped at the same time, and the sounds are layered per critter.
 - ⌃⌥⇧W or the menu item **Whip everyone idle** sends the whip message to every idle session. Immune sessions are skipped.
@@ -229,7 +233,20 @@ Delivers the whip message to idle Claude Code sessions at a fixed interval until
 | Stop current work (Ctrl-C) | Interrupt a Terminal session (not available for Claude app sessions) |
 | Whip immunity | Exclude from whips |
 
-### 6.5 Launching Claude
+### 6.5 Whip with your body
+
+Turn these on under **Settings ▸ Whip with your body**. Sensors, camera, microphone and network are used only while on, and nothing is recorded. Each trigger whips every idle session (same as ⌃⌥⇧W).
+
+| Trigger | Gesture | Requirements |
+|---|---|---|
+| AirPods head flick | Wearing AirPods, turn your head quickly (over 5.5 rad/s) | macOS 14 or later; AirPods with motion sensors (Pro, 3rd gen, Max, Beats Fit Pro) |
+| Camera hand swing | Swing a hand sideways across 30% of the frame within 0.35 s | Camera permission; tracks hand joints at 15 fps |
+| Say "whoosh-crack!" | A short burst that jumps from quiet to loud within 50 ms | Microphone permission; only the level is measured |
+| iPhone / iPad / Apple Watch remote | Flick the phone, snap your wrist with the Watch, or tap the button in the Whiplash Remote app on the same Wi‑Fi | Local network permission; see `WhiplashRemote/` |
+
+The menu shows each trigger's state (listening, permission denied, and so on).
+
+### 6.6 Launching Claude
 
 When Claude is not running, a **Claude (off)** character appears. Whip it to open the Claude app, or right-click → **Open claude in Terminal** and choose a recent project folder to start Claude Code there.
 

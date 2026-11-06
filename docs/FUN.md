@@ -9,7 +9,18 @@ Everything in Whiplash that exists only because it made us laugh. Use this list 
 3. The sounds stack: one crack, then a round of "ouch!" voices offset by a few dozen milliseconds, louder the more critters you hit.
 4. Click any critter and type the next job. Done.
 
+**Trackpad feel.** Every hit also gives a haptic "thunk" on the trackpad, one per critter when several are hit. And you can whip with a two-finger flick: hover a critter and flick sideways; keep the flick going (about 260 px) and the whole row it stands in gets whipped.
+
 No pointer gymnastics needed for the row: the per-critter whip (hover, then three swipes) is for picking one out. ⌃⌥⇧W does the same thing from the keyboard: **Whip everyone idle**.
+
+## Whip with your body
+
+Four more ways to crack it, all opt-in under Settings ▸ Whip with your body, all of them whipping every idle critter at once:
+
+- **AirPods head flick.** Wearing AirPods, snap your head sideways. The Mac reads the head-motion sensor (macOS 14+).
+- **Camera hand swing.** Swing your hand across the camera like you're holding a whip. Only hand joints are tracked, nothing is recorded.
+- **Say "whoosh-crack!"** Make the whip sound with your mouth. The mic listens for a sharp burst only.
+- **iPhone / iPad / Apple Watch.** The Whiplash Remote app: flick the phone like the Big Bang Theory whip app, snap your wrist with the Watch, or press the big button. The phone plays the crack instantly and every Mac running Whiplash on the Wi‑Fi gets whipped.
 
 ## Critters and what they carry
 
@@ -67,7 +78,18 @@ Working critters swing a tool that matches what the session is doing right now: 
 3. 소리가 겹칩니다: 「짝」 한 번 뒤에 「아야」가 수십 밀리초씩 어긋나서 돌림노래처럼, 마릿수가 많을수록 더 크게.
 4. 아무 캐릭터나 클릭해서 다음 일을 칩니다. 끝.
 
+**트랙패드 손맛.** 맞을 때마다 트랙패드가 「툭」 하고 울려요(여러 마리면 연타). 두 손가락 튕김으로도 때릴 수 있어요: 캐릭터 위에서 옆으로 휙 튕기면 그 애, 길게(260px쯤) 튕기면 그 애가 선 줄 전부.
+
 한 마리만 골라 때릴 땐 전처럼 머문 뒤 세 번 흔들면 되고, 키보드로는 ⌃⌥⇧W 「쉬는 애 전부 채찍」.
+
+## 몸으로 때리기
+
+설정 ▸ 몸으로 때리기에서 켜는 네 가지. 전부 쉬는 애 전원이 한 번에 맞아요.
+
+- **에어팟 고개 휙.** 에어팟 끼고 고개를 휙 돌리기. 머리 움직임 센서를 읽어요(macOS 14 이상).
+- **카메라 손 휘두르기.** 카메라 앞에서 채찍 쥔 것처럼 손을 휙. 손 관절만 추적하고 녹화는 없어요.
+- **입으로 「화츅!」.** 입으로 채찍 소리 내기. 마이크는 짧은 파열음만 들어요.
+- **아이폰·아이패드·애플워치.** Whiplash Remote 앱: 빅뱅이론 채찍 앱처럼 폰을 휙 휘두르거나, 워치 찬 손목을 튕기거나, 큰 버튼. 폰에서 바로 소리가 나고 같은 Wi‑Fi의 Whiplash 맥 전부가 맞아요.
 
 ## 캐릭터와 들고 있는 것
 

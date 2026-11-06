@@ -273,6 +273,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         reloadHotKeysIfChanged()
         installMouseMonitor()
         startBusyDetector()
+        installBodyWhips()
         model.onDockIconChange = { on in NSApp.setActivationPolicy(on ? .regular : .accessory) }
         if model.dockIcon { NSApp.setActivationPolicy(.regular) }
         if Paths.sandboxed && !Paths.hasHomeAccess && ProcessInfo.processInfo.environment["WHIPLASH_NO_PROMPT"] == nil {
@@ -537,6 +538,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let handler: (NSEvent) -> Void = { [weak self] e in self?.mouseMoved(e) }
         if let g = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved], handler: handler) { mouseMonitors.append(g) }
         if let l = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved], handler: { e in handler(e); return e }) { mouseMonitors.append(l) }
+        // 두 손가락 튕김: 캐릭터 창이 커서 아래에 있으면 스크롤 이벤트가 우리 창으로 온다 (앱이 뒤에 있어도)
+        if let l = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel], handler: { [weak self] e in (self?.flick(e) ?? false) ? nil : e }) { mouseMonitors.append(l) }
+    }
+
+    // MARK: 두 손가락 튕김 — 캐릭터 위에서 트랙패드를 휙 튕기면 채찍. 길게 튕기면(260px 이상) 같은 줄에 선 애들 전부.
+    private var flickAcc: CGFloat = 0
+    private var flickFired = false
+    private var flickCooldownUntil: TimeInterval = 0
+
+    /// true 면 이벤트를 먹는다 (밑 창이 스크롤되지 않게)
+    private func flick(_ e: NSEvent) -> Bool {
+        guard e.hasPreciseScrollingDeltas else { return false }                      // 트랙패드만 (마우스 휠 제외)
+        let m = model
+        if model.whipNeedsOption && !e.modifierFlags.contains(.option) { return false }
+        switch e.phase {
+        case .began: flickAcc = 0; flickFired = false
+        case .changed: flickAcc += e.scrollingDeltaX
+        case .ended, .cancelled: flickAcc = 0; flickFired = false; return false
+        default: break
+        }
+        if e.momentumPhase != [] { return false }
+        let p = NSEvent.mouseLocation
+        let frames = critters.frames()
+        let overID = frames.first { $0.value.contains(p) }?.key
+            ?? NSApp.windows.compactMap { ($0 as? FloatingPanel)?.whipTargetID(screen: p) }.first
+        guard let id = overID else { return false }
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now >= flickCooldownUntil else { return true }
+        let mag = abs(flickAcc)
+        if !flickFired, mag >= 60 {
+            flickFired = true
+            flickCooldownUntil = now + 0.8
+            if FloatingPanel.debugMouse { NSLog("EOHANG flick %@ acc=%.0f", id, flickAcc) }
+            m.whip(id: id)
+        } else if flickFired, mag >= 260, let f = frames[id] {
+            // 길게 튕기면 같은 줄 (세로로 겹치는 창) 전부
+            let row = frames.filter { $0.value.minY < f.maxY && $0.value.maxY > f.minY && $0.key != id }.map { $0.key }
+            if !row.isEmpty {
+                flickCooldownUntil = now + 1.2
+                flickAcc = 0
+                if FloatingPanel.debugMouse { NSLog("EOHANG flick row → %@", row.joined(separator: ",")) }
+                m.whipMany(row)
+            }
+        }
+        return true
     }
 
     private func mouseMoved(_ e: NSEvent) {
@@ -870,6 +916,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         // 채찍
         menu.addItem(menuItem(t("⌥ 누른 채로만 채찍 (오작동 방지)"), on: m.whipNeedsOption) { m.whipNeedsOption.toggle() })
+        let body = NSMenu()
+        func line(_ text: String) { if !text.isEmpty { let i = NSMenuItem(title: "   " + text, action: nil, keyEquivalent: ""); i.isEnabled = false; body.addItem(i) } }
+        body.addItem(menuItem(t("에어팟 고개 휙 — 쉬는 애 전부"), on: m.headFlickOn) { m.headFlickOn.toggle() })
+        if #available(macOS 14.0, *), let hf = headFlick as? HeadFlick { line(hf.status) } else { line(t("macOS 14 이상에서만")) }
+        body.addItem(menuItem(t("카메라 손 휘두르기 — 쉬는 애 전부"), on: m.handCamOn) { m.handCamOn.toggle() })
+        line(handSwing.status)
+        body.addItem(menuItem(t("입으로 「화츅!」 — 마이크"), on: m.mouthOn) { m.mouthOn.toggle() })
+        line(mouth.status)
+        body.addItem(menuItem(t("아이폰·아이패드·애플워치 리모트 받기"), on: m.remoteOn) { m.remoteOn.toggle() })
+        line(remote.status)
+        body.addItem(.separator())
+        let hint = NSMenuItem(title: t("켠 동안만 센서·카메라·마이크·네트워크를 써요. 녹화·녹음은 없어요."), action: nil, keyEquivalent: "")
+        hint.isEnabled = false
+        body.addItem(hint)
+        menu.addItem(submenu(t("몸으로 때리기"), body))
         if Paths.sandboxed {
             menu.addItem(menuItem(Paths.hasHomeAccess ? t("홈 폴더 접근 다시 고르기…") : t("홈 폴더 접근 허용… (세션 정보 보기)")) { Paths.requestHomeAccess() })
             menu.addItem(menuItem(t("전체 기능판 받기…")) { Paths.openFullEdition() })
@@ -899,6 +960,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// hotkeys.json 이 바뀌었으면 다시 등록 (메뉴를 열 때마다 확인 — 「다시 읽기」 항목 대신)
     private var hotKeysStamp: Date?
+
+    // MARK: 몸으로 때리기 — 에어팟·카메라·리모트. 설정이 켜진 동안만 돈다.
+    private var headFlick: Any? = { if #available(macOS 14.0, *) { return HeadFlick() } else { return nil } }()
+    private let handSwing = HandSwing()
+    private let remote = RemoteReceiver()
+    private let mouth = MouthWhip()
+
+    private func installBodyWhips() {
+        let m = model
+        if #available(macOS 14.0, *), let hf = headFlick as? HeadFlick {
+            hf.onFlick = { [weak self] speed in
+                if FloatingPanel.debugMouse { NSLog("EOHANG head flick %.1f rad/s", speed) }
+                self?.bodyWhip()
+            }
+        }
+        handSwing.onSwing = { [weak self] dx in
+            if FloatingPanel.debugMouse { NSLog("EOHANG hand swing %.2f", dx) }
+            self?.bodyWhip()
+        }
+        remote.onCommand = { [weak self] cmd, strength in
+            if FloatingPanel.debugMouse { NSLog("EOHANG remote %@ %.1f", cmd, strength) }
+            switch cmd {
+            case "whip": m.whipRandom()
+            default: self?.bodyWhip()
+            }
+        }
+        mouth.onCrack = { [weak self] db in
+            if FloatingPanel.debugMouse { NSLog("EOHANG mouth crack %.0f dB", db) }
+            self?.bodyWhip()
+        }
+        m.onBodyWhipChange = { [weak self] in self?.syncBodyWhips() }
+        syncBodyWhips()
+    }
+
+    /// 몸으로 때리면 쉬는 애 전부. 숨겨 뒀으면 잠깐 보여 준다.
+    private func bodyWhip() {
+        if model.hidden { model.hidden = false }
+        critters.setDodged(false)
+        model.whipAll()
+    }
+
+    private func syncBodyWhips() {
+        if #available(macOS 14.0, *), let hf = headFlick as? HeadFlick { model.headFlickOn ? hf.start() : hf.stop() }
+        model.handCamOn ? handSwing.start() : handSwing.stop()
+        model.remoteOn ? remote.start() : remote.stop()
+        model.mouthOn ? mouth.start() : mouth.stop()
+    }
     private func reloadHotKeysIfChanged() {
         let stamp = (try? FileManager.default.attributesOfItem(atPath: HotKeys.file.path))?[.modificationDate] as? Date
         guard stamp != hotKeysStamp else { return }

@@ -15,7 +15,7 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.2.1</string>
+    <string>0.3</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSApplicationCategoryType</key>
@@ -30,5 +30,17 @@
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>Optional: watches your hand through the camera so a fast swing cracks the whip. Nothing is recorded or saved.</string>
+    <key>NSMotionUsageDescription</key>
+    <string>Optional: reads AirPods head motion so a quick head flick cracks the whip.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Optional: listens for a sharp "whoosh-crack!" you make with your mouth to crack the whip. Nothing is recorded.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Optional: lets the Whiplash Remote app on your iPhone, iPad or Apple Watch crack the whip over the local network.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_whiplash._udp</string>
+    </array>
 </dict>
 </plist>
