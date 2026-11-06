@@ -532,7 +532,7 @@ struct SpriteTile: View {
                 .frame(width: cell * 14 + 2, height: cell * 13 + 1)
                 .background(
                     RoundedRectangle(cornerRadius: cell * 3, style: .continuous)
-                        .fill(boxed ? (hot ? Color(hex: 0xFFD9D2) : Sprite.water) : Color.clear)
+                        .fill(boxed ? (hot ? Color(hex: 0xFFD9D2) : Theme.current.water) : Color.clear)
                 )
         }
     }

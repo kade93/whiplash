@@ -62,8 +62,6 @@ struct PixelBar: View {
 
 private let monoSmall = Font.system(size: 9.5, weight: .medium, design: .monospaced)
 private let otherColor = Color.primary.opacity(0.38)
-let waitColor = Color(hex: 0xE0A030)     // 「내 차례」 색
-let hotColor = Color(hex: 0xE04F3A)      // 「과부하」 색
 
 func fmtCores(_ c: Double) -> String { tf("%.1f코어", c) }
 
@@ -80,6 +78,13 @@ struct SettingsMenu: View {
         Toggle(t("당근밭에 박아두기"), isOn: $model.caged)
         Toggle(t("풀어놓을 때 채찍질 창도 보기"), isOn: $model.panelWithCritters)
         Toggle(t("Dock 에 아이콘 보이기"), isOn: $model.dockIcon)
+        Menu(t("테마")) {
+            ForEach(Theme.all) { th in
+                Button(action: { model.theme = th.id }) {
+                    if model.theme == th.id { Label(t(th.title), systemImage: "checkmark") } else { Text(t(th.title)) }
+                }
+            }
+        }
         Toggle(t("당근밭 보기 — 남은 쿼터 (Claude 로그인 키체인 읽기)"), isOn: $model.quotaEnabled)
         Toggle(t("⌥ 누른 채로만 채찍 (오작동 방지)"), isOn: $model.whipNeedsOption)
         Toggle(t("캐릭터 뒤 물빛 칸"), isOn: $model.critterBox)
@@ -407,15 +412,15 @@ struct RowStatus {
         if memTotal > 0, g.overloaded(memTotal: memTotal) {
             return RowStatus(text: tf("과부하 · CPU %@ · %@", fmtCores(g.cpu), fmtBytes(g.memory)), color: hotColor, tone: .none, hot: true)
         }
-        if let job = job { return RowStatus(text: tf("채찍 맞고 %@", job.task.title), color: g.kind.barColor, tone: .none) }
+        if let job = job { return RowStatus(text: tf("채찍 맞고 %@", job.task.title), color: workingColor, tone: .none) }
         guard let s = g.session, s.status != .unknown else {
             let state = g.awake ? t("일하는 중") : t("쉬는 중")
             return RowStatus(text: g.processCount > 1 ? tf("%@ · %d개", state, g.processCount) : state,
-                             color: g.awake ? g.kind.barColor : nil, tone: .none)
+                             color: g.awake ? workingColor : nil, tone: .none)
         }
         if s.status == .busy {
             let act = s.activity.isEmpty ? t("일하는 중") : s.activity
-            return RowStatus(text: act, color: g.kind.barColor, tone: .none)
+            return RowStatus(text: act, color: workingColor, tone: .none)
         }
         let ago = fmtAgo(s.statusSince)
         switch s.waiting {
@@ -517,7 +522,7 @@ struct AgentRow: View {
                     .truncationMode(.middle)
                 HStack(spacing: 4) {
                     Text(st.text)
-                        .font(.system(size: 9, weight: st.tone == .none ? .regular : .semibold))
+                        .font(.system(size: 9, weight: st.color == nil ? .regular : .semibold))
                         .foregroundStyle(st.color.map { AnyShapeStyle($0) }
                                          ?? AnyShapeStyle(HierarchicalShapeStyle.tertiary))
                         .lineLimit(1)

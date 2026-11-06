@@ -157,6 +157,8 @@ final class ActionItem: NSMenuItem {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var panel: FloatingPanel!
     private var host: NSHostingView<WidgetView>!
+    private var effectView: NSVisualEffectView!
+    private var solidView: NSView!
     private let model = Model()
     private var critters: CritterManager!
     private var statusItem: NSStatusItem?
@@ -200,6 +202,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         effect.state = .active
         effect.maskImage = Self.roundedMask(radius: 14)
         panel.contentView = effect
+        let solid = NSView()                                   // 단색 테마용 덮개
+        solid.wantsLayer = true
+        solid.translatesAutoresizingMaskIntoConstraints = false
+        effect.addSubview(solid)
+        NSLayoutConstraint.activate([
+            solid.leadingAnchor.constraint(equalTo: effect.leadingAnchor), solid.trailingAnchor.constraint(equalTo: effect.trailingAnchor),
+            solid.topAnchor.constraint(equalTo: effect.topAnchor), solid.bottomAnchor.constraint(equalTo: effect.bottomAnchor),
+        ])
+        self.effectView = effect
+        self.solidView = solid
 
         var root = WidgetView(model: model)
         root.onNoDrag = { [weak panel] rects in panel?.noDragRects = rects }
@@ -274,6 +286,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         model.onStrike = { [weak self] id in self?.critters.hop(id) }
+        model.onThemeChange = { [weak self] th in self?.applyTheme(th) }
+        applyTheme(Theme.current)
         model.onLevelChange = { [weak self] onTop in
             guard let self = self else { return }
             self.panel?.level = self.level
@@ -552,6 +566,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !w.isVisible { w.orderFrontRegardless() }
     }
 
+    private func applyTheme(_ th: Theme) {
+        panel.appearance = NSAppearance(named: th.dark ? .darkAqua : .aqua)
+        effectView.material = th.material
+        solidView.layer?.backgroundColor = th.solid?.cgColor
+        solidView.isHidden = th.solid == nil
+        solidView.layer?.cornerRadius = 14
+        model.objectWillChange.send()
+    }
+
     // MARK: 메뉴 막대 채찍
 
     private func makeStatusItem() {
@@ -720,6 +743,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let langItem = NSMenuItem(title: t("언어"), action: nil, keyEquivalent: "")
         langItem.submenu = langMenu
         menu.addItem(langItem)
+        let themeMenu = NSMenu()
+        for th in Theme.all { themeMenu.addItem(menuItem(t(th.title), on: m.theme == th.id) { m.theme = th.id }) }
+        let themeItem = NSMenuItem(title: t("테마"), action: nil, keyEquivalent: "")
+        themeItem.submenu = themeMenu
+        menu.addItem(themeItem)
         if !Paths.sandboxed {
             menu.addItem(menuItem(t("당근밭 보기 — 남은 쿼터 (Claude 로그인 키체인 읽기)"), on: m.quotaEnabled) { m.quotaEnabled.toggle() })
         }

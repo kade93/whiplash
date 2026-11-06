@@ -38,6 +38,11 @@ final class Model: ObservableObject {
         didSet { UserDefaults.standard.set(dockIcon, forKey: "dockIcon"); onDockIconChange?(dockIcon) }
     }
     var onDockIconChange: ((Bool) -> Void)?
+    /// 테마 id (Theme.all)
+    @Published var theme: String {
+        didSet { UserDefaults.standard.set(theme, forKey: "theme"); Theme.current = Theme.named(theme); onThemeChange?(Theme.current) }
+    }
+    var onThemeChange: ((Theme) -> Void)?
     /// 돌아다닐 때 캐릭터 뒤에 물빛 칸을 그릴지
     @Published var critterBox: Bool {
         didSet { UserDefaults.standard.set(critterBox, forKey: "critterBox") }
@@ -174,6 +179,7 @@ final class Model: ObservableObject {
         caged = UserDefaults.standard.bool(forKey: "caged")
         hidden = UserDefaults.standard.bool(forKey: "hidden")
         critterBox = UserDefaults.standard.bool(forKey: "critterBox")
+        theme = UserDefaults.standard.string(forKey: "theme") ?? "glass"
         panelWithCritters = UserDefaults.standard.object(forKey: "panelWithCritters") as? Bool ?? false   // 기본: 둘 중 하나만
         dockIcon = UserDefaults.standard.object(forKey: "dockIcon") as? Bool ?? true
         whipNeedsOption = UserDefaults.standard.bool(forKey: "whipNeedsOption")
