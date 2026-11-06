@@ -18,7 +18,7 @@ jobs:
       - name: Build
         run: ./build.sh
       - name: Sign and notarize (if secrets exist)
-        if: ${{ env.MAC_CERT_P12_BASE64 != '' }}
+        if: ${{ secrets.MAC_CERT_P12_BASE64 != '' }}
         env:
           MAC_CERT_P12_BASE64: ${{ secrets.MAC_CERT_P12_BASE64 }}
           MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
