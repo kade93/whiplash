@@ -1,0 +1,5 @@
+build/
+*.dSYM
+.DS_Store
+embedded.provisionprofile
+AppIcon.iconset.bak/

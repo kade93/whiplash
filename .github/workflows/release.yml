@@ -1,0 +1,47 @@
+# 태그(v0.2 같은)를 푸시하면 Whiplash.app 을 빌드해 zip 으로 GitHub Release 에 붙인다.
+# 서명·공증은 아래 시크릿이 있을 때만 (없으면 임시 서명 zip — 처음 열 때 우클릭 → 열기 필요).
+#   MAC_CERT_P12_BASE64, MAC_CERT_PASSWORD : Developer ID Application 인증서(.p12 를 base64 로)
+#   APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD : 공증용 (앱 암호)
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: ./build.sh
+      - name: Sign and notarize (if secrets exist)
+        if: ${{ env.MAC_CERT_P12_BASE64 != '' }}
+        env:
+          MAC_CERT_P12_BASE64: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          echo "$MAC_CERT_P12_BASE64" | base64 --decode > cert.p12
+          security create-keychain -p ci build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ci build.keychain
+          security import cert.p12 -k build.keychain -P "$MAC_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)"/\1/')
+          codesign --force --deep --options runtime --timestamp --sign "$IDENTITY" build/Whiplash.app
+          ditto -c -k --keepParent build/Whiplash.app build/Whiplash.zip
+          xcrun notarytool submit build/Whiplash.zip --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple build/Whiplash.app
+      - name: Zip
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist)
+          ditto -c -k --keepParent build/Whiplash.app "build/Whiplash-$VERSION.zip"
+          echo "ZIP=build/Whiplash-$VERSION.zip" >> "$GITHUB_ENV"
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP }}
+          generate_release_notes: true
