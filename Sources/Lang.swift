@@ -90,7 +90,6 @@ enum L10n {
         "Squid": ("오징어", "イカ"),
         "Whale": ("고래", "クジラ"),
         "Blob": ("물방울", "しずく"),
-        "All resting": ("모두 쉬는 중", "みんな休憩中"),
         "Demo critters (fake agents, nothing is sent)": ("데모 캐릭터 (가짜 에이전트, 아무것도 안 보냄)", "デモキャラ（偽エージェント、何も送らない）"),
         "Editing · CartService.swift": ("고치는 중 · CartService.swift", "編集中 · CartService.swift"),
         "Running · pytest -x": ("실행 중 · pytest -x", "実行中 · pytest -x"),
