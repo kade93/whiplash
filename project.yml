@@ -1,0 +1,55 @@
+# Whiplash — Mac App Store build.   Generate: xcodegen generate   (brew install xcodegen)
+# The day-to-day build is still ./build.sh (swiftc). This project exists so Xcode's automatic signing can create the
+# Apple Distribution / Mac Installer certificates and the Mac App Store provisioning profile, and so
+# `./release.sh appstore` can archive + upload with xcodebuild instead of Transporter.
+name: Whiplash
+options:
+  bundleIdPrefix: com.kade
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: S79N2P4242          # Kade's individual team
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Whiplash:
+    type: application
+    platform: macOS
+    sources:
+      - Sources
+      - path: Resources              # whip1-3.wav, angry.wav — copied flat into Contents/Resources
+        buildPhase: resources
+      - path: PrivacyInfo.xcprivacy
+        buildPhase: resources
+    settings:
+      base:
+        # NOTE: not `info:`/`entitlements:` — xcodegen would *generate* those files over the hand-written ones.
+        INFOPLIST_FILE: Info.plist                   # the same plist build.sh copies; Xcode only fills in the version keys
+        CODE_SIGN_ENTITLEMENTS: Whiplash.entitlements # sandbox + camera + audio-input + network (App Store edition)
+        PRODUCT_BUNDLE_IDENTIFIER: com.kade.whiplash
+        PRODUCT_NAME: Whiplash
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        ENABLE_APP_SANDBOX: YES
+        SWIFT_OPTIMIZATION_LEVEL: "-O"
+    preBuildScripts:
+      - name: App icon (iconutil)
+        script: |
+          mkdir -p "$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+          iconutil -c icns "$SRCROOT/AppIcon.iconset" -o "$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/AppIcon.icns"
+        inputFiles: ["$(SRCROOT)/AppIcon.iconset"]
+        outputFiles: ["$(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/AppIcon.icns"]
+schemes:
+  Whiplash:
+    build:
+      targets: { Whiplash: all }
+    run:
+      config: Debug
+    archive:
+      config: Release

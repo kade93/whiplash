@@ -231,7 +231,7 @@ Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) �
 
 - `./build.sh --sandbox` — 앱스토어판처럼 샌드박스로 묶어 로컬에서 돌려 보기. 처음 실행하면 홈 폴더 허용 창이 떠요.
 - `./release.sh devid` — Developer ID 서명 + 공증 → zip (전 기능, 직접 배포)
-- `./release.sh appstore` — 샌드박스 + Apple Distribution 서명 → pkg (앱스토어 업로드)
+- `./release.sh appstore` — `project.yml`(xcodegen) 로 Xcode 아카이브 → 앱스토어 서명 → App Store Connect 업로드 (`EXPORT_ONLY=1` 이면 pkg 만). Xcode 에 Apple ID 가 로그인돼 있어야 인증서·프로파일이 자동으로 만들어져요
 - 심사 자료·설명·개인정보 처리방침 초안: [AppStore/metadata.md](AppStore/metadata.md)
 - 샌드박스 안에서는 새 에이전트를 못 띄우니 **채찍 = 창 앞으로 불러오기**로 바뀌고, Ctrl-C 멈추기는 빠져요.
 - 샌드박스에서 막히는 것: `proc_listallpids`, 남의 `proc_pid_rusage`. 그래서 프로세스 목록은 `sysctl kern.proc`로 읽고,

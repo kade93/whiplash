@@ -124,10 +124,9 @@ You do:
 - [x] App Store Connect ▸ App Privacy: "Data Not Collected", published
 - [ ] App Store Connect ▸ App Information ▸ privacy policy URL (needs the public page first)
 - [ ] App Store Connect ▸ version 1.0 ▸ App Review contact: first/last name, phone, email (left blank on purpose)
-- [ ] Certificates in Xcode: Apple Distribution, Mac Installer Distribution (and Developer ID Application for the GitHub edition)
-- [ ] Mac App Store provisioning profile → save as `embedded.provisionprofile`
+- [ ] **Sign in to Xcode** (Xcode ▸ Settings ▸ Accounts ▸ + ▸ Apple ID). The Mac has no Xcode account right now, so `xcodebuild` cannot create certificates or profiles ("No Accounts"). Once signed in, the next step creates Apple Distribution + Mac Installer Distribution and the Mac App Store profile by itself; Developer ID Application (GitHub edition) still has to be added by hand under Manage Certificates
 - [ ] Make the privacy policy URL public (make the repo public, or publish docs/PRIVACY.md on GitHub Pages)
-- [ ] `./release.sh appstore` → upload the .pkg with Transporter
+- [ ] `./release.sh appstore` — generates the Xcode project (`project.yml`, xcodegen), archives, signs for the Mac App Store and uploads to App Store Connect (`ExportOptions.plist`, destination upload). `EXPORT_ONLY=1` leaves the .pkg in `build/export/` instead. Verified today up to the archive step: the bundle has the sandbox entitlements, icon, sounds and privacy manifest
 - [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
 - [ ] Submit for review
 
