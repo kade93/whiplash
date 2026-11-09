@@ -19,19 +19,19 @@ struct Theme: Identifiable, Equatable {
     let water: Color                        // 캐릭터 뒤 물빛 칸
 
     static let all: [Theme] = [
-        Theme(id: "glass", title: "유리 (기본)", dark: true, material: .hudWindow, solid: nil,
+        Theme(id: "glass", title: "Glass (default)", dark: true, material: .hudWindow, solid: nil,
               working: Color(hex: 0xFFB08A), waiting: Color(hex: 0xFFC84A), hot: Color(hex: 0xFF6B5B),
               pill: Color.black.opacity(0.6), pillText: .white, water: Color(hex: 0xE9F3F4)),
-        Theme(id: "paper", title: "밝은 종이", dark: false, material: .popover, solid: nil,
+        Theme(id: "paper", title: "Light paper", dark: false, material: .popover, solid: nil,
               working: Color(hex: 0xB8471F), waiting: Color(hex: 0x9A6B00), hot: Color(hex: 0xC0392B),
               pill: Color.white.opacity(0.85), pillText: Color(hex: 0x2A2433), water: Color(hex: 0xD9ECF0)),
-        Theme(id: "night", title: "진한 밤", dark: true, material: .hudWindow, solid: NSColor(srgbRed: 0.08, green: 0.09, blue: 0.13, alpha: 0.94),
+        Theme(id: "night", title: "Deep night", dark: true, material: .hudWindow, solid: NSColor(srgbRed: 0.08, green: 0.09, blue: 0.13, alpha: 0.94),
               working: Color(hex: 0x7EE787), waiting: Color(hex: 0xFFD166), hot: Color(hex: 0xFF6B6B),
               pill: Color(hex: 0x0B0E16).opacity(0.85), pillText: .white, water: Color(hex: 0x1E2535)),
-        Theme(id: "carrot", title: "당근밭", dark: true, material: .hudWindow, solid: NSColor(srgbRed: 0.24, green: 0.16, blue: 0.11, alpha: 0.95),
+        Theme(id: "carrot", title: "Carrots", dark: true, material: .hudWindow, solid: NSColor(srgbRed: 0.24, green: 0.16, blue: 0.11, alpha: 0.95),
               working: Color(hex: 0xFFB347), waiting: Color(hex: 0xFFE08A), hot: Color(hex: 0xFF6F61),
               pill: Color(hex: 0x3A2A1E).opacity(0.9), pillText: Color(hex: 0xFFF1DC), water: Color(hex: 0xEADFC8)),
-        Theme(id: "terminal", title: "터미널", dark: true, material: .hudWindow, solid: NSColor(srgbRed: 0.03, green: 0.05, blue: 0.03, alpha: 0.96),
+        Theme(id: "terminal", title: "Terminal", dark: true, material: .hudWindow, solid: NSColor(srgbRed: 0.03, green: 0.05, blue: 0.03, alpha: 0.96),
               working: Color(hex: 0x33FF66), waiting: Color(hex: 0xFFFF66), hot: Color(hex: 0xFF3355),
               pill: Color.black.opacity(0.9), pillText: Color(hex: 0x33FF66), water: Color(hex: 0x0F1A10)),
     ]

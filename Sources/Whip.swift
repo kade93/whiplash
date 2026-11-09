@@ -10,20 +10,20 @@ struct WhipTask: Codable, Identifiable, Hashable {
     var id: String { title }
 
     static let defaults: [WhipTask] = [
-        WhipTask(title: t("다음 할 일 찾아와"),
-                 prompt: t("이 프로젝트를 훑어보고 지금 바로 손댈 만한 다음 작업 3가지를 우선순위, 이유, 관련 파일과 함께 제안해 줘.")),
-        WhipTask(title: t("코드 리뷰해"),
-                 prompt: t("가장 최근에 수정된 파일들 위주로 코드를 리뷰해서 버그 가능성, 빠진 예외 처리, 개선점을 심각한 순서로 정리해 줘.")),
-        WhipTask(title: t("TODO 수거해"),
-                 prompt: t("프로젝트 안의 TODO, FIXME, HACK 주석을 모두 찾아 파일과 줄 번호와 함께 묶어 정리하고, 처리할 순서를 제안해 줘.")),
-        WhipTask(title: t("출시 점검해"),
-                 prompt: t("이 앱을 앱스토어에 내기 전에 빠진 것(아이콘, 권한 문구, 개인정보 처리방침, 에러 처리, 하드코딩된 키나 비밀번호, 디버그 코드 등)을 점검표로 정리해 줘.")),
-        WhipTask(title: t("문서 다듬어"),
-                 prompt: t("README와 기획 문서(SPEC 등)를 실제 코드와 비교해서 틀리거나 빠진 내용을 찾아 고칠 문장을 제안해 줘.")),
+        WhipTask(title: t("Find the next tasks"),
+                 prompt: t("Skim this project and propose the next 3 tasks worth doing right now, with priority, reasoning and related files.")),
+        WhipTask(title: t("Review the code"),
+                 prompt: t("Review the most recently modified files for likely bugs, missing error handling and improvements, ordered by severity.")),
+        WhipTask(title: t("Collect TODOs"),
+                 prompt: t("Find every TODO, FIXME and HACK comment with file and line, group them and propose an order to handle them.")),
+        WhipTask(title: t("Release checklist"),
+                 prompt: t("Make a checklist of what is missing before shipping to the App Store (icons, permission strings, privacy policy, error handling, hard-coded keys or passwords, debug code).")),
+        WhipTask(title: t("Polish the docs"),
+                 prompt: t("Compare README and spec docs against the actual code, find what is wrong or missing, and propose corrected sentences.")),
     ]
 
     /// 사용자가 고친 일감에도 항상 붙는 안전 규칙
-    static var rules: String { t("\n\n(규칙: 파일을 만들거나 고치거나 지우지 말고, 명령도 실행하지 말고 읽기만 해. 답은 한국어 마크다운으로 짧고 구체적으로.)") }
+    static var rules: String { t("\n\n(Rules: do not create, edit or delete files and do not run commands — read only. Answer in short, concrete Markdown in English.)") }
 }
 
 struct WhipJob: Equatable {
@@ -47,10 +47,24 @@ struct WhipResult: Identifiable, Equatable {
 
 // MARK: - 채찍 문구 (소켓으로 세션 본인에게 보내는 말)
 
+/// 간식(칭찬) 프롬프트 — 짧게. 잘하고 있다는 것만.
+enum TreatWords {
+    static let file = WhipRunner.folder.appendingPathComponent("treat-words.txt")
+    static var fallback: String { t("🥕 Nice work! (Whiplash) Keep going just like this.") }
+    static func load() -> String {
+        try? FileManager.default.createDirectory(at: WhipRunner.folder, withIntermediateDirectories: true)
+        if let t = try? String(contentsOf: file, encoding: .utf8), !t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return t.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        try? fallback.write(to: file, atomically: true, encoding: .utf8)
+        return fallback
+    }
+}
+
 enum WhipWords {
     static let file = WhipRunner.folder.appendingPathComponent("whip-words.txt")
     /// 짧게. 누가 시켰는지 + 한 마디. 길게 지시하면 일 잘하던 세션이 엇나간다.
-    static var fallback: String { t("찰싹! (Whiplash) 하던 일 이어서 해. 끝났으면 다음 할 일 하나 골라서 해.") }
+    static var fallback: String { t("Whack! (Whiplash) Keep going with what you were doing. If you're done, pick the next thing and do it.") }
     private static let oldFallbacks = ["채찍! 계속 진행해.", "찰싹! (Whiplash)"]
 
     static func load() -> String {
@@ -138,7 +152,7 @@ final class WhipRunner {
             guard let name = Self.cliName(kind) else { return }
             guard let exe = resolve(name) else {
                 finished(nil, WhipResult(project: project, title: task.title, file: nil, ok: false,
-                                         note: tf("%@ 실행 파일을 못 찾았어요", name), finished: Date()))
+                                         note: tf("Couldn't find the %@ executable", name), finished: Date()))
                 return
             }
 
@@ -153,7 +167,7 @@ final class WhipRunner {
             let out = Self.resultsFolder.appendingPathComponent(base + ".md")
             let log = Self.resultsFolder.appendingPathComponent(base + ".log")
 
-            let header = tf("# %@\n\n- 에이전트: %@\n- 프로젝트: %@\n- 시작: %@\n\n---\n\n", task.title, kind.title, dir, String(describing: Date()))
+            let header = tf("# %@\n\n- Agent: %@\n- Project: %@\n- Started: %@\n\n---\n\n", task.title, kind.title, dir, String(describing: Date()))
             fm.createFile(atPath: out.path, contents: header.data(using: .utf8))
             fm.createFile(atPath: log.path, contents: nil)
 
@@ -182,8 +196,8 @@ final class WhipRunner {
                 try? outHandle.close()
                 try? logHandle.close()
                 let ok = proc.terminationReason == .exit && proc.terminationStatus == 0
-                var note = ok ? "" : tf("끝까지 못 했어요 (종료 코드 %d) · 로그: %@", Int(proc.terminationStatus), log.lastPathComponent)
-                if proc.terminationReason == .uncaughtSignal { note = t("중간에 멈췄어요 (시간 초과 또는 종료)") }
+                var note = ok ? "" : tf("Didn't finish (exit code %d) · log: %@", Int(proc.terminationStatus), log.lastPathComponent)
+                if proc.terminationReason == .uncaughtSignal { note = t("Stopped midway (timeout or killed)") }
                 if ok { try? fm.removeItem(at: log) }
                 finished(job, WhipResult(project: project, title: task.title, file: out, ok: ok,
                                          note: note, finished: Date()))
@@ -193,7 +207,7 @@ final class WhipRunner {
                 try p.run()
             } catch {
                 finished(nil, WhipResult(project: project, title: task.title, file: nil, ok: false,
-                                         note: tf("실행 실패: %@", error.localizedDescription), finished: Date()))
+                                         note: tf("Failed to run: %@", error.localizedDescription), finished: Date()))
                 return
             }
 
@@ -286,14 +300,8 @@ struct WhipCanvas: View {
 /// 채찍 맞을 수 있는 캐릭터 위에서는 커서가 채찍이 된다
 enum WhipCursor {
     static let cursor: NSCursor = {
-        let img = pixelImage(rows: WhipCanvas.rows, cell: 3) { ch in
-            switch ch {
-            case "H": return Color(hex: 0x8B5A2B)
-            case "A": return Sprite.ink
-            default:  return nil
-            }
-        }
-        return NSCursor(image: img, hotSpot: NSPoint(x: 2, y: 16))
+        // 앱 아이콘과 같은 벡터 채찍. 핫스팟은 손잡이 밑동 (왼쪽 아래)
+        NSCursor(image: WhipArt.cursorImage, hotSpot: NSPoint(x: 7, y: 30))
     }()
 }
 

@@ -20,6 +20,9 @@ enum WhiplashApp {
 final class FloatingPanel: NSPanel {
     var onDoubleClick: (() -> Void)?
     var onSwing: ((String) -> Void)?
+    var onPet: ((String) -> Void)?                   // 천천히 쓱쓱 쓰다듬기 → 간식
+    private var pets: [String: [TimeInterval]] = [:]
+    private var lastPet: [String: TimeInterval] = [:]
     var onClick: ((String, NSPoint) -> Void)?        // 제자리 클릭한 칸 id, 화면 좌표
     var onContextMenu: ((String?, NSEvent) -> Void)? // 오른쪽 클릭: 칸 id(없으면 nil) — SwiftUI 메뉴 대신 NSMenu (깜빡임 방지)
     var noDragRects: [CGRect] = []
@@ -116,6 +119,25 @@ final class FloatingPanel: NSPanel {
         guard !whipTargets.isEmpty, let last = lastMove, t > last.t, t - last.t < 0.2 else { return }
         if needsOption && !optionHeld { return }
         let speed = hypot(p.x - last.p.x, p.y - last.p.y) / (t - last.t)
+        // 쓰다듬기: 느리게(초당 30~180px) 가운데 선을 2.5초 안에 세 번 넘으면 간식. 빠르면 채찍.
+        if speed >= 30 && speed < 180 {
+            for (id, r) in whipTargets {
+                let ax = last.p.x - r.midX, bx = p.x - r.midX
+                let band = r.insetBy(dx: -4, dy: -10)
+                let midY = (p.y + last.p.y) / 2
+                guard midY >= band.minY, midY <= band.maxY, (ax < 0 && bx >= 0) || (ax > 0 && bx <= 0) else { continue }
+                guard let entered = enteredAt[id], t - entered >= 0.25 else { continue }
+                var list = (pets[id] ?? []).filter { t - $0 < 2.5 }
+                list.append(t)
+                if list.count >= 3, t - (lastPet[id] ?? 0) > 3 {
+                    lastPet[id] = t; list = []
+                    if Self.debugMouse { NSLog("EOHANG pet! %@", id) }
+                    onPet?(id)
+                }
+                pets[id] = list
+            }
+            return
+        }
         guard speed >= 400 else { return }
 
         for (id, r) in whipTargets {
@@ -234,6 +256,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         root.onWhipTargets = { [weak panel] rects in panel?.whipTargets = rects }
         root.onClickTargets = { [weak panel] rects in panel?.clickTargets = rects }
         panel.onSwing = { [weak self] id in self?.model.whip(id: id) }
+        panel.onPet = { [weak self] id in self?.model.treat(id: id) }
         panel.onClick = { [weak self] id, p in self?.openPrompt(for: id, near: p) }
         panel.onContextMenu = { [weak self] id, e in self?.showContextMenu(for: id, event: e) }
         effect.addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .activeAlways, .inVisibleRect],
@@ -380,6 +403,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         save(panel?.contentView, path)
         save(critters.firstContentView, (path as NSString).deletingPathExtension + "-critter.png")
+        for (i, v) in critters.allContentViews.enumerated() { save(v, (path as NSString).deletingPathExtension + "-critter\(i + 1).png") }
         save(critters.cageContentView, (path as NSString).deletingPathExtension + "-cage.png")
         if let img = critters.fieldComposite(), let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
             try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: (path as NSString).deletingPathExtension + "-field.png"))
@@ -440,12 +464,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let m = model
         if let id = id, let g = m.snapshot.groups.first(where: { $0.id == id }) {
             if g.id == Model.ghostID {
-                menu.addItem(menuItem(t("Claude 앱 열기")) { m.wakeClaude(dir: nil) })
+                menu.addItem(menuItem(t("Open Claude app")) { m.wakeClaude(dir: nil) })
                 let term = NSMenu()
                 for d in m.recentProjects() { term.addItem(menuItem((d as NSString).lastPathComponent) { m.wakeClaude(dir: d) }) }
                 term.addItem(.separator())
-                term.addItem(menuItem(t("홈 폴더에서")) { m.wakeClaude(dir: Paths.home) })
-                menu.addItem(submenu(t("터미널에서 claude 열기"), term))
+                term.addItem(menuItem(t("In home folder")) { m.wakeClaude(dir: Paths.home) })
+                menu.addItem(submenu(t("Open claude in Terminal"), term))
             } else {
                 let head = NSMenuItem(title: g.session.map { $0.name.isEmpty ? g.label : $0.name } ?? g.label, action: nil, keyEquivalent: "")
                 head.isEnabled = false
@@ -453,33 +477,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 if m.canWhip(g), !g.id.hasPrefix("app:"), !Paths.sandboxed {
                     let tasks = NSMenu()
                     for task in m.tasks { tasks.addItem(menuItem(task.title) { m.whip(g, task: task) }) }
-                    menu.addItem(submenu(t("채찍 — 일감 골라 시키기"), tasks))
+                    menu.addItem(submenu(t("Whip — pick a task"), tasks))
                 }
-                menu.addItem(menuItem(t("창 앞으로")) { m.bringToFront(g) })
-                if g.dir != nil || g.session != nil { menu.addItem(menuItem(t("폴더 열기")) { m.openFolder(g) }) }
+                if g.session != nil { menu.addItem(menuItem(t("🥕 Give a treat (praise)")) { m.treat(g) }) }
+                menu.addItem(menuItem(t("Bring window to front")) { m.bringToFront(g) })
+                if g.dir != nil || g.session != nil { menu.addItem(menuItem(t("Open folder")) { m.openFolder(g) }) }
                 if let s = g.session {
-                    menu.addItem(menuItem(t("채찍 면역"), on: m.isImmune(g)) { m.toggleImmune(g) })
+                    menu.addItem(menuItem(t("Whip immunity"), on: m.isImmune(g)) { m.toggleImmune(g) })
                     if s.status == .busy && !s.isDesktop && !Paths.sandboxed {
-                        menu.addItem(menuItem(t("하던 일 멈추기 (Ctrl-C)")) { m.interrupt(g) })
+                        menu.addItem(menuItem(t("Stop current work (Ctrl-C)")) { m.interrupt(g) })
                     }
                     let more = NSMenu()
-                    if !s.lastPrompt.isEmpty { more.addItem(menuItem(t("마지막 지시 복사")) { m.copyPrompt(g) }) }
-                    if s.transcript != nil { more.addItem(menuItem(t("대화 기록 파일 열기")) { m.openTranscript(g) }) }
-                    if more.items.count > 0 { menu.addItem(submenu(t("더 보기"), more)) }
-                    if Paths.sandboxed { menu.addItem(menuItem(t("전체 기능판 받기…")) { Paths.openFullEdition() }) }
+                    if !s.lastPrompt.isEmpty { more.addItem(menuItem(t("Copy last prompt")) { m.copyPrompt(g) }) }
+                    if s.transcript != nil { more.addItem(menuItem(t("Open transcript file")) { m.openTranscript(g) }) }
+                    if more.items.count > 0 { menu.addItem(submenu(t("More"), more)) }
                 }
             }
             menu.addItem(.separator())
         }
         if m.roaming {
-            menu.addItem(menuItem(m.caged ? t("당근밭에서 뽑기") : t("당근밭에 박아두기"), key: .cage) { m.caged.toggle() })
-            menu.addItem(menuItem(t("채찍질 창으로 모으기"), key: .roam) { m.roaming = false })
+            menu.addItem(menuItem(m.caged ? t("Pull out of the field") : t("Plant in the carrot field"), key: .cage) { m.caged.toggle() })
+            menu.addItem(menuItem(t("Gather into the window"), key: .roam) { m.roaming = false })
         } else {
-            menu.addItem(menuItem(t("풀어놓기 — 화면 돌아다니기"), key: .roam) { m.roaming = true; m.hidden = false })
+            menu.addItem(menuItem(t("Let loose — roam the screen"), key: .roam) { m.roaming = true; m.hidden = false })
         }
-        menu.addItem(menuItem(t("모두 숨기기"), key: .hide) { m.hidden = true })
+        menu.addItem(menuItem(t("Hide all"), key: .hide) { m.hidden = true })
         menu.addItem(.separator())
-        menu.addItem(submenu(t("설정"), settingsMenu()))
+        menu.addItem(submenu("Settings", settingsMenu()))
         NSMenu.popUpContextMenu(menu, with: event, for: view)
     }
 
@@ -489,11 +513,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return i
     }
 
+    /// 확성기: 입력창을 모두에게 보내기 모드로 연다 (커서 자리)
+    func openMegaphone() {
+        model.hidden = false
+        openPrompt(for: Model.broadcastID, near: NSEvent.mouseLocation)
+    }
+
     // MARK: 지시 입력창
 
     /// 캐릭터를 제자리 클릭하면 그 위에 작은 입력창. 엔터로 보내고 esc 로 닫는다.
     func openPrompt(for id: String, near p: NSPoint) {
-        guard model.snapshot.groups.first(where: { $0.id == id })?.session != nil else {
+        guard id == Model.broadcastID || model.snapshot.groups.first(where: { $0.id == id })?.session != nil else {
             NSSound(named: "Basso")?.play()      // Claude Code 세션이 아니면 보낼 데가 없다
             return
         }
@@ -701,7 +731,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 커서를 따라다니는 작은 채찍 (채찍 맞을 캐릭터 위에서만)
     private func moveFollower(to p: NSPoint) {
         if cursorFollower == nil {
-            let size = NSSize(width: 44, height: 34)        // 포인터 옆에 크게 — 시스템 커서가 안 바뀌어도 눈에 띄게
+            let size = NSSize(width: 48, height: 48)        // 포인터 옆에 크게 — 시스템 커서가 안 바뀌어도 눈에 띄게
             let w = NSPanel(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless, .nonactivatingPanel],
                             backing: .buffered, defer: false)
             w.isFloatingPanel = true
@@ -712,13 +742,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             w.hasShadow = false
             w.ignoresMouseEvents = true
             w.isReleasedWhenClosed = false
-            let host = NSHostingView(rootView: WhipCanvas(cell: 5).frame(width: size.width, height: size.height, alignment: .bottomLeading))
+            let host = NSHostingView(rootView: WhipGlyph(size: 48))   // 앱 아이콘의 채찍
             host.sizingOptions = []
             w.contentView = host
             cursorFollower = w
         }
         guard let w = cursorFollower else { return }
-        w.setFrameOrigin(NSPoint(x: p.x + 12, y: p.y - 36))
+        w.setFrameOrigin(NSPoint(x: p.x + 10, y: p.y - 40))
         if !w.isVisible { w.orderFrontRegardless() }
     }
 
@@ -735,24 +765,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func makeStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        // 꽃게 + 채찍, 템플릿 이미지 (메뉴 막대 밝기에 맞춰 검정/흰으로)
-        let rows = [
-            "KK........KK....AA",
-            "KAK......KAK...A..",
-            "KAAK....KAAK..A...",
-            ".KAK....KAK..A....",
-            "..KKKKKKKK..H.....",
-            ".KBLBBBBBBK.H.....",
-            "KBBEBBBBEBBK......",
-            "KBCBBKKBBCBK......",
-            ".KKKKKKKKKK.......",
-            ".K.K....K.K.......",
-        ]
-        let img = pixelImage(rows: rows, cell: 1.6) { ch in ch == "." || ch == "L" || ch == "C" ? nil : Color.black }
+        // 앱 아이콘과 같은 채찍, 템플릿 이미지 (메뉴 막대 밝기에 맞춰 검정/흰으로). 18pt 에 맞춰 2배로 그린다
+        let img = WhipArt.templateImage(size: 36)
+        img.size = NSSize(width: 18, height: 18)
         img.isTemplate = true
         item.button?.image = img
         item.button?.imagePosition = .imageOnly
-        item.button?.toolTip = t("Whiplash — 누르면 메뉴")
+        item.button?.toolTip = t("Whiplash — click for menu")
         // 노치 맥북: 새 항목은 맨 왼쪽(노치 뒤)에 들어가 안 보일 수 있다. 처음 한 번은 오른쪽 가까이(오른쪽 끝에서 300pt) 자리를 잡아 준다.
         // 사용자가 ⌘-끌어서 옮기면 그 자리가 기억된다.
         if UserDefaults.standard.object(forKey: "NSStatusItem Preferred Position WhiplashStatus") == nil {
@@ -781,10 +800,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let main = NSMenu()
         let appItem = NSMenuItem()
         let appMenu = NSMenu(title: "Whiplash")
-        appMenu.addItem(withTitle: t("채찍질 창 보이기"), action: #selector(showPanelAction), keyEquivalent: "")
+        appMenu.addItem(withTitle: t("Show Whiplash window"), action: #selector(showPanelAction), keyEquivalent: "")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: t("Whiplash 숨기기"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
-        appMenu.addItem(withTitle: t("Whiplash 종료"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: t("Hide Whiplash"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: t("Quit Whiplash"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
         main.addItem(appItem)
         NSApp.mainMenu = main
@@ -833,6 +852,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             .cage:   { m.caged.toggle(); if m.caged { m.roaming = true; m.hidden = false } },
             .whip:   { m.whipRandom() },
             .whipAll: { m.whipAll() },
+            .treatAll: { m.treatAll() },
+            .megaphone: { [weak self] in self?.openMegaphone() },
             .gather: { [weak self] in m.hidden = false; m.roaming = true; self?.critters.gatherToMouse() },
             .panel:  { m.hidden = false; m.panelWithCritters.toggle() },        // 둘 다 보기 켜고 끄기
         ])
@@ -850,8 +871,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let waiting = s.groups.filter { $0.session?.needsYou == true }.count
         reloadHotKeysIfChanged()
         menu.removeAllItems()
-        let head = NSMenuItem(title: s.groups.isEmpty ? t("지금 돌아가는 에이전트가 없어요")
-                                                       : tf("%d마리 · %d 일하는 중 · %d 내 차례", s.groups.count, working, waiting),
+        let head = NSMenuItem(title: s.groups.isEmpty ? t("No agents running right now")
+                                                       : tf("%d critters · %d working · %d need you", s.groups.count, working, waiting),
                               action: nil, keyEquivalent: "")
         head.isEnabled = false
         menu.addItem(head)
@@ -862,49 +883,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         menu.addItem(.separator())
         // 보기: 셋 중 하나
-        menu.addItem(menuItem(t("풀어놓기 — 화면 돌아다니기"), on: m.roaming && !m.hidden, key: .roam) { m.roaming = true; m.hidden = false })
-        menu.addItem(menuItem(t("채찍질 창으로 보기"), on: !m.roaming && !m.hidden) { m.roaming = false; m.hidden = false })
-        menu.addItem(menuItem(t("모두 숨기기"), on: m.hidden, key: .hide) { m.hidden = true })
+        menu.addItem(menuItem(t("Let loose — roam the screen"), on: m.roaming && !m.hidden, key: .roam) { m.roaming = true; m.hidden = false })
+        menu.addItem(menuItem(t("Show as window"), on: !m.roaming && !m.hidden) { m.roaming = false; m.hidden = false })
+        menu.addItem(menuItem(t("Hide all"), on: m.hidden, key: .hide) { m.hidden = true })
         menu.addItem(.separator())
         // 동작
-        menu.addItem(menuItem(t("이리 와 — 커서 자리로 모이기"), key: .gather) { [weak self] in m.hidden = false; m.roaming = true; self?.critters.gatherToMouse() })
-        menu.addItem(menuItem(t("당근밭에 박아두기"), on: m.caged, key: .cage) { m.caged.toggle(); if m.caged { m.roaming = true; m.hidden = false } })
-        menu.addItem(menuItem(t("쉬는 애 아무나 채찍"), key: .whip) { m.whipRandom() })
-        menu.addItem(menuItem(t("쉬는 애 전부 채찍"), key: .whipAll) { m.whipAll() })
+        menu.addItem(menuItem(t("Come here — gather at the cursor"), key: .gather) { [weak self] in m.hidden = false; m.roaming = true; self?.critters.gatherToMouse() })
+        menu.addItem(menuItem(t("Plant in the carrot field"), on: m.caged, key: .cage) { m.caged.toggle(); if m.caged { m.roaming = true; m.hidden = false } })
+        menu.addItem(menuItem(t("Whip any idle one"), key: .whip) { m.whipRandom() })
+        menu.addItem(menuItem(t("Whip everyone idle"), key: .whipAll) { m.whipAll() })
+        menu.addItem(menuItem(t("Treat everyone working 🥕"), key: .treatAll) { m.treatAll() })
+        if !Paths.sandboxed { menu.addItem(menuItem(t("Megaphone — same message to everyone…"), key: .megaphone) { [weak self] in self?.openMegaphone() }) }
         if !Paths.sandboxed {
             let f = DateFormatter(); f.dateFormat = "HH:mm"
-            menu.addItem(submenu(m.autoWhipOn ? tf("오토 채찍질 ⚡ %@ 까지", f.string(from: m.autoWhipUntil!)) : t("오토 채찍질"), autoWhipMenu()))
+            menu.addItem(submenu(m.autoWhipOn ? tf("Auto-whip ⚡ until %@", f.string(from: m.autoWhipUntil!)) : t("Auto-whip"), autoWhipMenu()))
         }
         menu.addItem(.separator())
-        menu.addItem(submenu(t("설정"), settingsMenu()))
+        menu.addItem(submenu("Settings", settingsMenu()))
         menu.addItem(.separator())
-        menu.addItem(menuItem(t("Whiplash 닫기")) { NSApp.terminate(nil) })
+        menu.addItem(menuItem(t("Quit Whiplash")) { NSApp.terminate(nil) })
     }
 
     private func autoWhipMenu() -> NSMenu {
         let m = model
         let auto = NSMenu()
         let f = DateFormatter(); f.dateFormat = "HH:mm"
-        let autoHead = NSMenuItem(title: m.autoWhipOn ? tf("켜짐 — %@ 까지 · %d분마다 · %d번 때림", f.string(from: m.autoWhipUntil!), Int(m.autoWhipInterval / 60), m.autoWhipCount)
-                                                  : t("꺼짐"), action: nil, keyEquivalent: "")
+        let autoHead = NSMenuItem(title: m.autoWhipOn ? tf("On — until %@ · every %d min · %d whips", f.string(from: m.autoWhipUntil!), Int(m.autoWhipInterval / 60), m.autoWhipCount)
+                                                  : t("Off"), action: nil, keyEquivalent: "")
         autoHead.isEnabled = false
         auto.addItem(autoHead)
         auto.addItem(.separator())
         func until(_ title: String, _ date: @escaping () -> Date) -> NSMenuItem { menuItem(title) { m.setAutoWhip(until: date()) } }
         func next(_ hour: Int) -> Date { Calendar.current.nextDate(after: Date(), matching: DateComponents(hour: hour, minute: 0), matchingPolicy: .nextTime) ?? Date().addingTimeInterval(3600) }
-        auto.addItem(until(t("1시간 동안")) { Date().addingTimeInterval(3600) })
-        auto.addItem(until(t("3시간 동안")) { Date().addingTimeInterval(3 * 3600) })
-        auto.addItem(until(t("퇴근(18시)까지")) { next(18) })
-        auto.addItem(until(t("자정까지")) { next(0) })
-        auto.addItem(until(t("아침 9시까지")) { next(9) })
-        if m.autoWhipOn { auto.addItem(menuItem(t("끄기")) { m.setAutoWhip(until: nil) }) }
+        auto.addItem(until(t("For 1 hour")) { Date().addingTimeInterval(3600) })
+        auto.addItem(until(t("For 3 hours")) { Date().addingTimeInterval(3 * 3600) })
+        auto.addItem(until(t("Until 6 PM")) { next(18) })
+        auto.addItem(until(t("Until midnight")) { next(0) })
+        auto.addItem(until(t("Until 9 AM")) { next(9) })
+        if m.autoWhipOn { auto.addItem(menuItem(t("Turn off")) { m.setAutoWhip(until: nil) }) }
         auto.addItem(.separator())
         let every = NSMenu()
         for mins in [3, 5, 10, 20, 30, 60] {
-            every.addItem(menuItem(tf("%d분마다", mins), on: Int(m.autoWhipInterval / 60) == mins) { m.autoWhipInterval = TimeInterval(mins * 60) })
+            every.addItem(menuItem(tf("Every %d min", mins), on: Int(m.autoWhipInterval / 60) == mins) { m.autoWhipInterval = TimeInterval(mins * 60) })
         }
-        auto.addItem(submenu(tf("간격 — %d분마다", Int(m.autoWhipInterval / 60)), every))
-        auto.addItem(menuItem(t("채찍 문구 편집…")) { m.editWhipWords() })
+        auto.addItem(submenu(tf("Interval — every %d min", Int(m.autoWhipInterval / 60)), every))
+        auto.addItem(menuItem(t("Edit whip prompt…")) { m.editWhipWords() })
         return auto
     }
 
@@ -912,57 +935,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func settingsMenu() -> NSMenu {
         let m = model
         let menu = NSMenu()
-        // 풀어놓기
-        menu.addItem(menuItem(t("작게 풀어놓기 (이름표 없이)"), on: m.critterSmall, key: .small) { m.critterSmall.toggle() })
-        menu.addItem(menuItem(t("캐릭터 뒤 물빛 칸"), on: m.critterBox) { m.critterBox.toggle() })
-        menu.addItem(menuItem(t("풀어놓을 때 채찍질 창도 보기"), on: m.panelWithCritters, key: .panel) { m.panelWithCritters.toggle() })
-        menu.addItem(menuItem(t("일할 때 알아서 숨기 (마우스·타자 바쁘면)"), on: m.autoDodge) { m.autoDodge.toggle() })
-        menu.addItem(.separator())
-        // 채찍질 창
-        menu.addItem(menuItem(t("작게 보기"), on: m.compact) { m.compact.toggle() })
-        menu.addItem(menuItem(t("항상 맨 위에"), on: m.alwaysOnTop) { m.alwaysOnTop.toggle() })
-        menu.addItem(.separator())
-        // 채찍
-        menu.addItem(menuItem(t("⌥ 누른 채로만 채찍 (오작동 방지)"), on: m.whipNeedsOption) { m.whipNeedsOption.toggle() })
-        let body = NSMenu()
-        func line(_ text: String) { if !text.isEmpty { let i = NSMenuItem(title: "   " + text, action: nil, keyEquivalent: ""); i.isEnabled = false; body.addItem(i) } }
-        body.addItem(menuItem(t("에어팟 고개 휙 — 쉬는 애 전부"), on: m.headFlickOn) { m.headFlickOn.toggle() })
-        if #available(macOS 14.0, *), let hf = headFlick as? HeadFlick { line(hf.status) } else { line(t("macOS 14 이상에서만")) }
-        body.addItem(menuItem(t("카메라 손 휘두르기 — 쉬는 애 전부"), on: m.handCamOn) { m.handCamOn.toggle() })
-        line(handSwing.status)
-        body.addItem(menuItem(t("입으로 「화츅!」 — 마이크"), on: m.mouthOn) { m.mouthOn.toggle() })
-        line(mouth.status)
-        body.addItem(menuItem(t("아이폰·아이패드·애플워치 리모트 받기"), on: m.remoteOn) { m.remoteOn.toggle() })
-        line(remote.status)
-        body.addItem(.separator())
-        let hint = NSMenuItem(title: t("켠 동안만 센서·카메라·마이크·네트워크를 써요. 녹화·녹음은 없어요."), action: nil, keyEquivalent: "")
-        hint.isEnabled = false
-        body.addItem(hint)
-        menu.addItem(submenu(t("몸으로 때리기"), body))
-        if Paths.sandboxed {
-            menu.addItem(menuItem(Paths.hasHomeAccess ? t("홈 폴더 접근 다시 고르기…") : t("홈 폴더 접근 허용… (세션 정보 보기)")) { Paths.requestHomeAccess() })
-            menu.addItem(menuItem(t("전체 기능판 받기…")) { Paths.openFullEdition() })
-        } else {
-            menu.addItem(menuItem(t("남은 쿼터 보기 🥕 (Claude 로그인 키체인 읽기)"), on: m.quotaEnabled) { m.quotaEnabled.toggle() })
-            let tasks = NSMenu()
-            tasks.addItem(menuItem(t("채찍 일감 편집…")) { m.editTasks() })
-            tasks.addItem(menuItem(t("채찍 결과 폴더 열기")) { m.openResults() })
-            menu.addItem(submenu(t("채찍 일감"), tasks))
-        }
-        menu.addItem(.separator())
-        // 모양·언어·단축키
-        let themeMenu = NSMenu()
-        for th in Theme.all { themeMenu.addItem(menuItem(t(th.title), on: m.theme == th.id) { m.theme = th.id }) }
-        menu.addItem(submenu(t("테마"), themeMenu))
+        // Language 는 어느 언어에서나 맨 위, 영어 표기 (만국공통)
         let langMenu = NSMenu()
         for l in Lang.allCases {
             langMenu.addItem(menuItem(l.title, on: Lang.current == l) { Lang.current = l; m.objectWillChange.send() })
         }
         menu.addItem(submenu("Language", langMenu))
-        menu.addItem(menuItem(t("단축키 편집…")) { _ = HotKeys.loadCombos(); NSWorkspace.shared.open(HotKeys.file) })
         menu.addItem(.separator())
-        menu.addItem(menuItem(t("Dock 에 아이콘 보이기"), on: m.dockIcon) { m.dockIcon.toggle() })
-        menu.addItem(menuItem(t("로그인할 때 열기"), on: m.loginItemEnabled) { m.loginItemEnabled.toggle() })
+        // 풀어놓기
+        menu.addItem(menuItem(t("Roam small (no name tags)"), on: m.critterSmall, key: .small) { m.critterSmall.toggle() })
+        menu.addItem(menuItem(t("Water tile behind critters"), on: m.critterBox) { m.critterBox.toggle() })
+        menu.addItem(menuItem(t("Show list while roaming (both at once)"), on: m.panelWithCritters, key: .panel) { m.panelWithCritters.toggle() })
+        menu.addItem(menuItem(t("Hide while I'm busy (fast mouse or typing)"), on: m.autoDodge) { m.autoDodge.toggle() })
+        menu.addItem(.separator())
+        // 채찍질 창
+        menu.addItem(menuItem(t("Compact view"), on: m.compact) { m.compact.toggle() })
+        menu.addItem(menuItem(t("Always on top"), on: m.alwaysOnTop) { m.alwaysOnTop.toggle() })
+        menu.addItem(.separator())
+        // 채찍
+        menu.addItem(menuItem(t("Whip only while holding ⌥ (avoid accidents)"), on: m.whipNeedsOption) { m.whipNeedsOption.toggle() })
+        let body = NSMenu()
+        func line(_ text: String) { if !text.isEmpty { let i = NSMenuItem(title: "   " + text, action: nil, keyEquivalent: ""); i.isEnabled = false; body.addItem(i) } }
+        body.addItem(menuItem(t("AirPods head flick — whip everyone idle"), on: m.headFlickOn) { m.headFlickOn.toggle() })
+        if #available(macOS 14.0, *), let hf = headFlick as? HeadFlick { line(hf.status) } else { line(t("Needs macOS 14 or later")) }
+        body.addItem(menuItem(t("Camera hand swing — whip everyone idle"), on: m.handCamOn) { m.handCamOn.toggle() })
+        line(handSwing.status)
+        body.addItem(menuItem(t("Say \"whoosh-crack!\" — microphone"), on: m.mouthOn) { m.mouthOn.toggle() })
+        line(mouth.status)
+        body.addItem(menuItem(t("Accept iPhone / iPad / Apple Watch remote"), on: m.remoteOn) { m.remoteOn.toggle() })
+        line(remote.status)
+        body.addItem(.separator())
+        let hint = NSMenuItem(title: t("Sensors, camera, microphone and network are used only while on. Nothing is recorded."), action: nil, keyEquivalent: "")
+        hint.isEnabled = false
+        body.addItem(hint)
+        menu.addItem(submenu(t("Whip with your body"), body))
+        if Paths.sandboxed {
+            menu.addItem(menuItem(Paths.hasHomeAccess ? t("Re-pick home folder access…") : t("Allow home folder access… (to see sessions)")) { Paths.requestHomeAccess() })
+        } else {
+            menu.addItem(menuItem(t("Show remaining quota 🥕 (reads Claude login from Keychain)"), on: m.quotaEnabled) { m.quotaEnabled.toggle() })
+            menu.addItem(menuItem(t("Edit whip prompt…")) { m.editWhipWords() })       // 채찍질 때 세션에 보내는 글
+            menu.addItem(menuItem(t("Edit treat prompt…")) { m.editTreatWords() })      // 칭찬할 때 보내는 글
+            let tasks = NSMenu()
+            tasks.addItem(menuItem(t("Edit task list…")) { m.editTasks() })
+            tasks.addItem(menuItem(t("Open results folder")) { m.openResults() })
+            menu.addItem(submenu(t("Helper agent tasks (for agents that can't receive messages)"), tasks))
+        }
+        menu.addItem(.separator())
+        // 모양·언어·단축키
+        let themeMenu = NSMenu()
+        for th in Theme.all { themeMenu.addItem(menuItem(t(th.title), on: m.theme == th.id) { m.theme = th.id }) }
+        menu.addItem(submenu(t("Theme"), themeMenu))
+        menu.addItem(menuItem(t("Edit hotkeys…")) { _ = HotKeys.loadCombos(); NSWorkspace.shared.open(HotKeys.file) })
+        menu.addItem(.separator())
+        menu.addItem(menuItem(t("Demo critters (fake agents, nothing is sent)"), on: m.demo) { m.demo.toggle() })
+        menu.addItem(menuItem(t("Show icon in Dock"), on: m.dockIcon) { m.dockIcon.toggle() })
+        menu.addItem(menuItem(t("Open at login"), on: m.loginItemEnabled) { m.loginItemEnabled.toggle() })
         return menu
     }
 

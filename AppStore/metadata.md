@@ -1,122 +1,135 @@
-# Whiplash — 앱스토어 심사 제출 자료 초안
+# Whiplash — App Store submission kit
 
-App Store Connect 에 붙여 넣을 글과 체크리스트. 바꿔도 되는 건 전부 바꿔도 됨.
+Everything to paste into App Store Connect, plus the checklist. English is the primary locale; Korean and Japanese follow. Edit freely.
 
-## 기본
+## Basics
 
-| 항목 | 값 |
+| Field | Value |
 |---|---|
-| 이름 | Whiplash |
-| 부제 (30자) | 내 AI 에이전트들을 채찍질하는 어항 |
-| 부제 (EN) | Whip your AI agents into shape |
-| 번들 ID | kr.urbanism.whiplash |
-| 카테고리 | 유틸리티 (보조: 엔터테인먼트) |
-| 가격 | 무료 (인앱 결제 없음) |
-| 연령 | 4+ |
-| 저작권 | © 2026 Kade |
-| 지원 URL | https://github.com/kade93/whiplash |
-| 개인정보 처리방침 URL | https://github.com/kade93/whiplash/blob/main/docs/PRIVACY.md |
-| 암호화 | 사용 안 함 (ITSAppUsesNonExemptEncryption = NO, plist에 들어 있음) |
+| Name | Whiplash |
+| Subtitle (30 chars) | Whip your AI agents into shape |
+| Subtitle (KO) | 내 AI 에이전트들을 채찍질하는 앱 |
+| Subtitle (JA) | AIエージェントに鞭を |
+| Bundle ID | kr.urbanism.whiplash |
+| Primary category | Utilities (secondary: Entertainment) |
+| Price | Free, no in-app purchases |
+| Age rating | 4+ |
+| Copyright | © 2026 Kade |
+| Support URL | https://github.com/kade93/whiplash |
+| Privacy policy URL | https://github.com/kade93/whiplash/blob/main/docs/PRIVACY.md (must be public before submission) |
+| Encryption | None (ITSAppUsesNonExemptEncryption = NO in Info.plist) |
+| Minimum macOS | 13.0 (AirPods head flick needs 14.0) |
+| Development region | en |
 
-## 설명 (KR)
+## Description (EN)
 
-맥에서 돌아가는 AI 코딩 에이전트(Claude Code, Codex, Cursor, Gemini CLI…)가 지금 뭘 하는지,
-누가 내 답을 기다리는지, CPU·메모리를 얼마나 물고 있는지 — 픽셀 캐릭터들로 한눈에.
-
-- 세션마다 캐릭터 하나. 일하면 연장을 들고 휘두르고, 쉬면 잠들고, 내 차례면 폴짝 뛰어요.
-- 읽는 중엔 책, 고치는 중엔 연필, 명령 실행 중엔 망치. 지금 하는 일이 그대로 보여요.
-- 답·질문·허락을 기다리는 세션은 노란 말풍선. 여러 세션을 돌릴 때 어디로 돌아가야 할지 바로 알 수 있어요.
-- 과부하(CPU·메모리)면 빨개지고 김이 나요.
-- 풀어놓기: 캐릭터들이 바탕화면을 돌아다녀요. 작게, 우리에 가두기, 모두 숨기기, 전역 단축키.
-- 채찍질: 쉬는 캐릭터 위에서 마우스를 휙휙 흔들면 「짝!」.
-
-Claude Code 세션 정보는 홈 폴더의 `.claude` 를 읽기만 해요. 어디로도 보내지 않아요.
-
-## 설명 (EN)
-
-See what your AI coding agents (Claude Code, Codex, Cursor, Gemini CLI…) are doing right now —
-who's working, who's waiting for you, who's eating your CPU — as tiny pixel critters.
+See what your AI coding agents (Claude Code, Codex, Cursor, Gemini CLI…) are doing right now — who's working, who's waiting for you, who's eating your CPU — as tiny pixel critters that roam your desktop.
 
 - One critter per session. Working ones swing a tool, idle ones sleep, the ones waiting on you hop.
 - A book while reading, a pencil while editing, a hammer while running commands.
 - Sessions waiting for your reply, a question or a permission get a yellow speech bubble.
 - Overloaded? They turn red and steam.
-- Let them roam your desktop, shrink them, pen them up, hide them all, global hotkeys.
-- Crack the whip: swing your mouse over an idle critter.
+- Let them roam your desktop, line them up, plant them in the carrot field, hide them all, global hotkeys.
+- Crack the whip: swipe your mouse over an idle critter. Pet it slowly for a treat instead.
+- Whip with your body: an AirPods head flick, a hand swing in front of the camera, a "whoosh-crack!" into the mic, or a flick of your iPhone or Apple Watch with the Whiplash Remote companion.
+- Remaining Claude quota shown as carrots. When they run out, the critters go on strike.
+- English, 한국어, 日本語.
 
-Reads your `~/.claude` session files locally. Nothing leaves your Mac.
+Reads your `~/.claude` session files locally. Nothing leaves your Mac. Camera, microphone, motion and network are used only while the matching feature is switched on, and nothing is recorded.
 
-## 키워드 (100자)
+## Description (KO)
 
-claude code,codex,cursor,gemini,ai agent,monitor,cpu,pixel,pet,desktop,tamagotchi,개발,에이전트,모니터
+맥에서 돌아가는 AI 코딩 에이전트(Claude Code, Codex, Cursor, Gemini CLI…)가 지금 뭘 하는지, 누가 내 답을 기다리는지, CPU·메모리를 얼마나 물고 있는지 — 바탕화면을 돌아다니는 픽셀 캐릭터들로 한눈에.
 
-## 새로운 기능 (1.0)
+- 세션마다 캐릭터 하나. 일하면 연장을 들고 휘두르고, 쉬면 잠들고, 내 차례면 폴짝 뛰어요.
+- 읽는 중엔 책, 고치는 중엔 연필, 명령 실행 중엔 망치.
+- 답·질문·허락을 기다리는 세션은 노란 말풍선.
+- 과부하면 빨개지고 김이 나요.
+- 풀어놓기, 줄 세우기, 당근밭에 심기, 모두 숨기기, 전역 단축키.
+- 채찍질: 쉬는 캐릭터 위에서 마우스를 휙휙. 천천히 쓰다듬으면 간식.
+- 몸으로 때리기: 에어팟 고개 휙, 카메라 앞 손 휘두르기, 입으로 「화츅!」, 아이폰·애플워치 휘두르기(Whiplash Remote).
+- 남은 Claude 쿼터를 당근으로. 다 떨어지면 파업.
 
-첫 출시.
+Claude Code 세션 정보는 홈 폴더의 `.claude`를 읽기만 해요. 어디로도 보내지 않아요. 카메라·마이크·모션·네트워크는 해당 기능을 켠 동안만 쓰고 녹화·녹음하지 않아요.
 
-## 스크린샷 (필수: 1280×800 또는 2880×1800, 최소 1장, 최대 10장)
+## Description (JA)
 
-찍을 장면:
-1. 어항 창 — 세션 여러 개, 내 차례 노란 줄, 과부하 빨간 줄
-2. 풀어놓기 — 바탕화면 위를 걷는 캐릭터들 (이름표 포함)
-3. 우리에 가두기
-4. 채찍질 순간 「짝!」 (StrikeTile 애니메이션 중)
-5. 메뉴 막대 채찍 메뉴 + 단축키
+Mac で動く AI コーディングエージェント（Claude Code、Codex、Cursor、Gemini CLI…）が今何をしているか、誰があなたの返事を待っているか、CPU・メモリをどれだけ使っているかを、デスクトップを歩き回るピクセルキャラクターでひと目で。
 
-찍는 법: `WHIPLASH_SNAPSHOT=/경로.png` 로 실행하면 창 자체를 PNG로 저장. 바탕화면 포함 장면은 ⇧⌘5.
+- セッションごとにキャラクター 1 体。働くときは道具を振り、休むと眠り、あなたの番なら跳ねます。
+- 読んでいるときは本、編集中は鉛筆、コマンド実行中はハンマー。
+- 返事・質問・許可を待つセッションには黄色い吹き出し。
+- 過負荷なら赤くなって湯気。
+- 放す、一列に並べる、ニンジン畑に植える、すべて隠す、グローバルショートカット。
+- 鞭：休んでいるキャラの上でマウスをさっと。ゆっくりなでるとおやつ。
+- 体で鞭：AirPods で首をひょい、カメラの前で手を振る、口で「ヒュッ！」、iPhone・Apple Watch を振る（Whiplash Remote）。
+- 残りの Claude クォータをニンジンで。尽きるとストライキ。
 
-## 심사 노트 (Review Notes)
+`~/.claude` のセッションファイルをローカルで読むだけです。何も送信しません。カメラ・マイク・モーション・ネットワークは該当機能をオンにしている間だけ使い、録画・録音はしません。
 
-Whiplash is a desktop companion that visualises locally running AI coding agents.
+## Keywords (100 chars)
 
-- It lists processes with `proc_listallpids`/`proc_pidinfo` (read-only) to find agent processes
-  (Claude Code, Codex, Cursor, Gemini CLI) and shows their CPU/memory.
-- To show session titles and status it reads `~/.claude/sessions/*.json` and the tail of
-  `~/.claude/projects/**/*.jsonl`. The user grants access to their home folder once via NSOpenPanel
-  (security-scoped bookmark). Nothing is written there, nothing is uploaded anywhere.
-- Global hotkeys use RegisterEventHotKey (no Accessibility permission needed).
-- No accounts, no network, no analytics. (The quota "carrot field" feature exists only in the direct-download edition and is not compiled into App Store behavior: the sandbox build hides it.)
+claude code,codex,cursor,gemini,ai agent,monitor,cpu,pixel,pet,desktop,tamagotchi,whip,에이전트,모니터
 
-Reviewer tip: without Claude Code installed the aquarium shows "no agents running"; the roaming
-critters and menus can still be exercised. A demo video is attached.
+## What's New (0.3)
 
-## 개인정보 처리방침 (올릴 글)
+First release.
 
-Whiplash는 개인정보를 수집하지 않습니다. 앱은 사용자의 Mac에서 실행 중인 프로세스 목록과,
-사용자가 허용한 홈 폴더 안의 `.claude` 세션 파일을 읽기만 하며, 어떤 정보도 외부 서버로 전송하지 않습니다.
-설정(창 위치, 단축키 등)은 Mac 안에만 저장됩니다.
+## Screenshots (1280×800 or 2880×1800, 1–10)
 
-Whiplash does not collect any personal data. It reads the list of running processes on your Mac and,
-with your permission, the `.claude` session files in your home folder. Nothing is transmitted anywhere.
-Settings are stored only on your Mac.
+Generated by `tools/screenshots.sh` into `AppStore/screenshots/`:
 
-## 제출 전 체크리스트
+1. Roaming critters on the desktop, one waiting for you, one overloaded
+2. The list window: sessions, CPU/memory bars, quota carrots
+3. The carrot field with one critter per carrot
+4. The whip moment ("Whack!") and the treat ("Yum!")
+5. Settings menu: Body Whips, Language
 
-- [ ] Apple Developer Program 가입, 인증서 3종 (release.sh 머리말)
-- [ ] App Store Connect 에 앱 생성 (번들 ID kr.urbanism.whiplash)
-- [x] `./build.sh --sandbox` 로 샌드박스판 로컬 테스트 (2026-11-05): 프로세스 목록·CPU·메모리 OK (sysctl + taskinfo), 홈 폴더 허용 → 세션 제목 붙는지는 직접 확인
-- [ ] `./release.sh appstore` → .pkg → Transporter 업로드
-- [ ] 스크린샷 5장, 1024 아이콘(assets/icon-1024.png — 자동으로 들어감)
-- [ ] GitHub 저장소 공개 후 지원 URL·개인정보 URL 확인 (docs/PRIVACY.md)
-- [ ] 심사 노트 + 데모 영상 첨부 (에이전트 없는 환경에서 심사할 수 있으니 꼭)
+## Review notes
 
-## 샌드박스 실험 결과 (2026-11-06)
+Whiplash is a desktop companion that visualises AI coding agents running locally on the reviewer's Mac.
 
-- 프로세스 목록·CPU·메모리: `sysctl kern.proc` + `PROC_PIDTASKINFO` 로 **동작**.
-- `~/.claude` 읽기: 홈 폴더를 NSOpenPanel 로 한 번 허용받으면 **동작**.
-- 세션 소켓(`/tmp/cc-socks/<pid>.sock`) connect: **차단** (errno 1). `network.client` 와
-  `temporary-exception.files.absolute-path.read-write` 로 `/tmp/cc-socks/`·`/private/tmp/cc-socks/` 를 열어도 똑같이 차단.
-  → 앱스토어판에서는 채찍 메시지·지시 보내기·오토 채찍을 제공할 수 없다. 창 앞으로 가져오기로 대체.
-- 보조 에이전트(`claude -p`) 실행: 샌드박스를 물려받아 동작 불가. 제공 안 함.
-- 결론: **앱스토어 = 무료 관람·관리판**, **전체 기능 = Developer ID 공증 직접 배포(무료 다운로드)**. 두 판 모두 `release.sh` 로 만든다.
+- Process discovery is read-only via `sysctl(KERN_PROC_ALL)` and `proc_pidinfo`; it shows CPU and memory per agent process (Claude Code, Codex, Cursor, Gemini CLI, Antigravity).
+- Session titles and status come from `~/.claude/sessions/*.json` and the tail of `~/.claude/projects/**/*.jsonl`. The user grants home-folder access once through NSOpenPanel (security-scoped bookmark). Nothing is written there and nothing is uploaded anywhere.
+- Global hotkeys use RegisterEventHotKey; no Accessibility permission is requested.
+- Optional "Body Whips" features are off by default and each asks for its permission only when switched on: camera (Vision hand pose, frames are analysed in memory and discarded), microphone (only the signal level is measured), AirPods motion (CMHeadphoneMotionManager), local network (Bonjour `_whiplash._udp`, UDP port 47777, receives one-line commands from the companion iOS/watchOS app). No recording, no storage, no analytics, no accounts.
+- In this App Store build, "whipping" a session brings its window to the front and plays the reaction; sending text to sessions is not part of this edition.
 
-## 앱스토어판과 직접 배포판 차이
+Without an AI agent installed, the app shows "no agents running"; the roaming critters, menus, carrot field and the whip gesture can still be exercised. A demo video is attached.
 
-| | 앱스토어 (샌드박스) | 직접 배포 (Developer ID) |
+## Privacy policy (publish this text)
+
+Whiplash does not collect any personal data. It reads the list of running processes on your Mac and, with your permission, the `.claude` session files in your home folder. Optional features use the camera, microphone, AirPods motion sensors or the local network only while they are switched on, process the data in memory, and never record, store or transmit it. Settings are stored only on your Mac.
+
+Whiplash는 개인정보를 수집하지 않습니다. 사용자의 Mac에서 실행 중인 프로세스 목록과, 사용자가 허용한 홈 폴더 안의 `.claude` 세션 파일을 읽기만 합니다. 선택 기능은 카메라·마이크·에어팟 모션 센서·로컬 네트워크를 켠 동안만 사용하고 메모리에서만 처리하며 저장·전송하지 않습니다. 설정은 Mac 안에만 저장됩니다.
+
+## Checklist
+
+Done by the code:
+- [x] English is the development region and default UI language; 한국어 / 日本語 complete (294 strings, 0 missing)
+- [x] Sandbox build (`./build.sh --sandbox`) launches; entitlements: app-sandbox, user-selected files (read-only), app-scope bookmarks, camera, audio-input, network client/server
+- [x] Usage descriptions for camera, microphone, motion, local network; Bonjour service declared
+- [x] No references to another distribution channel in the sandboxed build
+- [x] App icon 1024 and iconset; privacy manifest (PrivacyInfo.xcprivacy); ITSAppUsesNonExemptEncryption = NO
+- [x] Screenshots script (`tools/screenshots.sh`)
+
+You do:
+- [ ] Apple Developer Program (individual is fine; no business registration needed; organization needs a D-U-N-S number)
+- [ ] Certificates in Xcode: Apple Distribution, Mac Installer Distribution (and Developer ID Application for the GitHub edition)
+- [ ] App Store Connect: create the app with bundle ID kr.urbanism.whiplash, free, Utilities
+- [ ] Mac App Store provisioning profile → save as `embedded.provisionprofile`
+- [ ] Make the privacy policy URL public (make the repo public, or publish docs/PRIVACY.md on GitHub Pages)
+- [ ] `./release.sh appstore` → upload the .pkg with Transporter
+- [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
+- [ ] Submit for review
+
+## App Store edition vs direct download
+
+| | App Store (sandbox) | Direct download (Developer ID) |
 |---|---|---|
-| 세션 보기·돌아다니기·단축키 | ○ | ○ |
-| 채찍질 | 창 앞으로 불러오기만 | 세션에 「계속해」 메시지 (소켓 없으면 보조 에이전트) |
-| 지시 보내기 · 오토 채찍 | × | ○ |
-| 하던 일 멈추기 (Ctrl-C) | × | ○ |
-| ~/.claude 접근 | 처음 한 번 홈 폴더 허용 | 바로 |
-| 메모리 숫자 | resident size (taskinfo) | phys footprint (활성 상태 보기와 같음) |
+| Monitoring, roaming, hotkeys, carrot field, themes | ✓ | ✓ |
+| Whip | brings the window to front + reaction | delivers the whip prompt to the session |
+| Send instruction, megaphone, treats as messages, auto-whip | ✗ | ✓ |
+| Body whips (AirPods, camera, mic, remote) | ✓ (reaction only) | ✓ |
+| Remaining quota (carrots) | ✗ (Keychain not accessible) | ✓ |
+| ~/.claude access | one-time home folder permission | immediate |

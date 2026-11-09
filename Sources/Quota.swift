@@ -16,8 +16,8 @@ struct Quota: Equatable {
         /// 짧은 이름: 세션 · 주간 · Fable
         var shortTitle: String {
             switch key {
-            case "five_hour": return t("세션")
-            case "seven_day": return t("주간")
+            case "five_hour": return t("Session")
+            case "seven_day": return t("Weekly")
             default:
                 if key.hasPrefix("seven_day_") { return Quota.modelName(String(key.dropFirst("seven_day_".count))) }
                 return key.replacingOccurrences(of: "_", with: " ")
@@ -26,9 +26,9 @@ struct Quota: Equatable {
         /// 긴 이름: 세션 (5시간) · 주간 (모든 모델) · 주간 · Fable
         var title: String {
             switch key {
-            case "five_hour": return t("세션 (5시간)")
-            case "seven_day": return t("주간 (모든 모델)")
-            default: return key.hasPrefix("seven_day_") ? t("주간 · ") + shortTitle : shortTitle
+            case "five_hour": return t("Session (5 hours)")
+            case "seven_day": return t("Weekly (all models)")
+            default: return key.hasPrefix("seven_day_") ? t("Weekly · ") + shortTitle : shortTitle
             }
         }
     }
@@ -49,10 +49,10 @@ struct Quota: Equatable {
 
     /// 한 줄 요약: 🥕 남은 쿼터 25% · 주간 55% · Fable 70% · 2시간 뒤
     var summary: String {
-        guard let five = fiveHour else { return t("🥕 남은 쿼터 조회 중…") }
-        if exhausted { return t("🥕 쿼터 다 씀 · 파업!") }
-        var parts = [tf("🥕 남은 쿼터 %d%%", Int(five.remaining))]
-        if let w = sevenDay { parts.append(tf("주간 %d%%", Int(w.remaining))) }
+        guard let five = fiveHour else { return t("🥕 Checking remaining quota…") }
+        if exhausted { return t("🥕 Quota exhausted · strike!") }
+        var parts = [tf("🥕 Quota left %d%%", Int(five.remaining))]
+        if let w = sevenDay { parts.append(tf("weekly %d%%", Int(w.remaining))) }
         for w in extras { parts.append("\(w.shortTitle) \(Int(w.remaining))%") }
         if let r = five.resetsAt { parts.append(fmtAgoFuture(r)) }
         return parts.joined(separator: " · ")
@@ -67,11 +67,11 @@ enum QuotaReader {
         case noToken, denied, http(Int), parse, network(String)
         var errorDescription: String? {
             switch self {
-            case .noToken:         return t("키체인에 Claude Code 로그인 정보가 없어요 — Claude Code 에서 /login 먼저")
-            case .denied:          return t("키체인 접근을 거부했어요 — 「당근밭 보기」를 껐다 켜고 「항상 허용」")
-            case .http(let c):     return tf("사용량 조회 실패 (HTTP %d)", c)
-            case .parse:           return t("사용량 응답을 못 읽었어요")
-            case .network(let s):  return tf("사용량 조회 실패: %@", s)
+            case .noToken:         return t("No Claude Code login in Keychain — run /login in Claude Code first")
+            case .denied:          return t("Keychain access was denied — toggle Show carrots off and on, then choose Always Allow")
+            case .http(let c):     return tf("Usage check failed (HTTP %d)", c)
+            case .parse:           return t("Couldn't read the usage response")
+            case .network(let s):  return tf("Usage check failed: %@", s)
             }
         }
     }

@@ -20,16 +20,16 @@ final class HeadFlick {
 
     func start() {
         guard !running else { return }
-        guard manager.isDeviceMotionAvailable else { status = t("에어팟 모션을 지원하는 기기가 없어요"); return }
+        guard manager.isDeviceMotionAvailable else { status = t("No AirPods with motion sensors connected"); return }
         running = true
-        status = t("에어팟 기다리는 중…")
+        status = t("Waiting for AirPods…")
         manager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let self = self else { return }
             if let error = error { self.status = error.localizedDescription; return }
             guard let m = motion else { return }
             let r = m.rotationRate
             let speed = sqrt(r.x * r.x + r.y * r.y + r.z * r.z)
-            if self.status != t("에어팟 듣는 중") { self.status = t("에어팟 듣는 중") }
+            if self.status != t("Listening to AirPods") { self.status = t("Listening to AirPods") }
             let now = ProcessInfo.processInfo.systemUptime
             if speed >= Self.threshold, now >= self.cooldownUntil {
                 self.cooldownUntil = now + Self.cooldown

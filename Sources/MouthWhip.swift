@@ -20,11 +20,11 @@ final class MouthWhip {
     func start() {
         guard !running else { return }
         running = true
-        status = t("마이크 권한 확인 중…")
+        status = t("Checking microphone permission…")
         AVCaptureDevice.requestAccess(for: .audio) { [weak self] ok in
             DispatchQueue.main.async {
                 guard let self = self, self.running else { return }
-                guard ok else { self.status = t("마이크 권한이 거부됐어요 — 시스템 설정 › 개인정보 보호 › 마이크"); self.running = false; return }
+                guard ok else { self.status = t("Microphone access denied — System Settings › Privacy › Microphone"); self.running = false; return }
                 self.open()
             }
         }
@@ -33,7 +33,7 @@ final class MouthWhip {
     private func open() {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
-        guard format.sampleRate > 0 else { status = t("마이크를 못 열었어요"); running = false; return }
+        guard format.sampleRate > 0 else { status = t("Couldn't open the microphone"); running = false; return }
         input.installTap(onBus: 0, bufferSize: 512, format: format) { [weak self] buffer, _ in
             guard let self = self, let ch = buffer.floatChannelData?[0] else { return }
             let n = Int(buffer.frameLength)
@@ -45,7 +45,7 @@ final class MouthWhip {
         }
         do {
             try engine.start()
-            status = t("마이크 듣는 중 — 「화츅!」")
+            status = t("Listening — go \"whoosh-crack!\"")
         } catch {
             status = error.localizedDescription; running = false
         }

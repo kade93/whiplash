@@ -13,12 +13,12 @@ enum SessionMessenger {
         case noSocket, noToken, connect(Int32), write(Int32), rejected(String), sandboxed
         var errorDescription: String? {
             switch self {
-            case .noSocket:        return t("이 세션은 메시지 소켓이 없어요")
-            case .noToken:         return t("세션 키 파일을 못 읽었어요")
-            case .connect(let e):  return tf("세션에 연결 못 함 (errno %d)", Int(e))
-            case .write(let e):    return tf("보내다 끊김 (errno %d)", Int(e))
-            case .rejected(let s): return tf("세션이 거절함: %@", s)
-            case .sandboxed:       return t("앱스토어판에서는 보낼 수 없어요 — 전체 기능판에서 돼요")
+            case .noSocket:        return t("This session has no message socket")
+            case .noToken:         return t("Couldn't read the session key file")
+            case .connect(let e):  return tf("Couldn't connect to the session (errno %d)", Int(e))
+            case .write(let e):    return tf("Dropped while sending (errno %d)", Int(e))
+            case .rejected(let s): return tf("Session refused: %@", s)
+            case .sandboxed:       return t("Not available in the App Store edition")
             }
         }
     }
@@ -121,14 +121,19 @@ struct PromptView: View {
 
     var body: some View {
         let g = model.snapshot.groups.first { $0.id == groupID }
-        let name = g.flatMap { $0.session?.name }.flatMap { $0.isEmpty ? nil : $0 } ?? g?.kind.title ?? ""
+        let broadcast = groupID == Model.broadcastID
+        let targets = model.snapshot.groups.filter { $0.session != nil && $0.id != Model.ghostID }.count
+        let name = broadcast ? tf("📣 Megaphone — to all %d Claude sessions", targets)
+                             : (g.flatMap { $0.session?.name }.flatMap { $0.isEmpty ? nil : $0 } ?? g?.kind.title ?? "")
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 if let g = g { SpriteTile(kind: g.kind, awake: true, cell: 1.5) }
                 Text(name).font(.system(size: 11, weight: .bold)).lineLimit(1).truncationMode(.tail)
                 Spacer()
-                Text(g?.session?.isDesktop == true ? t("Claude 앱 세션") : t("터미널 세션"))
-                    .font(.system(size: 9)).foregroundStyle(.tertiary)
+                if !broadcast {
+                    Text(g?.session?.isDesktop == true ? t("Claude app session") : t("Terminal session"))
+                        .font(.system(size: 9)).foregroundStyle(.tertiary)
+                }
             }
             // 뭘 물어봤나 / 마지막에 뭐라 했나 — 한두 줄
             if let s = g?.session {
@@ -145,12 +150,12 @@ struct PromptView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .help(s.lastReply)
                     if s.status != .busy {
-                        chips([t("응, 해"), t("하지 마"), t("계속해")])
+                        chips([t("Yes, do it"), t("Don't"), t("Keep going")])
                     }
                 }
             }
             HStack(spacing: 6) {
-                TextField(t("지시를 쳐서 바로 보내요 (⏎ 보내기 · esc 닫기)"), text: $text)
+                TextField(broadcast ? t("Same message to everyone (⏎ send · esc close)") : t("Type an instruction and send (⏎ send · esc close)"), text: $text)
                     .textFieldStyle(.plain)
                     .font(.system(size: 12))
                     .focused($focused)
@@ -169,7 +174,8 @@ struct PromptView: View {
             HStack(spacing: 6) {
                 switch state {
                 case .idle:
-                    Text(g?.session?.status == .busy ? t("일하는 중이라 지금 턴이 끝난 뒤에 읽어요") : t("쉬는 중 · 바로 읽어요"))
+                    Text(broadcast ? t("Idle sessions read it now, busy ones after their turn")
+                                   : (g?.session?.status == .busy ? t("Busy — reads this after the current turn") : t("Idle · reads right away")))
                         .font(.system(size: 9)).foregroundStyle(.secondary)
                 case .sending:
                     ProgressView().controlSize(.mini)
@@ -178,14 +184,11 @@ struct PromptView: View {
                     Text("보냈어요 ✓").font(.system(size: 9, weight: .bold)).foregroundStyle(Color(hex: 0x4E9A57))
                 case .failed(let why):
                     Text(why).font(.system(size: 9)).foregroundStyle(Color(hex: 0xE04F3A)).lineLimit(2)
-                    if Paths.sandboxed {
-                        Button(t("전체 기능판 받기…")) { Paths.openFullEdition(); close() }
-                            .buttonStyle(.plain).font(.system(size: 9, weight: .bold)).foregroundStyle(Color(hex: 0xE07A5F))
-                    }
+
                 }
                 Spacer()
-                if g != nil {
-                    Button(t("창 앞으로")) { if let g = g { model.bringToFront(g) }; close() }
+                if g != nil, !broadcast {
+                    Button(t("Bring window to front")) { if let g = g { model.bringToFront(g) }; close() }
                         .buttonStyle(.plain).font(.system(size: 9)).foregroundStyle(.secondary)
                 }
             }
@@ -216,7 +219,16 @@ struct PromptView: View {
 
     private func send() {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty, let g = model.snapshot.groups.first(where: { $0.id == groupID }) else { return }
+        guard !t.isEmpty else { return }
+        if groupID == Model.broadcastID {                       // 확성기
+            state = .sending
+            model.broadcast(t) { ok, total in
+                if ok > 0 { state = .sent; text = ""; DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { close() } }
+                else { state = .failed(tf("No session to send to (%d/%d)", ok, total)) }
+            }
+            return
+        }
+        guard let g = model.snapshot.groups.first(where: { $0.id == groupID }) else { return }
         state = .sending
         model.send(t, to: g) { result in
             switch result {

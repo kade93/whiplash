@@ -124,6 +124,7 @@ final class CritterManager: ObservableObject {
         }.mapValues { $0.frame }
     }
     var firstContentView: NSView? { windows.values.first?.contentView }
+    var allContentViews: [NSView] { windows.sorted { $0.key < $1.key }.compactMap { $0.value.contentView } }
     var firstAlpha: CGFloat { windows.values.first?.alphaValue ?? -1 }
     var cageContentView: NSView? { (cage?.isVisible ?? false) ? cage?.contentView : nil }
 
@@ -521,12 +522,13 @@ struct CritterView: View {
                 .opacity(g.id == Model.ghostID ? 0.55 : 1)
                 .whipHover(model.hoverWhipID == g.id)
                 .sentFlash(model.lastSent[g.id])
+                .treatFlash(model.lastTreat[g.id])
                 .overlay(alignment: .topTrailing) { WaitBadge(tone: st.tone, small: small).offset(x: small ? 6 : 8, y: small ? -6 : -8) }
                 .overlay(alignment: .bottomLeading) {
                     if critters.hungry.contains(g.id) && !strike {
                         Text("🥕✕").font(.system(size: 8)).padding(.horizontal, 3).padding(.vertical, 1)
                             .background(Capsule().fill(Color.black.opacity(0.6)))
-                            .help(t("자리에 당근이 없어요 — 쿼터가 줄어 굶는 중"))
+                            .help(t("No carrot at this seat — starving as the quota runs low"))
                     }
                 }
                 .whipTarget(g.id, on: model.canWhip(g))
@@ -543,7 +545,7 @@ struct CritterView: View {
     }
 
     private func name(_ g: AgentGroup) -> String {
-        if g.id == Model.ghostID { return t("Claude (꺼짐) · 휘두르면 깨워요") }
+        if g.id == Model.ghostID { return t("Claude (off) · swing to wake") }
         if let s = g.session, !s.name.isEmpty { return s.name }
         return g.kind.title + " · " + g.label
     }
@@ -601,15 +603,15 @@ struct FieldView: View {
             .allowsHitTesting(false)
             HStack {
                 Text(model.quotaEnabled && five != nil
-                     ? (model.quota?.summary ?? "") + (hungry > 0 ? tf(" · %d마리 굶는 중", hungry) : "")
-                     : tf("당근밭 · %d마리", n))
+                     ? (model.quota?.summary ?? "") + (hungry > 0 ? tf(" · %d starving", hungry) : "")
+                     : tf("Carrot field · %d", n))
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(Color(hex: 0xFFF1DC))
                 Spacer()
                 Button {
                     model.caged = false
                 } label: {
-                    Text(t("뽑아주기"))
+                    Text(t("Pull out"))
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 7).padding(.vertical, 2)
@@ -625,7 +627,7 @@ struct FieldView: View {
         .contentShape(Rectangle())
         .coordinateSpace(name: "root")
         .onPreferenceChange(NoDragKey.self) { onNoDrag($0) }
-        .help(t("끌어서 옮길 수 있어요. 애들은 여기 자기 자리에 박혀 있어요."))
+        .help(t("Drag to move. Each one stays planted in its spot."))
     }
 
     private func seatLabel(_ g: AgentGroup) -> String {

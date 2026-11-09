@@ -29,8 +29,8 @@ enum Paths {
     /// 홈 폴더 고르기 창. 고르면 북마크로 저장해 다음부터는 안 묻는다.
     static func requestHomeAccess() {
         let panel = NSOpenPanel()
-        panel.message = t("Claude Code 세션 정보(~/.claude)를 읽으려면 홈 폴더 접근을 허용해 주세요. 읽기만 해요.")
-        panel.prompt = t("허용")
+        panel.message = t("To read Claude Code session info (~/.claude), please allow access to your home folder. Read-only.")
+        panel.prompt = t("Allow")
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
@@ -341,8 +341,8 @@ final class SessionReader {
                                 tail.question = (q["question"] as? String) ?? ""
                                 tail.options = ((q["options"] as? [[String: Any]]) ?? []).compactMap { $0["label"] as? String }
                             } else if name == "ExitPlanMode" {
-                                tail.question = t("계획을 세웠어요. 이대로 진행할까요?")
-                                tail.options = [t("진행해"), t("계획 고치자")]
+                                tail.question = t("I drafted a plan. Go ahead with it?")
+                                tail.options = [t("Go ahead"), t("Revise the plan")]
                             } else {
                                 tail.question = ""; tail.options = []
                             }
@@ -363,11 +363,11 @@ final class SessionReader {
         case .none:
             tail.activity = ""; tail.waiting = .none; tail.chore = .none
         case .prompt:
-            tail.activity = t("지시 읽는 중"); tail.waiting = .none; tail.chore = .read
+            tail.activity = t("Reading the prompt"); tail.waiting = .none; tail.chore = .read
         case .toolResult:
-            tail.activity = t("생각하는 중"); tail.waiting = .none; tail.chore = .think
+            tail.activity = t("Thinking"); tail.waiting = .none; tail.chore = .think
         case .text:
-            tail.activity = t("답하는 중"); tail.waiting = .reply; tail.chore = .answer
+            tail.activity = t("Answering"); tail.waiting = .reply; tail.chore = .answer
         case .tool(let name, let detail):
             tail.activity = detail.isEmpty ? verb(name) : "\(verb(name)) · \(detail)"
             tail.waiting = ["AskUserQuestion", "ExitPlanMode"].contains(name) ? .question : .permission
@@ -395,18 +395,18 @@ final class SessionReader {
 
     private static func verb(_ name: String) -> String {
         switch name {
-        case "Read":                      return t("읽는 중")
-        case "Edit", "MultiEdit", "NotebookEdit": return t("고치는 중")
-        case "Write":                     return t("쓰는 중")
-        case "Bash":                      return t("실행 중")
-        case "Grep", "Glob":              return t("찾는 중")
-        case "Agent", "Task":             return t("부하 시키는 중")
-        case "WebSearch":                 return t("검색 중")
-        case "WebFetch":                  return t("웹 읽는 중")
-        case "AskUserQuestion":           return t("물어보는 중")
-        case "ExitPlanMode":              return t("계획 승인 기다림")
-        case "TodoWrite":                 return t("할 일 적는 중")
-        default:                          return shortName(name) + t(" 중")
+        case "Read":                      return t("Reading")
+        case "Edit", "MultiEdit", "NotebookEdit": return t("Editing")
+        case "Write":                     return t("Writing")
+        case "Bash":                      return t("Running")
+        case "Grep", "Glob":              return t("Searching")
+        case "Agent", "Task":             return t("Delegating")
+        case "WebSearch":                 return t("Web searching")
+        case "WebFetch":                  return t("Reading the web")
+        case "AskUserQuestion":           return t("Asking you")
+        case "ExitPlanMode":              return t("Waiting for plan approval")
+        case "TodoWrite":                 return t("Writing todos")
+        default:                          return shortName(name) + t(" in progress")
         }
     }
 
@@ -441,10 +441,10 @@ final class SessionReader {
 func fmtAgo(_ d: Date?) -> String {
     guard let d = d else { return "" }
     let s = Int(Date().timeIntervalSince(d))
-    if s < 60 { return t("방금") }
-    if s < 3600 { return tf("%d분", s / 60) }
-    if s < 86400 { return tf("%d시간 %d분", s / 3600, s % 3600 / 60) }
-    return tf("%d일", s / 86400)
+    if s < 60 { return t("just now") }
+    if s < 3600 { return tf("%dm", s / 60) }
+    if s < 86400 { return tf("%dh %dm", s / 3600, s % 3600 / 60) }
+    return tf("%dd", s / 86400)
 }
 
 /// 1.2M · 340k · 980

@@ -198,7 +198,7 @@ Alternatively press ⌃⌥W (random idle session) or right-click → **Whip — 
 - ⌃⌥⇧W or the menu item **Whip everyone idle** sends the whip message to every idle session. Immune sessions are skipped.
 
 **What happens**
-- Claude Code sessions receive a short message (default: `Whack! (Whiplash) Keep going with what you were doing. If you're done, pick the next thing and do it.`). Change it under **Auto-whip → Edit whip words…**.
+- Claude Code sessions receive a short message (default: `Whack! (Whiplash) Keep going with what you were doing. If you're done, pick the next thing and do it.`). Change it under **Auto-whip → Edit whip prompt…**.
 - Agents that cannot receive messages (Codex, Gemini) or a picked task: a helper agent starts in the same project folder in read-only mode and works on the task. Results appear at the bottom of the window; click to open.
 
 **Reaction**
@@ -233,7 +233,19 @@ Delivers the whip message to idle Claude Code sessions at a fixed interval until
 | Stop current work (Ctrl-C) | Interrupt a Terminal session (not available for Claude app sessions) |
 | Whip immunity | Exclude from whips |
 
-### 6.5 Whip with your body
+### 6.5 Treats (praise) and the megaphone
+
+A **treat** is the opposite of a whip. It delivers a praise prompt to the session (default: `🥕 Nice work! (Whiplash) Keep going just like this.`, editable under Settings ▸ Edit treat prompt…) and the critter hops with a "Yum!". Agents that cannot receive messages still react.
+
+| Method | Action |
+|---|---|
+| Petting | Hover over a critter, then stroke **slowly** (30–180 px/s) side to side three times. Fast means whip, slow means treat |
+| Right-click → 🥕 Give a treat | Treat that session |
+| ⌃⌥T / menu **Treat everyone working** | Treat every working session |
+
+The **megaphone** (⌃⌥B / menu **Megaphone — same message to everyone…**) opens the prompt box in broadcast mode: the text is delivered to every Claude session. Idle sessions read it immediately, busy ones after their turn.
+
+### 6.6 Whip with your body
 
 Turn these on under **Settings ▸ Whip with your body**. Sensors, camera, microphone and network are used only while on, and nothing is recorded. Each trigger whips every idle session (same as ⌃⌥⇧W).
 
@@ -246,7 +258,7 @@ Turn these on under **Settings ▸ Whip with your body**. Sensors, camera, micro
 
 The menu shows each trigger's state (listening, permission denied, and so on).
 
-### 6.6 Launching Claude
+### 6.7 Launching Claude
 
 When Claude is not running, a **Claude (off)** character appears. Whip it to open the Claude app, or right-click → **Open claude in Terminal** and choose a recent project folder to start Claude Code there.
 
@@ -277,7 +289,8 @@ The menu bar icon and the Dock icon (right-click) show the same menu. Frequently
 | Compact view / Always on top | Window settings |
 | Whip only while holding ⌥ | Accident prevention |
 | Show remaining quota — remaining quota | Enable quota lookup (a macOS Keychain prompt appears the first time, see 5.4) |
-| Whip tasks ▸ | Edit helper agent tasks, open results folder |
+| Edit whip prompt… | The text delivered on a whip |
+| Helper agent tasks ▸ | Task list for agents that cannot receive messages (Codex, Gemini), results folder |
 | Theme ▸ / Language ▸ | Appearance and language |
 | Edit hotkeys… | Opens `hotkeys.json`; reloaded automatically after saving |
 | Show icon in Dock / Open at login | App settings |
@@ -295,6 +308,8 @@ Work regardless of the active app. No Accessibility permission needed.
 | ⌃⌥G | Come here |
 | ⌃⌥W | Whip an idle session |
 | ⌃⌥⇧W | Whip every idle session |
+| ⌃⌥T | Treat every working session |
+| ⌃⌥B | Megaphone — same message to everyone |
 | ⌃⌥P | Show list while roaming |
 
 To change them, choose **Settings ▸ Edit hotkeys…**, edit `hotkeys.json` using the form `"ctrl+alt+h"` and save. The file is reloaded the next time the menu opens. Modifiers: ctrl, alt (option), cmd, shift. An empty value disables that hotkey.

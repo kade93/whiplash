@@ -63,7 +63,7 @@ struct PixelBar: View {
 private let monoSmall = Font.system(size: 9.5, weight: .medium, design: .monospaced)
 private let otherColor = Color.primary.opacity(0.38)
 
-func fmtCores(_ c: Double) -> String { tf("%.1f코어", c) }
+func fmtCores(_ c: Double) -> String { tf("%.1f cores", c) }
 
 // MARK: - 루트
 
@@ -73,44 +73,43 @@ struct SettingsMenu: View {
     @AppStorage("useAppIcons") private var useAppIcons = false   // 기본은 캐릭터
 
     var body: some View {
-        Toggle(t("풀어놓기 — 화면 돌아다니기"), isOn: $model.roaming)
-        Toggle(t("작게 풀어놓기 (이름표 없이)"), isOn: $model.critterSmall)
-        Toggle(t("당근밭에 박아두기"), isOn: $model.caged)
-        Toggle(t("풀어놓을 때 채찍질 창도 보기"), isOn: $model.panelWithCritters)
-        Toggle(t("Dock 에 아이콘 보이기"), isOn: $model.dockIcon)
-        Menu(t("테마")) {
+        Toggle(t("Let loose — roam the screen"), isOn: $model.roaming)
+        Toggle(t("Roam small (no name tags)"), isOn: $model.critterSmall)
+        Toggle(t("Plant in the carrot field"), isOn: $model.caged)
+        Toggle(t("Show list while roaming (both at once)"), isOn: $model.panelWithCritters)
+        Toggle(t("Show icon in Dock"), isOn: $model.dockIcon)
+        Menu(t("Theme")) {
             ForEach(Theme.all) { th in
                 Button(action: { model.theme = th.id }) {
                     if model.theme == th.id { Label(t(th.title), systemImage: "checkmark") } else { Text(t(th.title)) }
                 }
             }
         }
-        Toggle(t("남은 쿼터 보기 🥕 (Claude 로그인 키체인 읽기)"), isOn: $model.quotaEnabled)
-        Toggle(t("⌥ 누른 채로만 채찍 (오작동 방지)"), isOn: $model.whipNeedsOption)
-        Toggle(t("캐릭터 뒤 물빛 칸"), isOn: $model.critterBox)
-        Toggle(t("모두 숨기기 (메뉴 막대 채찍으로 되돌림)"), isOn: $model.hidden)
+        Toggle(t("Show remaining quota 🥕 (reads Claude login from Keychain)"), isOn: $model.quotaEnabled)
+        Toggle(t("Whip only while holding ⌥ (avoid accidents)"), isOn: $model.whipNeedsOption)
+        Toggle(t("Water tile behind critters"), isOn: $model.critterBox)
+        Toggle(t("Hide all (bring back from the menu bar whip)"), isOn: $model.hidden)
         Divider()
-        Toggle(t("작게 보기"), isOn: $model.compact)
-        Toggle(t("앱 아이콘으로 보기"), isOn: $useAppIcons)
-        Toggle(t("항상 맨 위에"), isOn: $model.alwaysOnTop)
-        Toggle(t("로그인할 때 열기"), isOn: $model.loginItemEnabled)
-        Button(t("저장공간 다시 재기")) { model.rescanStorage() }
+        Toggle(t("Compact view"), isOn: $model.compact)
+        Toggle(t("Show app icons"), isOn: $useAppIcons)
+        Toggle(t("Always on top"), isOn: $model.alwaysOnTop)
+        Toggle(t("Open at login"), isOn: $model.loginItemEnabled)
+        Button(t("Rescan storage")) { model.rescanStorage() }
         Divider()
-        if Paths.sandboxed { Button(t("전체 기능판 받기… (채찍 메시지·지시 보내기·오토 채찍)")) { Paths.openFullEdition() } }
-        if !Paths.sandboxed { Menu(t("오토 채찍질")) {
-            Button(t("1시간 동안")) { model.setAutoWhip(until: Date().addingTimeInterval(3600)) }
-            Button(t("3시간 동안")) { model.setAutoWhip(until: Date().addingTimeInterval(3 * 3600)) }
-            Button(t("자정까지")) { model.setAutoWhip(until: Calendar.current.nextDate(after: Date(), matching: DateComponents(hour: 0, minute: 0), matchingPolicy: .nextTime)) }
-            Button(t("아침 9시까지")) { model.setAutoWhip(until: Calendar.current.nextDate(after: Date(), matching: DateComponents(hour: 9, minute: 0), matchingPolicy: .nextTime)) }
-            if model.autoWhipOn { Button(t("끄기")) { model.setAutoWhip(until: nil) } }
+        if !Paths.sandboxed { Menu(t("Auto-whip")) {
+            Button(t("For 1 hour")) { model.setAutoWhip(until: Date().addingTimeInterval(3600)) }
+            Button(t("For 3 hours")) { model.setAutoWhip(until: Date().addingTimeInterval(3 * 3600)) }
+            Button(t("Until midnight")) { model.setAutoWhip(until: Calendar.current.nextDate(after: Date(), matching: DateComponents(hour: 0, minute: 0), matchingPolicy: .nextTime)) }
+            Button(t("Until 9 AM")) { model.setAutoWhip(until: Calendar.current.nextDate(after: Date(), matching: DateComponents(hour: 9, minute: 0), matchingPolicy: .nextTime)) }
+            if model.autoWhipOn { Button(t("Turn off")) { model.setAutoWhip(until: nil) } }
             Divider()
-            Button(t("채찍 문구 편집…")) { model.editWhipWords() }
+            Button(t("Edit whip words…")) { model.editWhipWords() }
         } }
-        Button(t("채찍 일감 편집…")) { model.editTasks() }
-        Button(t("채찍 일감 다시 읽기")) { model.reloadTasks() }
-        Button(t("채찍 결과 폴더 열기")) { model.openResults() }
-        Button(t("단축키 편집…")) { _ = HotKeys.loadCombos(); NSWorkspace.shared.open(HotKeys.file) }
-        Menu(t("언어")) {
+        Button(t("Edit whip tasks…")) { model.editTasks() }
+        Button(t("Reload whip tasks")) { model.reloadTasks() }
+        Button(t("Open whip results folder")) { model.openResults() }
+        Button(t("Edit hotkeys…")) { _ = HotKeys.loadCombos(); NSWorkspace.shared.open(HotKeys.file) }
+        Menu(t("Language")) {
             ForEach(Lang.allCases, id: \.self) { l in
                 Button(action: { Lang.current = l; model.objectWillChange.send() }) {
                     if Lang.current == l { Label(l.title, systemImage: "checkmark") } else { Text(l.title) }
@@ -118,7 +117,7 @@ struct SettingsMenu: View {
             }
         }
         Divider()
-        Button(t("Whiplash 닫기")) { NSApp.terminate(nil) }
+        Button(t("Quit Whiplash")) { NSApp.terminate(nil) }
     }
 }
 
@@ -131,13 +130,11 @@ struct TrafficLights: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            light(Color(hex: 0xFF5F57), Color(hex: 0xE0443E), "×",
-                  model.roaming ? t("이 창만 닫기 — 캐릭터는 계속 돌아다녀요 (메뉴 막대 채찍 → 풀어놓을 때 채찍질 창도 보기)")
-                                : t("닫기 — 메뉴 막대 채찍에서 다시 열어요")) {
-                if model.roaming { model.panelWithCritters = false } else { model.hidden = true }
+            light(Color(hex: 0xFF5F57), Color(hex: 0xE0443E), "×", t("Hide all — windows and critters (⌃⌥H or the menu bar whip brings them back) · ⌥-click quits")) {
+                if NSEvent.modifierFlags.contains(.option) { NSApp.terminate(nil) } else { model.hidden = true }
             }
-            light(Color(hex: 0xFEBC2E), Color(hex: 0xDEA123), "−", model.compact ? t("크게 보기") : t("작게 보기")) { model.compact.toggle() }
-            light(Color(hex: 0x28C840), Color(hex: 0x1AAB29), "+", model.roaming ? t("채찍질 창으로 모으기") : t("풀어놓기 — 화면 돌아다니기")) { model.roaming.toggle(); if model.roaming { model.hidden = false } }
+            light(Color(hex: 0xFEBC2E), Color(hex: 0xDEA123), "−", model.compact ? t("Full view") : t("Compact view")) { model.compact.toggle() }
+            light(Color(hex: 0x28C840), Color(hex: 0x1AAB29), "+", model.roaming ? t("Gather into the window") : t("Let loose — roam the screen")) { model.roaming.toggle(); if model.roaming { model.hidden = false } }
         }
         .onHover { hovering = $0 }
         .noDrag()
@@ -222,23 +219,23 @@ struct FullView: View {
             TrafficLights(model: model)
                 .padding(.trailing, 2)
             Text("Whiplash")
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-            Spacer()
+                .font(.system(size: 12, weight: .bold, design: .rounded)).lineLimit(1).fixedSize()
+            Spacer(minLength: 6)
             if s.groups.isEmpty {
-                Text("모두 쉬는 중").font(.system(size: 10)).foregroundStyle(.secondary)
+                Text(t("All resting")).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
             } else {
-                Text(tf("%d마리 · %d 일하는 중", s.groups.count, working))
-                    .font(.system(size: 10)).foregroundStyle(.secondary)
+                Text(tf("%d critters · %d working", s.groups.count, working))
+                    .font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
                 if waiting > 0 {
-                    Text(tf("· %d 내 차례", waiting))
-                        .font(.system(size: 10, weight: .bold)).foregroundStyle(waitColor)
+                    Text(tf("· %d need you", waiting))
+                        .font(.system(size: 10, weight: .bold)).foregroundStyle(waitColor).lineLimit(1).minimumScaleFactor(0.7)
                 }
                 if hot > 0 {
-                    Text(tf("· %d 과부하", hot))
-                        .font(.system(size: 10, weight: .bold)).foregroundStyle(hotColor)
+                    Text(tf("· %d overloaded", hot))
+                        .font(.system(size: 10, weight: .bold)).foregroundStyle(hotColor).lineLimit(1).minimumScaleFactor(0.7)
                 }
                 if striking > 0 {
-                    Text(tf("· %d 파업", striking))
+                    Text(tf("· %d on strike", striking))
                         .font(.system(size: 10, weight: .bold)).foregroundStyle(hotColor)
                 }
             }
@@ -246,7 +243,7 @@ struct FullView: View {
                 Text("⚡\(until, style: .time)")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(Color(hex: 0xE07A5F))
-                    .help(tf("오토 채찍질 켜짐 · %d분마다 쉬는 세션에 「계속해」 · 지금까지 %d번", Int(model.autoWhipInterval / 60), model.autoWhipCount))
+                    .help(tf("Auto-whip on · idle sessions get a nudge every %d min · %d so far", Int(model.autoWhipInterval / 60), model.autoWhipCount))
             }
         }
     }
@@ -265,11 +262,11 @@ struct FullView: View {
 
         return VStack(spacing: 5) {
             UsageLine(title: "CPU", parts: cpuParts,
-                      value: tf("%@ / 전체 %@", fmtPct(agentCPU), fmtPct(s.machineBusy)))
-            UsageLine(title: t("메모리"), parts: memParts,
+                      value: tf("%@ / total %@", fmtPct(agentCPU), fmtPct(s.machineBusy)))
+            UsageLine(title: t("Memory"), parts: memParts,
                       value: "\(fmtBytes(agentMem)) / \(fmtBytes(s.memUsed))")
         }
-        .help(t("색 = 에이전트, 회색 = 다른 앱, 빈 칸 = 남은 자원"))
+        .help(t("Color = agents, gray = other apps, empty = free"))
     }
 
     @ViewBuilder
@@ -287,7 +284,7 @@ struct FullView: View {
                             SpriteTile(kind: item.kind, awake: true, cell: 1.5)
                             Text(fmtBytes(item.bytes)).font(monoSmall)
                         }
-                        .help(tf("%@ 데이터 폴더\n", item.kind.title) + item.paths.joined(separator: "\n"))
+                        .help(tf("%@ data folder\n", item.kind.title) + item.paths.joined(separator: "\n"))
                     }
                 }
             }
@@ -300,11 +297,11 @@ struct FullView: View {
                 let rest = used > agentBytes ? used - agentBytes : 0
                 let parts: [BarPart] = model.storage.map { BarPart(color: $0.kind.barColor, value: Double($0.bytes) / total) }
                     + [BarPart(color: otherColor, value: Double(rest) / total)]
-                UsageLine(title: t("디스크"), parts: parts, value: tf("여유 %@", fmtBytes(d.free)))
-                    .help(tf("에이전트 데이터 폴더 합계 %@ · 30분마다 다시 잼", fmtBytes(agentBytes)))
+                UsageLine(title: t("Disk"), parts: parts, value: tf("%@ free", fmtBytes(d.free)))
+                    .help(tf("Agent data folders total %@ · rescanned every 30 min", fmtBytes(agentBytes)))
             }
 
-            Text(tf("채찍질 자체 CPU %@ · %@", fmtPct(s.selfCPU / Double(max(s.ncpu, 1))), fmtBytes(s.selfMemory)))
+            Text(tf("Whiplash itself CPU %@ · %@", fmtPct(s.selfCPU / Double(max(s.ncpu, 1))), fmtBytes(s.selfMemory)))
                 .font(.system(size: 9))
                 .foregroundStyle(.tertiary)
         }
@@ -322,10 +319,10 @@ struct CarrotField: View {
         let seven = q?.sevenDay
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text(t("세션"))
+                Text(t("Session"))
                     .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
-                    .frame(width: 34, alignment: .leading)
-                    .help(t("세션 (5시간) 남은 쿼터 — 당근 1개 = 10%"))
+                    .frame(width: 52, alignment: .leading)
+                    .help(t("Session (5-hour) quota left — one carrot = 10%"))
                 HStack(spacing: 2) {
                     ForEach(0..<count, id: \.self) { i in
                         let alive = five.map { Double(i) < Double(count) * $0.remaining / 100 - 0.001 } ?? true
@@ -340,38 +337,38 @@ struct CarrotField: View {
                     .lineLimit(1)
             }
             if let seven = seven {
-                UsageLine(title: t("주간"), parts: [BarPart(color: seven.utilization >= 90 ? hotColor : Color(hex: 0xF28C28), value: seven.utilization / 100)],
-                          value: tf("%d%% 남음 · %@", Int(seven.remaining), seven.resetsAt.map { fmtAgoFuture($0) } ?? ""))
+                UsageLine(title: t("Weekly"), parts: [BarPart(color: seven.utilization >= 90 ? hotColor : Color(hex: 0xF28C28), value: seven.utilization / 100)],
+                          value: tf("%d%% left · %@", Int(seven.remaining), seven.resetsAt.map { fmtAgoFuture($0) } ?? ""))
                     .help(seven.title)
             }
             ForEach(q?.extras ?? [], id: \.key) { w in
                 UsageLine(title: w.shortTitle, parts: [BarPart(color: w.utilization >= 90 ? hotColor : Color(hex: 0xC97BFF), value: w.utilization / 100)],
-                          value: tf("%d%% 남음 · %@", Int(w.remaining), w.resetsAt.map { fmtAgoFuture($0) } ?? ""))
+                          value: tf("%d%% left · %@", Int(w.remaining), w.resetsAt.map { fmtAgoFuture($0) } ?? ""))
                     .help(w.title)
             }
             if let e = q?.error {
                 Text(e).font(.system(size: 9)).foregroundStyle(hotColor).lineLimit(2)
             }
         }
-        .help(t("남은 쿼터 — 세션(5시간)·주간·모델별. 세션 쿼터가 바닥나면 애들이 파업해요. 5분마다 Claude 사용량을 조회해요 (키체인의 Claude Code 로그인으로)."))
+        .help(t("Remaining quota — session (5h), weekly, per model. When the session quota runs out the critters strike. Checked every 5 minutes with the Claude Code login from the Keychain."))
         .padding(.vertical, 2)
     }
 
     private func fieldText(_ w: Quota.Window?) -> String {
-        guard let w = w else { return t("조회 중…") }
-        if w.utilization >= 100 { return t("다 뽑힘 · 파업!") }
+        guard let w = w else { return t("Checking…") }
+        if w.utilization >= 100 { return t("All gone · strike!") }
         let reset = w.resetsAt.map { fmtAgoFuture($0) } ?? ""
-        return tf("%d%% 남음 · %@", Int(w.remaining), reset)
+        return tf("%d%% left · %@", Int(w.remaining), reset)
     }
 }
 
 /// "2시간 뒤" 처럼 앞으로 남은 시간
 func fmtAgoFuture(_ d: Date) -> String {
     let s = Int(d.timeIntervalSinceNow)
-    if s <= 0 { return t("지금") }
-    if s < 3600 { return tf("%d분 뒤", s / 60) }
-    if s < 86400 { return tf("%d시간 %d분 뒤", s / 3600, s % 3600 / 60) }
-    return tf("%d일 뒤", s / 86400)
+    if s <= 0 { return t("now") }
+    if s < 3600 { return tf("in %dm", s / 60) }
+    if s < 86400 { return tf("in %dh %dm", s / 3600, s % 3600 / 60) }
+    return tf("in %dd", s / 86400)
 }
 
 struct UsageLine: View {
@@ -384,7 +381,7 @@ struct UsageLine: View {
             Text(title)
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 34, alignment: .leading)
+                .frame(width: 52, alignment: .leading)
             PixelBar(parts: parts, segments: 24)
                 .frame(height: 7)
             Text(value)
@@ -405,11 +402,11 @@ struct RowStatus {
     var hot = false
 
     static func of(_ g: AgentGroup, job: WhipJob?, memTotal: UInt64 = 0, immune: Bool = false, angry: String? = nil, strike: Date? = nil) -> RowStatus {
-        if g.id == Model.ghostID { return RowStatus(text: t("자는 중 · 휘두르면 깨워요"), color: nil, tone: .none) }
+        if g.id == Model.ghostID { return RowStatus(text: t("Asleep · swing to wake"), color: nil, tone: .none) }
         if let line = angry { return RowStatus(text: "😠 " + line, color: hotColor, tone: .none) }
         if let until = strike {
             let f = DateFormatter(); f.dateFormat = "HH:mm"
-            return RowStatus(text: tf("✊ 파업 중 · %@ 까지", f.string(from: until)), color: hotColor, tone: .none)
+            return RowStatus(text: tf("✊ On strike · until %@", f.string(from: until)), color: hotColor, tone: .none)
         }
         if immune {
             var r = of(g, job: job, memTotal: memTotal, immune: false)
@@ -417,24 +414,24 @@ struct RowStatus {
             return r
         }
         if memTotal > 0, g.overloaded(memTotal: memTotal) {
-            return RowStatus(text: tf("과부하 · CPU %@ · %@", fmtCores(g.cpu), fmtBytes(g.memory)), color: hotColor, tone: .none, hot: true)
+            return RowStatus(text: tf("Overloaded · CPU %@ · %@", fmtCores(g.cpu), fmtBytes(g.memory)), color: hotColor, tone: .none, hot: true)
         }
-        if let job = job { return RowStatus(text: tf("채찍 맞고 %@", job.task.title), color: workingColor, tone: .none) }
+        if let job = job { return RowStatus(text: tf("Whipped: %@", job.task.title), color: workingColor, tone: .none) }
         guard let s = g.session, s.status != .unknown else {
-            let state = g.awake ? t("일하는 중") : t("쉬는 중")
-            return RowStatus(text: g.processCount > 1 ? tf("%@ · %d개", state, g.processCount) : state,
+            let state = g.awake ? t("Working") : t("Resting")
+            return RowStatus(text: g.processCount > 1 ? tf("%@ · %d procs", state, g.processCount) : state,
                              color: g.awake ? workingColor : nil, tone: .none)
         }
         if s.status == .busy {
-            let act = s.activity.isEmpty ? t("일하는 중") : s.activity
+            let act = s.activity.isEmpty ? t("Working") : s.activity
             return RowStatus(text: act, color: workingColor, tone: .none)
         }
         let ago = fmtAgo(s.statusSince)
         switch s.waiting {
-        case .reply:      return RowStatus(text: tf("답 기다리는 중 · %@", ago), color: waitColor, tone: .reply)
-        case .question:   return RowStatus(text: tf("물어보고 기다림 · %@", ago), color: waitColor, tone: .question)
-        case .permission: return RowStatus(text: tf("허락 기다리는 중 · %@", ago), color: waitColor, tone: .permission)
-        case .none:       return RowStatus(text: ago.isEmpty ? t("쉬는 중") : tf("쉬는 중 · %@", ago), color: nil, tone: .none)
+        case .reply:      return RowStatus(text: tf("Your turn · %@", ago), color: waitColor, tone: .reply)
+        case .question:   return RowStatus(text: tf("Asked you · %@", ago), color: waitColor, tone: .question)
+        case .permission: return RowStatus(text: tf("Needs permission · %@", ago), color: waitColor, tone: .permission)
+        case .none:       return RowStatus(text: ago.isEmpty ? t("Resting") : tf("Resting · %@", ago), color: nil, tone: .none)
         }
     }
 }
@@ -513,6 +510,7 @@ struct AgentRow: View {
             }
             .whipHover(model.hoverWhipID == g.id)
             .sentFlash(model.lastSent[g.id])
+            .treatFlash(model.lastTreat[g.id])
             .overlay(alignment: .topLeading) { WaitBadge(tone: st.tone).offset(x: -6, y: -6) }
             .whipTarget(g.id, on: canWhip)
             .clickTarget(g.id)
@@ -558,7 +556,7 @@ struct AgentRow: View {
     }
 
     private func title(_ g: AgentGroup) -> String {
-        if g.id == Model.ghostID { return t("Claude (꺼짐)") }
+        if g.id == Model.ghostID { return t("Claude (off)") }
         if let s = g.session, !s.name.isEmpty { return s.name }
         return g.kind.title
     }
@@ -574,27 +572,55 @@ struct AgentRow: View {
 
 }
 
+/// 간식 받으면 「냠!」 + 🥕 + 하트가 1.2초 떠오른다
+struct TreatFlash: ViewModifier {
+    let at: Date?
+    @State private var shown = false
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .top) {
+                if shown {
+                    HStack(spacing: 2) {
+                        Text("🥕").font(.system(size: 12))
+                        Text(t("Yum!")).font(.system(size: 11, weight: .black, design: .rounded)).foregroundStyle(Color(hex: 0x4E9A57))
+                            .shadow(color: .white.opacity(0.9), radius: 0, x: 1, y: 1)
+                        Text("♥").font(.system(size: 10, weight: .black)).foregroundStyle(Color(hex: 0xE05A7A))
+                    }
+                    .offset(y: -18)
+                    .transition(.asymmetric(insertion: .scale(scale: 0.4).combined(with: .opacity), removal: .move(edge: .top).combined(with: .opacity)))
+                }
+            }
+            .onChange(of: at) { new in
+                guard new != nil else { return }
+                withAnimation(.spring(duration: 0.3)) { shown = true }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { withAnimation(.easeIn(duration: 0.3)) { shown = false } }
+            }
+    }
+}
+extension View { func treatFlash(_ at: Date?) -> some View { modifier(TreatFlash(at: at)) } }
+
 /// 줄·크리터 공용 설명 풍선
 func rowTooltip(_ model: Model, _ g: AgentGroup) -> String {
     var lines: [String] = []
     if let s = g.session {
         if !s.lastPrompt.isEmpty {
             let p = s.lastPrompt.replacingOccurrences(of: "\n", with: " ")
-            lines.append(t("마지막 지시: ") + (p.count > 160 ? String(p.prefix(160)) + "…" : p))
+            lines.append(t("Last prompt: ") + (p.count > 160 ? String(p.prefix(160)) + "…" : p))
         }
-        if let st = s.startedAt { lines.append(tf("세션 시작 %@ 전 · %@", fmtAgo(st), s.isDesktop ? t("Claude 앱") : t("터미널"))) }
+        if let st = s.startedAt { lines.append(tf("Session started %@ ago · %@", fmtAgo(st), s.isDesktop ? t("Claude app") : t("Terminal"))) }
         var money: [String] = []
-        if let c = model.carrotsEaten(g) { money.append(tf("먹은 당근 %.1f개 (세션 먹이값 비율)", c)) }
-        if s.costUSD > 0 { money.append(tf("먹이값 %@", fmtUSD(s.costUSD))) }
-        if s.tokens > 0 { money.append(tf("토큰 %@", fmtTokens(s.tokens))) }
-        if s.linesAdded + s.linesRemoved > 0 { money.append(tf("고친 줄 +%d −%d", s.linesAdded, s.linesRemoved)) }
+        if let c = model.carrotsEaten(g) { money.append(tf("Carrots eaten %.1f (by session cost share)", c)) }
+        if s.costUSD > 0 { money.append(tf("Feed cost %@", fmtUSD(s.costUSD))) }
+        if s.tokens > 0 { money.append(tf("Tokens %@", fmtTokens(s.tokens))) }
+        if let n = model.treats[g.id], n > 0 { money.append(tf("🥕 %d treats", n)) }
+        if s.linesAdded + s.linesRemoved > 0 { money.append(tf("Lines +%d −%d", s.linesAdded, s.linesRemoved)) }
         if !money.isEmpty { lines.append(money.joined(separator: " · ")) }
     }
     if let d = g.dir { lines.append(d) }
-    lines.append(tf("%@ · PID %d · 프로세스 %d개 · CPU는 맥 전체 대비", t(g.kind.sprite.friend), Int(g.rootPID), g.processCount))
+    lines.append(tf("%@ · PID %d · %d procs · CPU vs whole Mac", t(g.kind.sprite.friend), Int(g.rootPID), g.processCount))
     if model.canWhip(g) {
-        lines.append(g.id.hasPrefix("app:") ? t("캐릭터 위에서 마우스를 휙휙 흔들면 앱을 앞으로 불러와요")
-                                            : t("캐릭터 위에서 마우스를 휙휙 흔들면 채찍질 (읽기만 하는 일감 하나) · 오른쪽 클릭으로 골라서"))
+        lines.append(g.id.hasPrefix("app:") ? t("Swing the mouse over it to bring the app forward")
+                                            : t("Swing the mouse over it to whip · right-click to pick a task"))
     }
     return lines.joined(separator: "\n")
 }
@@ -607,51 +633,50 @@ struct RowMenu: View {
     var body: some View {
         let g = group
         if g.id == Model.ghostID {
-            Button(t("Claude 앱 열기")) { model.wakeClaude(dir: nil) }
-            Menu(t("터미널에서 claude 열기")) {
+            Button(t("Open Claude app")) { model.wakeClaude(dir: nil) }
+            Menu(t("Open claude in Terminal")) {
                 ForEach(model.recentProjects(), id: \.self) { d in
                     Button((d as NSString).lastPathComponent) { model.wakeClaude(dir: d) }
                 }
                 Divider()
-                Button(t("홈 폴더에서")) { model.wakeClaude(dir: Paths.home) }
+                Button(t("In home folder")) { model.wakeClaude(dir: Paths.home) }
             }
             Divider()
         }
         if model.canWhip(g), !g.id.hasPrefix("app:"), g.id != Model.ghostID, !Paths.sandboxed {
-            Menu(t("채찍 — 일감 골라 시키기")) {
+            Menu(t("Whip — pick a task")) {
                 ForEach(model.tasks) { t in Button(t.title) { model.whip(g, task: t) } }
             }
             Divider()
         }
         if let s = g.session {
             Text(s.name.isEmpty ? g.label : s.name)
-            Button(model.isImmune(g) ? t("채찍 면역 풀기") : t("채찍 면역 (손·오토 채찍 다 안 맞음)")) { model.toggleImmune(g) }
-            if Paths.sandboxed { Button(t("전체 기능판 받기… (채찍 메시지·지시 보내기·오토 채찍)")) { Paths.openFullEdition() } }
-            else { Text(t("제자리 클릭 → 지시 보내기")) }
-            Button(t("창 앞으로")) { model.bringToFront(g) }
-            Button(t("폴더 열기")) { model.openFolder(g) }
-            if !s.lastPrompt.isEmpty { Button(t("마지막 지시 복사")) { model.copyPrompt(g) } }
-            if s.transcript != nil { Button(t("대화 기록 파일 열기")) { model.openTranscript(g) } }
+            Button(model.isImmune(g) ? t("Remove whip immunity") : t("Whip immunity (no manual or auto whips)")) { model.toggleImmune(g) }
+            Text(t("Click in place → send instruction"))
+            Button(t("Bring window to front")) { model.bringToFront(g) }
+            Button(t("Open folder")) { model.openFolder(g) }
+            if !s.lastPrompt.isEmpty { Button(t("Copy last prompt")) { model.copyPrompt(g) } }
+            if s.transcript != nil { Button(t("Open transcript file")) { model.openTranscript(g) } }
             if s.status == .busy && !s.isDesktop && !Paths.sandboxed {
                 Divider()
-                Button(t("하던 일 멈추기 (Ctrl-C)")) { model.interrupt(g) }
+                Button(t("Stop current work (Ctrl-C)")) { model.interrupt(g) }
             }
         } else {
-            Button(t("창 앞으로")) { model.bringToFront(g) }
-            if g.dir != nil { Button(t("폴더 열기")) { model.openFolder(g) } }
+            Button(t("Bring window to front")) { model.bringToFront(g) }
+            if g.dir != nil { Button(t("Open folder")) { model.openFolder(g) } }
         }
         Divider()
         // 자주 쓰는 것은 바로
         if model.roaming {
-            Button(model.caged ? t("당근밭에서 뽑기") : t("당근밭에 박아두기")) { model.caged.toggle() }
-            Button(t("채찍질 창으로 모으기")) { model.roaming = false }
-            Button(model.critterSmall ? t("크게 풀어놓기") : t("작게 풀어놓기")) { model.critterSmall.toggle() }
+            Button(model.caged ? t("Pull out of the field") : t("Plant in the carrot field")) { model.caged.toggle() }
+            Button(t("Gather into the window")) { model.roaming = false }
+            Button(model.critterSmall ? t("Roam large") : t("Roam small")) { model.critterSmall.toggle() }
         } else {
-            Button(t("풀어놓기 — 화면 돌아다니기")) { model.roaming = true; model.hidden = false }
+            Button(t("Let loose — roam the screen")) { model.roaming = true; model.hidden = false }
         }
-        Button(t("모두 숨기기")) { model.hidden = true }
+        Button(t("Hide all")) { model.hidden = true }
         Divider()
-        Menu(t("채찍질 설정")) { SettingsMenu(model: model) }
+        Menu(t("Whiplash settings")) { SettingsMenu(model: model) }
     }
 }
 
@@ -706,7 +731,7 @@ struct CompactView: View {
                 .padding(.trailing, 2)
             if s.groups.isEmpty {
                 SpriteTile(kind: .other, awake: false, cell: 2)
-                    .help(t("지금 돌아가는 에이전트가 없어요"))
+                    .help(t("No agents running right now"))
             }
             ForEach(s.groups) { g in
                 let strike = model.onStrike(g)
@@ -721,6 +746,8 @@ struct CompactView: View {
                     }
                     .whipHover(model.hoverWhipID == g.id)
                     .sentFlash(model.lastSent[g.id])
+                    .treatFlash(model.lastTreat[g.id])
+            .treatFlash(model.lastTreat[g.id])
                     .overlay(alignment: .topLeading) { WaitBadge(tone: st.tone, small: true).offset(x: -4, y: -5) }
                     .whipTarget(g.id, on: model.canWhip(g))
                     .clickTarget(g.id)
@@ -745,8 +772,8 @@ struct CompactView: View {
 
     private func compactHelp(_ g: AgentGroup, _ st: RowStatus) -> String {
         let name = (g.session?.name).flatMap { $0.isEmpty ? nil : $0 } ?? g.kind.title
-        var text = tf("%@ · %@\n%@\nCPU %@ · 메모리 %@", name, g.label, st.text, fmtPct(g.cpu / Double(max(model.snapshot.ncpu, 1))), fmtBytes(g.memory))
-        if model.canWhip(g) { text += t("\n마우스를 휙휙 흔들거나 눌러서 채찍질") }
+        var text = tf("%@ · %@\n%@\nCPU %@ · Memory %@", name, g.label, st.text, fmtPct(g.cpu / Double(max(model.snapshot.ncpu, 1))), fmtBytes(g.memory))
+        if model.canWhip(g) { text += t("\nSwing the mouse or click to whip") }
         return text
     }
 }
@@ -790,7 +817,7 @@ struct StrikeTile<Content: View>: View {
                     .opacity(phase == 2 || phase == 3 ? 1 : 0)
             }
             .overlay(alignment: .topLeading) {
-                Text(angryLine ?? t("아야"))
+                Text(angryLine ?? t("Ouch"))
                     .font(.system(size: angryLine == nil ? 8 : 9, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
                     .lineLimit(1).fixedSize()
@@ -830,7 +857,7 @@ struct WhipResults: View {
                 HStack(spacing: 6) {
                     Button { model.open(r) } label: {
                         HStack(spacing: 4) {
-                            Text(r.ok ? t("결과") : t("실패"))
+                            Text(r.ok ? t("Result") : t("Failed"))
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundStyle(r.ok ? Color(hex: 0x4E9A57) : Color(hex: 0xE04F3A))
                             Text("\(r.project) · \(r.title)")
@@ -846,7 +873,7 @@ struct WhipResults: View {
                     }
                     .buttonStyle(.plain)
                     .noDrag()
-                    .help(r.ok ? t("눌러서 결과 열기") : r.note)
+                    .help(r.ok ? t("Click to open the result") : r.note)
 
                     Button { model.dismiss(r) } label: {
                         Text("×").font(.system(size: 11)).foregroundStyle(.tertiary)

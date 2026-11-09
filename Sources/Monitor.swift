@@ -318,10 +318,10 @@ final class ProcessSampler {
     }
 
     private func label(root: pid_t, key: Key?, isApp: Bool) -> (label: String, dir: String?) {
-        if isApp { return (t("앱"), nil) }
+        if isApp { return (t("app"), nil) }
         guard let key = key else { return ("", nil) }
         if let cached = labelCache[key] { return cached }
-        var l = t("터미널")
+        var l = t("Terminal")
         let dir = cwd(root)
         if let dir = dir {
             if dir == home { l = "~" }

@@ -29,7 +29,7 @@ final class RemoteReceiver {
             l.stateUpdateHandler = { [weak self] state in
                 DispatchQueue.main.async {
                     switch state {
-                    case .ready: self?.status = tf("리모트 듣는 중 (포트 %d)", Int(Self.port))
+                    case .ready: self?.status = tf("Listening for remotes (port %d)", Int(Self.port))
                     case .failed(let e): self?.status = e.localizedDescription; self?.running = false
                     default: break
                     }
@@ -39,7 +39,7 @@ final class RemoteReceiver {
             l.start(queue: queue)
             listener = l
             running = true
-            status = t("리모트 준비 중…")
+            status = t("Starting remote…")
         } catch {
             status = error.localizedDescription
         }

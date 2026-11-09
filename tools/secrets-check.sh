@@ -23,7 +23,7 @@ PATTERNS=(
   '/Users/[A-Za-z0-9._-]+'                            # 내 홈 경로
   '[A-Za-z0-9._%+-]+@(gmail|naver|daum|kakao|icloud|outlook|hotmail)\.com'
 )
-ALLOW='noreply@anthropic\.com|users\.noreply\.github\.com|/Users/<|/Users/\$|/Users/me/|/Users/USER'
+ALLOW='noreply@anthropic\.com|users\.noreply\.github\.com|/Users/<|/Users/\$|/Users/me/|/Users/USER|/Users/demo/'
 
 mode="${1:-tree}"
 fail=0

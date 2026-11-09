@@ -31,35 +31,35 @@ struct WelcomeView: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Whiplash").font(.system(size: 20, weight: .heavy, design: .rounded))
-                    Text(t("맥에서 돌아가는 AI 에이전트들이 캐릭터로 돌아다녀요. 뭘 하는지 보고, 채찍질하고, 지시를 보내세요."))
+                    Text(t("The AI agents running on your Mac roam around as critters. See what they do, crack the whip, send instructions."))
                         .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
             }
             Divider()
             VStack(alignment: .leading, spacing: 8) {
-                how(kind: .claudeCode, title: t("채찍질"), text: t("쉬는 캐릭터 위에 잠깐 머문 뒤 마우스를 좌우로 휙휙 두 번. 「찰싹!」 하고 하던 일을 이어가요."))
-                how(kind: .codex, title: t("지시 보내기"), text: t("캐릭터를 제자리 클릭하면 입력창. 쓰고 ⏎ 누르면 그 세션에 바로 들어가요."))
-                how(kind: .gemini, title: t("보기 전환"), text: tf("메뉴 막대의 채찍 아이콘, 또는 %@ 풀어놓기 · %@ 모두 숨기기 · %@ 당근밭.", "⌃⌥A", "⌃⌥H", "⌃⌥C"))
+                how(kind: .claudeCode, title: t("Whip"), text: t("Hover over an idle critter, then swipe the mouse left-right twice. Whack! It picks its work back up."))
+                how(kind: .codex, title: t("Send instruction"), text: t("Click a critter in place for an input box. Type and press ⏎ to deliver it to that session."))
+                how(kind: .gemini, title: t("Views"), text: tf("The whip icon in the menu bar, or %@ roam · %@ hide all · %@ carrot field.", "⌃⌥A", "⌃⌥H", "⌃⌥C"))
             }
             Divider()
             VStack(alignment: .leading, spacing: 6) {
                 if Paths.sandboxed {
                     HStack {
-                        Text(t("세션 제목과 상태를 보려면 홈 폴더 읽기를 한 번 허용해야 해요.")).font(.system(size: 11))
+                        Text(t("Allow reading your home folder once to see session titles and status.")).font(.system(size: 11))
                         Spacer()
-                        Button(Paths.hasHomeAccess ? t("허용됨") : t("홈 폴더 허용…")) { Paths.requestHomeAccess() }
+                        Button(Paths.hasHomeAccess ? t("Allowed") : t("Allow home folder…")) { Paths.requestHomeAccess() }
                             .disabled(Paths.hasHomeAccess)
                     }
                 } else {
-                    option($carrots, t("남은 쿼터 보기 — 세션·주간·모델별, 🥕 당근은 그림"),
-                           t("Claude Code 로그인 토큰을 키체인에서 읽어요. 켜면 macOS가 키체인 허용을 한 번 물어요."))
+                    option($carrots, t("Show remaining quota — session, weekly, per model; 🥕 carrots are just the picture"),
+                           t("Reads the Claude Code login token from the Keychain. macOS will ask once to allow it."))
                 }
-                option($login, t("로그인할 때 열기"), t("맥을 켜면 메뉴 막대에 조용히 올라와요. 나중에 설정에서 바꿀 수 있어요."))
+                option($login, t("Open at login"), t("Starts quietly in the menu bar when you log in. Change it later in Settings."))
             }
             HStack {
-                Text(t("그 밖의 권한은 필요 없어요. 모든 정보는 이 맥 안에만 있어요.")).font(.system(size: 10)).foregroundStyle(.tertiary)
+                Text(t("No other permissions are needed. Everything stays on this Mac.")).font(.system(size: 10)).foregroundStyle(.tertiary)
                 Spacer()
-                Button(t("시작하기")) {
+                Button(t("Get started")) {
                     if !Paths.sandboxed, carrots != model.quotaEnabled { model.quotaEnabled = carrots }
                     if login != model.loginItemEnabled { model.loginItemEnabled = login }
                     close()

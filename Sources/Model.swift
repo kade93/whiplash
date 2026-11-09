@@ -103,6 +103,9 @@ final class Model: ObservableObject {
         return n
     }
 
+    /// 데모: 가짜 에이전트들 (Claude 없이도 캐릭터를 본다 — 심사·스크린샷용). 메시지는 보내지 않고 반응만.
+    @Published var demo: Bool { didSet { UserDefaults.standard.set(demo, forKey: "demo"); snapshot = merged(snapshot) } }
+
     /// 몸으로 때리기: 에어팟 고개 휙 · 카메라 손 휘두르기 · 아이폰/워치 리모트 (켤 때만 센서·카메라·네트워크를 연다)
     @Published var headFlickOn: Bool { didSet { UserDefaults.standard.set(headFlickOn, forKey: "headFlickOn"); onBodyWhipChange?() } }
     @Published var handCamOn: Bool { didSet { UserDefaults.standard.set(handCamOn, forKey: "handCamOn"); onBodyWhipChange?() } }
@@ -135,9 +138,9 @@ final class Model: ObservableObject {
         guard !UserDefaults.standard.bool(forKey: "quotaExplained"), ProcessInfo.processInfo.environment["WHIPLASH_FAKE_QUOTA"] == nil else { return }
         UserDefaults.standard.set(true, forKey: "quotaExplained")
         let a = NSAlert()
-        a.messageText = t("잠깐 — 키체인 허용 창이 떠요")
-        a.informativeText = t("남은 쿼터는 Claude Code 가 키체인에 넣어 둔 로그인 토큰으로 조회해요. 곧 macOS 가 「Whiplash 가 키체인 항목을 쓰려 한다」며 Mac 로그인 비밀번호를 물어요 (Claude 로그인이 아니에요). 「항상 허용」을 누르면 다음부턴 안 물어요. 토큰은 조회에만 쓰고 저장하지 않아요.")
-        a.addButton(withTitle: t("알겠어요"))
+        a.messageText = t("Heads up — a Keychain prompt is coming")
+        a.informativeText = t("Remaining quota is read with the login token Claude Code keeps in your Keychain. macOS will now ask for your Mac login password because Whiplash wants to use that Keychain item (this is not a Claude login). Choose Always Allow and it won't ask again. The token is only used for the request and never stored.")
+        a.addButton(withTitle: t("Got it"))
         NSApp.activate(ignoringOtherApps: true)
         a.runModal()
     }
@@ -214,6 +217,8 @@ final class Model: ObservableObject {
     @Published private(set) var lastStrike: [String: Date] = [:]
     @Published var hoverWhipID: String? = nil          // 커서가 올라간 채찍 맞을 칸
     @Published private(set) var lastSent: [String: Date] = [:]   // 지시를 보낸 칸 (반짝임)
+    @Published private(set) var lastTreat: [String: Date] = [:]  // 간식 받은 칸 (냠!)
+    @Published private(set) var treats: [String: Int] = [:]      // 세션별 간식 횟수
 
     // 오토 채찍질: 정한 시각까지 간격마다 쉬는 세션에 「계속해」
     @Published private(set) var autoWhipUntil: Date? {
@@ -250,6 +255,7 @@ final class Model: ObservableObject {
         dockIcon = UserDefaults.standard.object(forKey: "dockIcon") as? Bool ?? true
         whipNeedsOption = UserDefaults.standard.bool(forKey: "whipNeedsOption")
         autoDodge = UserDefaults.standard.object(forKey: "autoDodge") as? Bool ?? true
+        demo = ProcessInfo.processInfo.environment["WHIPLASH_DEMO"] != nil || UserDefaults.standard.bool(forKey: "demo")
         headFlickOn = UserDefaults.standard.bool(forKey: "headFlickOn")
         handCamOn = UserDefaults.standard.bool(forKey: "handCamOn")
         remoteOn = UserDefaults.standard.bool(forKey: "remoteOn")
@@ -379,7 +385,7 @@ final class Model: ObservableObject {
         if isImmune(g) { if !silent { NSSound(named: "Tink")?.play() }; return }      // 면역: 맞지 않는다
         let streak = hit(g.id)
         if onStrike(g) {                                                // 파업: 쿼터가 없는데 때리면 화만 낸다
-            angry[g.id] = (Date().addingTimeInterval(8), t(streak >= 2 ? "쿼터 없다고!!" : "쿼터가 없어요!!"))
+            angry[g.id] = (Date().addingTimeInterval(8), (streak >= 2 ? t("No quota, I said!!") : t("I'm out of quota!!")))
             lastStrike[g.id] = Date()
             Self.playAngry()
             onStrike?(g.id)
@@ -390,9 +396,9 @@ final class Model: ObservableObject {
             let rude = streak >= 3                        // 두 번째는 존댓말, 세 번째부터 반말
             let line: String
             switch s.waiting {
-            case .question, .permission: line = t(rude ? t("말을 해야 할 거 아냐!!") : t("말을 해야 하죠!!!"))
-            case .reply:                 line = t(rude ? t("할 일을 줘야지!!") : t("할 일을 주셔야죠!!"))
-            case .none:                  line = t(rude ? t("왜 때려!!") : t("왜 때리세요!!"))
+            case .question, .permission: line = t(rude ? t("Just say something already!!") : t("You need to tell me what to do!!"))
+            case .reply:                 line = t(rude ? t("Give me work then!!") : t("I need something to do!!"))
+            case .none:                  line = t(rude ? t("Stop hitting me!!") : t("Why are you hitting me?!"))
             }
             angry[g.id] = (Date().addingTimeInterval(8), line)
             lastStrike[g.id] = Date()
@@ -407,7 +413,7 @@ final class Model: ObservableObject {
         lastStrike[g.id] = Date()
         if !silent { Self.playWhip(streak); Self.haptic(1) }
         onStrike?(g.id)
-        if ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil {   // 개발용: 소리만
+        if demo || ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil {   // 데모·개발용: 소리만
             NSLog("EOHANG whip %@", g.id)
             return
         }
@@ -475,6 +481,48 @@ final class Model: ObservableObject {
         if let g = targets.randomElement() { whip(g) } else { NSSound(named: "Basso")?.play() }
     }
 
+    /// 간식(칭찬): 채찍의 반대. 세션에 칭찬 프롬프트를 보내고 「냠!」 반응. 메시지를 못 받는 애도 반응은 한다.
+    static let broadcastID = "broadcast:all"
+    static func playYum() { NSSound(named: "Purr")?.play() }
+    func treat(_ g: AgentGroup, silent: Bool = false) {
+        lastTreat[g.id] = Date()
+        treats[g.id, default: 0] += 1
+        if !silent { Self.playYum(); Self.haptic(1) }
+        onStrike?(g.id)                                             // 폴짝
+        if demo || ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil { NSLog("EOHANG treat %@", g.id); return }
+        guard let s = g.session, !Paths.sandboxed else { return }
+        SessionMessenger.send(TreatWords.load(), to: s) { _ in }
+    }
+    func treat(id: String) {
+        guard let g = snapshot.groups.first(where: { $0.id == id }) else { return }
+        treat(g)
+    }
+    /// 일하는 애 전부 간식
+    func treatAll() {
+        let targets = snapshot.groups.filter { $0.awake && !$0.id.hasPrefix("app:") && $0.id != Self.ghostID }
+        guard !targets.isEmpty else { NSSound(named: "Basso")?.play(); return }
+        for g in targets { treat(g, silent: true) }
+        Self.playYum(); Self.haptic(min(targets.count, 3))
+    }
+    func editTreatWords() {
+        _ = TreatWords.load()
+        NSWorkspace.shared.open(TreatWords.file)
+    }
+
+    /// 확성기: 같은 말을 Claude 세션 전부에게
+    func broadcast(_ text: String, completion: @escaping (Int, Int) -> Void) {
+        let targets = snapshot.groups.filter { $0.session != nil && $0.id != Self.ghostID }
+        guard !targets.isEmpty else { completion(0, 0); return }
+        var ok = 0, done = 0
+        for g in targets {
+            send(text, to: g) { r in
+                if case .success = r { ok += 1 }
+                done += 1
+                if done == targets.count { completion(ok, targets.count) }
+            }
+        }
+    }
+
     /// 줄 세워 놓고 한 번에: 쉬는 애 전부 (소리는 겹쳐서 한 번)
     func whipAll() {
         let targets = snapshot.groups.filter { canWhip($0) && !$0.id.hasPrefix("app:") && !isImmune($0) }
@@ -524,6 +572,7 @@ final class Model: ObservableObject {
     /// 떠 있는 세션에 사용자 메시지로 넣는다 (Claude 창에서 → 누르는 것과 같음)
     func send(_ text: String, to g: AgentGroup, completion: @escaping (Result<String, SessionMessenger.Failure>) -> Void) {
         guard let s = g.session else { completion(.failure(.noSocket)); return }
+        if demo { lastSent[g.id] = Date(); NSSound(named: "Tink")?.play(); completion(.success("demo")); return }
         SessionMessenger.send(text, to: s) { [weak self] r in
             if case .success = r {
                 self?.lastSent[g.id] = Date()
@@ -623,12 +672,49 @@ final class Model: ObservableObject {
         let force = ProcessInfo.processInfo.environment["WHIPLASH_GHOST"] != nil
         guard !claudeUp || force else { return incoming }
         var s = incoming
-        s.groups.append(AgentGroup(id: Self.ghostID, kind: .claudeCode, label: t("꺼져 있어요"), rootPID: 0, start: 0))
+        s.groups.append(AgentGroup(id: Self.ghostID, kind: .claudeCode, label: t("off"), rootPID: 0, start: 0))
         return s
     }
 
-    /// 채찍 맞고 뛰는 보조 프로세스를 채찍 맞은 칸에 합친다: 그 칸이 일하는 것처럼 보이고, 보조 줄은 숨긴다
     private func merged(_ incoming: Snapshot) -> Snapshot {
+        var s = mergedReal(incoming)
+        if demo { s.groups = Self.demoGroups() }
+        return s
+    }
+
+    /// 데모용 가짜 에이전트 7마리: 종류·상태·활동을 골고루
+    static func demoGroups() -> [AgentGroup] {
+        func session(_ pid: pid_t, _ name: String, _ cwd: String, busy: Bool, activity: String, chore: Chore, waiting: AgentSession.Waiting, cost: Double, reply: String = "") -> AgentSession {
+            var s = AgentSession(pid: pid, sessionId: "demo-\(pid)", cwd: cwd, name: name, status: busy ? .busy : .idle,
+                                 startedAt: Date().addingTimeInterval(-3600 * Double(pid % 5 + 1)), statusSince: Date().addingTimeInterval(-60 * Double(pid % 9 + 1)),
+                                 entrypoint: "cli")
+            s.activity = activity; s.chore = chore; s.waiting = waiting; s.costUSD = cost; s.tokens = Int(cost * 180_000); s.lastReply = reply
+            s.linesAdded = Int(cost * 40); s.linesRemoved = Int(cost * 9)
+            return s
+        }
+        func group(_ id: String, _ kind: AgentKind, _ label: String, _ pid: pid_t, cpu: Double, mem: UInt64, awake: Bool, session: AgentSession? = nil) -> AgentGroup {
+            var g = AgentGroup(id: id, kind: kind, label: label, rootPID: pid, start: 0)
+            g.dir = "/Users/demo/" + label; g.cpu = cpu; g.memory = mem; g.processCount = 1 + Int(cpu * 3); g.awake = awake; g.session = session
+            return g
+        }
+        let mb: UInt64 = 1_048_576
+        return [
+            group("cli:9001", .claudeCode, "shop-api", 9001, cpu: 0.9, mem: 420 * mb, awake: true,
+                  session: session(9001, "Refactor the checkout flow", "/Users/demo/shop-api", busy: true, activity: t("Editing · CartService.swift"), chore: .write, waiting: .none, cost: 12.4)),
+            group("cli:9002", .claudeCode, "docs-site", 9002, cpu: 0.0, mem: 310 * mb, awake: false,
+                  session: session(9002, "Write the onboarding guide", "/Users/demo/docs-site", busy: false, activity: t("Answering"), chore: .answer, waiting: .reply, cost: 4.1, reply: "Draft is ready. Want me to add screenshots?")),
+            group("cli:9003", .claudeCode, "mobile", 9003, cpu: 0.0, mem: 365 * mb, awake: false,
+                  session: session(9003, "Fix login crash on iOS 17", "/Users/demo/mobile", busy: false, activity: t("Asking you"), chore: .answer, waiting: .question, cost: 7.8)),
+            group("cli:9004", .claudeCode, "data-pipeline", 9004, cpu: 1.7, mem: 2_300 * mb, awake: true,
+                  session: session(9004, "Backfill 2025 events", "/Users/demo/data-pipeline", busy: true, activity: t("Running · pytest -x"), chore: .run, waiting: .none, cost: 31.2)),
+            group("cli:9005", .codex, "landing", 9005, cpu: 0.4, mem: 210 * mb, awake: true),
+            group("cli:9006", .cursor, "design-system", 9006, cpu: 0.1, mem: 540 * mb, awake: false),
+            group("app:antigravity", .antigravity, t("app"), 9007, cpu: 0.2, mem: 890 * mb, awake: true),
+        ]
+    }
+
+    /// 채찍 맞고 뛰는 보조 프로세스를 채찍 맞은 칸에 합친다: 그 칸이 일하는 것처럼 보이고, 보조 줄은 숨긴다
+    private func mergedReal(_ incoming: Snapshot) -> Snapshot {
         guard !jobs.isEmpty else { return withGhost(incoming) }
         var s = incoming
         var helpers: [String: AgentGroup] = [:]        // owner id → 보조

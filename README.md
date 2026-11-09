@@ -262,7 +262,7 @@ Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) �
 
 ## 몸으로 때리기 · 리모트
 
-에어팟 고개 휙, 카메라 손 휘두르기, 입으로 「화츅!」, 아이폰·아이패드·애플워치 리모트(Whiplash Remote 앱, [WhiplashRemote/](WhiplashRemote/README.md)). 설정 ▸ 몸으로 때리기에서 켠다.
+에어팟 고개 휙, 카메라 손 휘두르기, 입으로 「화츅!」, 아이폰·아이패드·애플워치 리모트(Whiplash Remote 앱, [WhiplashRemote/](WhiplashRemote/README.md)). Settings ▸ 몸으로 때리기에서 켠다.
 
 ## 재미 요소
 

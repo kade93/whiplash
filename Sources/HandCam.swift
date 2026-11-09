@@ -23,12 +23,12 @@ final class HandSwing: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     func start() {
         guard !running else { return }
         running = true
-        status = t("카메라 권한 확인 중…")
+        status = t("Checking camera permission…")
         AVCaptureDevice.requestAccess(for: .video) { [weak self] ok in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 guard self.running else { return }                    // 그새 껐으면
-                guard ok else { self.status = t("카메라 권한이 거부됐어요 — 시스템 설정 › 개인정보 보호 › 카메라"); self.running = false; return }
+                guard ok else { self.status = t("Camera access denied — System Settings › Privacy › Camera"); self.running = false; return }
                 self.open()
             }
         }
@@ -36,7 +36,7 @@ final class HandSwing: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
 
     private func open() {
         guard let device = AVCaptureDevice.default(for: .video), let input = try? AVCaptureDeviceInput(device: device) else {
-            status = t("카메라를 못 열었어요"); running = false; return
+            status = t("Couldn't open the camera"); running = false; return
         }
         session.beginConfiguration()
         session.sessionPreset = .vga640x480
@@ -51,7 +51,7 @@ final class HandSwing: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
             device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 15)
             device.unlockForConfiguration()
         }
-        status = t("카메라 보는 중 — 손을 가로로 휙")
+        status = t("Watching the camera — swing your hand sideways")
         queue.async { [weak self] in self?.session.startRunning() }
     }
 

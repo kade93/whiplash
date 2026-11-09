@@ -11,12 +11,12 @@ enum AgentKind: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .claudeCode:  return "Claude Code"
-        case .claudeApp:   return t("Claude 앱")
+        case .claudeApp:   return t("Claude app")
         case .codex:       return "Codex"
         case .cursor:      return "Cursor"
         case .gemini:      return "Gemini CLI"
         case .antigravity: return "Antigravity"
-        case .other:       return t("기타 에이전트")
+        case .other:       return t("Other agent")
         }
     }
 
@@ -112,15 +112,15 @@ struct Sprite {
         ".K.K....K.K.",
     ]
 
-    static let crab = Sprite(friend: "꽃게", rows: crabRows,
+    static let crab = Sprite(friend: "Crab", rows: crabRows,
         body: Color(hex: 0xE07A5F), light: Color(hex: 0xF6B9A3),
         accent: Color(hex: 0xC4553B), cheek: Color(hex: 0xFFD3C4))
 
-    static let sandCrab = Sprite(friend: "모래게", rows: crabRows,
+    static let sandCrab = Sprite(friend: "Sand crab", rows: crabRows,
         body: Color(hex: 0xD9A27A), light: Color(hex: 0xF1D3B8),
         accent: Color(hex: 0xB07A52), cheek: Color(hex: 0xF2A7B8))
 
-    static let jelly = Sprite(friend: "해파리", rows: [
+    static let jelly = Sprite(friend: "Jellyfish", rows: [
         "...KKKKKK...",
         "..KLLBBBBK..",
         ".KLBBBBBBBK.",
@@ -134,7 +134,7 @@ struct Sprite {
     ], body: Color(hex: 0xBFE8EA), light: Color(hex: 0xFFFFFF),
        accent: Color(hex: 0x7FBFD3), cheek: Color(hex: 0xF2A7B8))
 
-    static let puffer = Sprite(friend: "복어", rows: [
+    static let puffer = Sprite(friend: "Pufferfish", rows: [
         "...K.KK.K...",
         "....KKKK....",
         "..KKLLBBKK..",
@@ -148,7 +148,7 @@ struct Sprite {
     ], body: Color(hex: 0x8FB3F0), light: Color(hex: 0xDCE8FF),
        accent: Color(hex: 0x5A7FD6), cheek: Color(hex: 0xF2A7B8))
 
-    static let squid = Sprite(friend: "오징어", rows: [
+    static let squid = Sprite(friend: "Squid", rows: [
         ".....KK.....",
         "....KBBK....",
         "...KBLBBK...",
@@ -162,7 +162,7 @@ struct Sprite {
     ], body: Color(hex: 0x8C93A3), light: Color(hex: 0xC4C9D4),
        accent: Color(hex: 0x5D6372), cheek: Color(hex: 0xF2A7B8))
 
-    static let whale = Sprite(friend: "고래", rows: [
+    static let whale = Sprite(friend: "Whale", rows: [
         "..A.A.......",
         "...A........",
         "..KKKKKK..KK",
@@ -176,7 +176,7 @@ struct Sprite {
     ], body: Color(hex: 0x6FA8DC), light: Color(hex: 0xB8D8F2),
        accent: Color(hex: 0xE8F2FB), cheek: Color(hex: 0xF2A7B8))
 
-    static let blob = Sprite(friend: "물방울", rows: [
+    static let blob = Sprite(friend: "Blob", rows: [
         ".....KK.....",
         "....KLLK....",
         "...KLBBBK...",

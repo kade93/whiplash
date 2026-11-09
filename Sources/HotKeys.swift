@@ -6,18 +6,20 @@ import Carbon.HIToolbox
 // 예: {"hide": "ctrl+alt+h", "roam": "ctrl+alt+a", ...}  비워 두면("") 그 단축키는 끈다.
 
 enum HotAction: String, CaseIterable {
-    case hide, roam, small, cage, whip, whipAll, gather, panel
+    case hide, roam, small, cage, whip, whipAll, treatAll, megaphone, gather, panel
 
     var title: String {
         switch self {
-        case .hide:   return t("모두 숨기기 / 보이기")
-        case .roam:   return t("풀어놓기 / 채찍질 창")
-        case .small:  return t("작게 / 크게")
-        case .cage:   return t("당근밭에 박기 / 뽑기")
-        case .whip:   return t("쉬는 애 아무나 채찍")
-        case .whipAll: return t("쉬는 애 전부 채찍")
-        case .gather: return t("이리 와 (커서 자리로 모이기)")
-        case .panel:  return t("풀어놓을 때 채찍질 창도 보기")
+        case .hide:   return t("Hide / show all")
+        case .roam:   return t("Roam / window")
+        case .small:  return t("Small / large")
+        case .cage:   return t("Plant / pull out")
+        case .whip:   return t("Whip any idle one")
+        case .whipAll: return t("Whip everyone idle")
+        case .treatAll: return t("Treat everyone working 🥕")
+        case .megaphone: return t("Megaphone — same message to everyone")
+        case .gather: return t("Come here (gather at cursor)")
+        case .panel:  return t("Show list while roaming (both at once)")
         }
     }
 
@@ -29,6 +31,8 @@ enum HotAction: String, CaseIterable {
         case .cage:   return "ctrl+alt+c"
         case .whip:   return "ctrl+alt+w"
         case .whipAll: return "ctrl+alt+shift+w"
+        case .treatAll: return "ctrl+alt+t"
+        case .megaphone: return "ctrl+alt+b"
         case .gather: return "ctrl+alt+g"
         case .panel:  return "ctrl+alt+p"
         }
@@ -150,7 +154,7 @@ final class HotKeys {
             var ref: EventHotKeyRef?
             let hk = EventHotKeyID(signature: Self.signature, id: UInt32(i + 1))
             let st = RegisterEventHotKey(c.keyCode, c.carbonModifiers, hk, GetApplicationEventTarget(), 0, &ref)
-            guard st == noErr, let ref = ref else { bad[a] = text + t(" (등록 실패)"); continue }
+            guard st == noErr, let ref = ref else { bad[a] = text + t(" (failed to register)"); continue }
             refs.append(ref)
             handlers[UInt32(i + 1)] = actions[a]
             combos[a] = c

@@ -22,6 +22,11 @@ Four more ways to crack it, all opt-in under Settings ▸ Whip with your body, a
 - **Say "whoosh-crack!"** Make the whip sound with your mouth. The mic listens for a sharp burst only.
 - **iPhone / iPad / Apple Watch.** The Whiplash Remote app: flick the phone like the Big Bang Theory whip app, snap your wrist with the Watch, or press the big button. The phone plays the crack instantly and every Mac running Whiplash on the Wi‑Fi gets whipped.
 
+## Carrot and stick
+
+- **Treats.** Pet a critter slowly (three slow strokes) or right-click → Give a treat: it gets a praise prompt, hops, and says "Yum!" with a carrot and a heart. ⌃⌥T treats everyone who is working. Fast strokes are the whip, slow ones are the treat — same hand, opposite mood.
+- **Megaphone.** ⌃⌥B opens a box that sends one message to every Claude session at once. Handy for "stop and summarize" or "everyone: ship it".
+
 ## Critters and what they carry
 
 | Agent | Creature |
@@ -84,12 +89,17 @@ Working critters swing a tool that matches what the session is doing right now: 
 
 ## 몸으로 때리기
 
-설정 ▸ 몸으로 때리기에서 켜는 네 가지. 전부 쉬는 애 전원이 한 번에 맞아요.
+Settings ▸ 몸으로 때리기에서 켜는 네 가지. 전부 쉬는 애 전원이 한 번에 맞아요.
 
 - **에어팟 고개 휙.** 에어팟 끼고 고개를 휙 돌리기. 머리 움직임 센서를 읽어요(macOS 14 이상).
 - **카메라 손 휘두르기.** 카메라 앞에서 채찍 쥔 것처럼 손을 휙. 손 관절만 추적하고 녹화는 없어요.
 - **입으로 「화츅!」.** 입으로 채찍 소리 내기. 마이크는 짧은 파열음만 들어요.
 - **아이폰·아이패드·애플워치.** Whiplash Remote 앱: 빅뱅이론 채찍 앱처럼 폰을 휙 휘두르거나, 워치 찬 손목을 튕기거나, 큰 버튼. 폰에서 바로 소리가 나고 같은 Wi‑Fi의 Whiplash 맥 전부가 맞아요.
+
+## 채찍과 당근
+
+- **간식.** 캐릭터를 천천히 세 번 쓰다듬거나 오른쪽 클릭 → 간식 주기: 칭찬 프롬프트가 가고, 폴짝 뛰면서 「냠!」과 당근·하트. ⌃⌥T는 일하는 애 전부. 빠르게 쓸면 채찍, 느리게 쓸면 간식.
+- **확성기.** ⌃⌥B로 Claude 세션 전부에 같은 말을 한 번에. "다들 멈추고 정리해" 같은 거.
 
 ## 캐릭터와 들고 있는 것
 
