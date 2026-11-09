@@ -119,10 +119,11 @@ You do:
 - [x] Bundle ID com.kade.whiplash registered in Certificates, Identifiers & Profiles
 - [x] App Store Connect app created (macOS, English (U.S.), full access); description, promotional text, keywords, support URL, copyright, review notes and 5 screenshots entered on version 1.0
 - [ ] **Accept the updated Apple Developer Program License Agreement** (App Store Connect shows a yellow banner; only the account holder can do it, and nothing can be submitted until then)
-- [ ] App Store Connect ▸ App Information: primary category Utilities, secondary Entertainment; privacy policy URL
-- [ ] App Store Connect ▸ Pricing and Availability: Free, all countries
-- [ ] App Store Connect ▸ App Privacy: "Data Not Collected"
-- [ ] App Store Connect ▸ version 1.0 ▸ App Review contact (name, phone, email) and age rating questionnaire
+- [x] App Store Connect ▸ App Information: subtitle, Utilities + Entertainment, content rights (no third-party content), age rating 4+ (all "none"; if a reviewer objects to the cartoon whip, change "Cartoon or Fantasy Violence" to Infrequent, which makes it 9+)
+- [x] App Store Connect ▸ Pricing and Availability: Free, all 175 regions
+- [x] App Store Connect ▸ App Privacy: "Data Not Collected", published
+- [ ] App Store Connect ▸ App Information ▸ privacy policy URL (needs the public page first)
+- [ ] App Store Connect ▸ version 1.0 ▸ App Review contact: first/last name, phone, email (left blank on purpose)
 - [ ] Certificates in Xcode: Apple Distribution, Mac Installer Distribution (and Developer ID Application for the GitHub edition)
 - [ ] Mac App Store provisioning profile → save as `embedded.provisionprofile`
 - [ ] Make the privacy policy URL public (make the repo public, or publish docs/PRIVACY.md on GitHub Pages)
