@@ -94,7 +94,7 @@ final class WhipRunner {
     static let resultsFolder = folder.appendingPathComponent("whips", isDirectory: true)
     static let timeout: TimeInterval = 15 * 60
 
-    private let queue = DispatchQueue(label: "kr.urbanism.whiplash.whip", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "com.kade.whiplash.whip", qos: .userInitiated)
     private var resolved: [String: String] = [:]
 
     static func canRun(_ kind: AgentKind) -> Bool { cliName(kind) != nil }

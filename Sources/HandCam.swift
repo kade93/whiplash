@@ -11,7 +11,7 @@ final class HandSwing: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     private(set) var running = false
     private(set) var status = ""
     private let session = AVCaptureSession()
-    private let queue = DispatchQueue(label: "kr.urbanism.whiplash.handcam", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "com.kade.whiplash.handcam", qos: .userInitiated)
     private var trail: [(t: TimeInterval, x: Double)] = []
     private var cooldownUntil: TimeInterval = 0
     private var frames = 0

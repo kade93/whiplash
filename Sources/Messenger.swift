@@ -23,7 +23,7 @@ enum SessionMessenger {
         }
     }
 
-    private static let queue = DispatchQueue(label: "kr.urbanism.whiplash.messenger", qos: .userInitiated)
+    private static let queue = DispatchQueue(label: "com.kade.whiplash.messenger", qos: .userInitiated)
 
     static func send(_ text: String, to session: AgentSession, completion: @escaping (Result<String, Failure>) -> Void) {
         queue.async {

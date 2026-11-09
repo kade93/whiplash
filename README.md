@@ -245,8 +245,8 @@ Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) �
 - `WHIPLASH_SWING_TEST=1` 이면 6초 뒤 첫 쉬는 캐릭터에 가짜 마우스 이벤트를 보내 휘두르기 감지만 로그로 확인해요 (채찍은 안 때림).
 - `WHIPLASH_DRY_WHIP=1` 이면 채찍이 소리·애니메이션만 하고 에이전트는 안 띄워요. `WHIPLASH_DEBUG_MOUSE=1` 은 마우스 이동·감지 로그.
 - `WHIPLASH_FAKE_SOCK=/경로.sock WHIPLASH_FAKE_TOKEN=x WHIPLASH_SEND_TEST="글"` 이면 6초 뒤 첫 세션 대신 그 소켓으로 보내 봐요 (프로토콜 검증용).
-- 샌드박스판을 한 번이라도 띄우면 컨테이너가 생겨서 그 뒤로 `defaults write kr.urbanism.whiplash …` 는 컨테이너 쪽 설정에 써져요.
-  전 기능판 설정을 만질 땐 `defaults write ~/Library/Preferences/kr.urbanism.whiplash.plist …` 처럼 경로로.
+- 샌드박스판을 한 번이라도 띄우면 컨테이너가 생겨서 그 뒤로 `defaults write com.kade.whiplash …` 는 컨테이너 쪽 설정에 써져요.
+  전 기능판 설정을 만질 땐 `defaults write ~/Library/Preferences/com.kade.whiplash.plist …` 처럼 경로로.
 
 ## 한계
 

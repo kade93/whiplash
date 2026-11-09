@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 APP=build/Whiplash.app/Contents/MacOS/Whiplash
 [ -x "$APP" ] || ./build.sh
-PL=~/Library/Preferences/kr.urbanism.whiplash.plist
+PL=~/Library/Preferences/com.kade.whiplash.plist
 TMP=$(mktemp -d)
 pkill -x Whiplash 2>/dev/null || true; sleep 1
 

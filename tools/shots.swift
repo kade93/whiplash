@@ -39,15 +39,17 @@ func place(_ img: NSImage, x: CGFloat, y: CGFloat, scale: CGFloat, shadow: Bool 
     cg.restoreGState()
 }
 
+/// Exactly W×H pixels (lockFocus on a Retina Mac would give 2× and App Store Connect rejects 5760×3600).
 func shot(_ name: String, _ draw: () -> Void) {
-    let img = NSImage(size: NSSize(width: W, height: H))
-    img.lockFocus()
+    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(W), pixelsHigh: Int(H), bitsPerSample: 8, samplesPerPixel: 4,
+                               hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+    rep.size = NSSize(width: W, height: H)
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
     NSGraphicsContext.current!.imageInterpolation = .high
     backdrop()
     draw()
-    img.unlockFocus()
-    let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
-    rep.size = NSSize(width: W, height: H)
+    NSGraphicsContext.restoreGraphicsState()
     try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: outDir + "/" + name))
     print("wrote", name)
 }

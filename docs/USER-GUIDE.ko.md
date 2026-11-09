@@ -322,7 +322,7 @@ Claude가 실행 중이지 않으면 **Claude (꺼짐)** 캐릭터가 표시됩�
 | `hotkeys.json` | 전역 단축키 |
 | `whips/` | 보조 에이전트 결과 문서(.md) 및 로그 |
 
-창 위치, 보기 모드, 언어, 면역 세션 목록은 앱 기본 설정(`kr.urbanism.whiplash`)에 저장됩니다.
+창 위치, 보기 모드, 언어, 면역 세션 목록은 앱 기본 설정(`com.kade.whiplash`)에 저장됩니다.
 
 ## 9. 개인정보 및 보안
 
@@ -342,10 +342,10 @@ Claude가 실행 중이지 않으면 **Claude (꺼짐)** 캐릭터가 표시됩�
 | 메시지를 보낼 수 없음 | 입력창 하단의 오류 메시지를 확인하십시오. App Store 판에서는 제공되지 않습니다. |
 | 캐릭터가 창을 가림 | 작게 풀어놓기, 우리에 가두기, 또는 채찍질 창으로 보기를 사용하십시오. |
 | 전역 단축키가 충돌함 | 단축키 편집…에서 다른 조합으로 변경하십시오. |
-| 설정이 반영되지 않음 (개발자) | 샌드박스 빌드를 한 번이라도 실행하면 `defaults` 명령이 컨테이너 설정을 가리킵니다. `~/Library/Preferences/kr.urbanism.whiplash.plist` 경로를 직접 지정하십시오. |
+| 설정이 반영되지 않음 (개발자) | 샌드박스 빌드를 한 번이라도 실행하면 `defaults` 명령이 컨테이너 설정을 가리킵니다. `~/Library/Preferences/com.kade.whiplash.plist` 경로를 직접 지정하십시오. |
 
 ## 11. 제거
 
 1. 메뉴 막대 아이콘 → **Whiplash 닫기**로 종료합니다.
 2. `/Applications/Whiplash.app`을 휴지통으로 옮깁니다.
-3. 설정을 함께 제거하려면 `~/Library/Application Support/Whiplash/`와 `~/Library/Preferences/kr.urbanism.whiplash.plist`를 삭제합니다.
+3. 설정을 함께 제거하려면 `~/Library/Application Support/Whiplash/`와 `~/Library/Preferences/com.kade.whiplash.plist`를 삭제합니다.

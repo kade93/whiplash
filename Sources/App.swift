@@ -6,11 +6,21 @@ import Combine
 @MainActor
 enum WhiplashApp {
     static func main() {
+        migratePreferences()
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.delegate = delegate
         app.setActivationPolicy(.accessory)      // 시작은 조용히. Dock 아이콘은 설정(dockIcon)에 따라 켠다
         withExtendedLifetime(delegate) { app.run() }
+    }
+
+    /// 0.3 까지는 번들 ID 가 kr.urbanism.whiplash 였다. 새 설정이 비어 있고 옛 설정이 있으면 한 번 옮겨 온다.
+    private static func migratePreferences() {
+        let d = UserDefaults.standard
+        guard d.object(forKey: "lang") == nil, d.object(forKey: "compact") == nil,
+              let old = UserDefaults(suiteName: "kr.urbanism.whiplash")?.persistentDomain(forName: "kr.urbanism.whiplash"),
+              !old.isEmpty else { return }
+        for (k, v) in old where !k.hasPrefix("NS") { d.set(v, forKey: k) }
     }
 }
 

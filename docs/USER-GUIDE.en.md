@@ -325,7 +325,7 @@ All configuration lives in `~/Library/Application Support/Whiplash/`.
 | `hotkeys.json` | Global hotkeys |
 | `whips/` | Helper agent results (.md) and logs |
 
-Window positions, view mode, language and the immunity list are stored in the app's preferences (`kr.urbanism.whiplash`).
+Window positions, view mode, language and the immunity list are stored in the app's preferences (`com.kade.whiplash`).
 
 ## 9. Privacy and security
 
@@ -345,10 +345,10 @@ Window positions, view mode, language and the immunity list are stored in the ap
 | Cannot send a message | Read the error under the input field. Not available in the App Store edition. |
 | Characters cover my windows | Use Roam small, the pen, or the window view. |
 | Hotkey conflicts | Change the combination under Edit hotkeys…. |
-| Settings not applied (developers) | Once a sandboxed build has run, the `defaults` command targets the container. Use the explicit path `~/Library/Preferences/kr.urbanism.whiplash.plist`. |
+| Settings not applied (developers) | Once a sandboxed build has run, the `defaults` command targets the container. Use the explicit path `~/Library/Preferences/com.kade.whiplash.plist`. |
 
 ## 11. Uninstall
 
 1. Quit via the menu bar icon → **Quit Whiplash**.
 2. Move `/Applications/Whiplash.app` to the Trash.
-3. To remove settings as well, delete `~/Library/Application Support/Whiplash/` and `~/Library/Preferences/kr.urbanism.whiplash.plist`.
+3. To remove settings as well, delete `~/Library/Application Support/Whiplash/` and `~/Library/Preferences/com.kade.whiplash.plist`.

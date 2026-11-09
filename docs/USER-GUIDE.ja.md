@@ -322,7 +322,7 @@ Claude が起動していないときは **Claude（オフ）** のキャラク�
 | `hotkeys.json` | グローバルショートカット |
 | `whips/` | 補助エージェントの結果（.md）とログ |
 
-ウィンドウ位置、表示モード、言語、免疫リストはアプリの環境設定（`kr.urbanism.whiplash`）に保存されます。
+ウィンドウ位置、表示モード、言語、免疫リストはアプリの環境設定（`com.kade.whiplash`）に保存されます。
 
 ## 9. プライバシーとセキュリティ
 
@@ -347,4 +347,4 @@ Claude が起動していないときは **Claude（オフ）** のキャラク�
 
 1. メニューバーアイコン → **Whiplash を終了** で終了します。
 2. `/Applications/Whiplash.app` をゴミ箱に移動します。
-3. 設定も削除する場合は `~/Library/Application Support/Whiplash/` と `~/Library/Preferences/kr.urbanism.whiplash.plist` を削除します。
+3. 設定も削除する場合は `~/Library/Application Support/Whiplash/` と `~/Library/Preferences/com.kade.whiplash.plist` を削除します。

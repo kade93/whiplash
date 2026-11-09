@@ -235,8 +235,8 @@ final class Model: ObservableObject {
 
     private let sampler = ProcessSampler()
     private let sessionReader = SessionReader()      // sampleQueue 에서만 쓴다
-    private let sampleQueue = DispatchQueue(label: "kr.urbanism.whiplash.sample", qos: .utility)
-    private let storageQueue = DispatchQueue(label: "kr.urbanism.whiplash.storage", qos: .background)
+    private let sampleQueue = DispatchQueue(label: "com.kade.whiplash.sample", qos: .utility)
+    private let storageQueue = DispatchQueue(label: "com.kade.whiplash.storage", qos: .background)
     private var sampleTimer: DispatchSourceTimer?
     private var storageTimer: DispatchSourceTimer?
     private var animTimer: Timer?

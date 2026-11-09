@@ -10,7 +10,7 @@
 #        - Developer ID Application          (devid)
 #        - Apple Distribution                (appstore)
 #        - Mac Installer Distribution        (appstore .pkg 서명)
-#   3. App Store Connect 에서 앱 만들기: 번들 ID kr.urbanism.whiplash, 이름 Whiplash
+#   3. App Store Connect 앱: 이름 "Whiplash: AI Agent Critters", 번들 ID com.kade.whiplash, App ID 6832438273 (2026-11-09 생성됨)
 #   4. 프로비저닝 프로파일 (appstore): Mac App Store 용으로 만들어 받아서 embedded.provisionprofile 로 저장
 #   5. 공증용 키체인 프로파일 (devid):  xcrun notarytool store-credentials whiplash --apple-id <ID> --team-id <TEAM> --password <앱 암호>
 #

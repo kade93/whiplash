@@ -61,7 +61,7 @@ struct Quota: Equatable {
 
 enum QuotaReader {
     static let endpoint = URL(string: "https://api.anthropic.com/api/oauth/usage")!
-    private static let queue = DispatchQueue(label: "kr.urbanism.whiplash.quota", qos: .utility)
+    private static let queue = DispatchQueue(label: "com.kade.whiplash.quota", qos: .utility)
 
     enum Failure: Error, LocalizedError {
         case noToken, denied, http(Int), parse, network(String)

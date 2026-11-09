@@ -25,6 +25,6 @@
 	<key>WKApplication</key>
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
-	<string>kr.urbanism.whiplash.remote</string>
+	<string>com.kade.whiplash.remote</string>
 </dict>
 </plist>

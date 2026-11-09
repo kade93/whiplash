@@ -15,7 +15,7 @@ final class RemoteReceiver {
     private(set) var status = ""
     private(set) var lastSender = ""
     private var listener: NWListener?
-    private let queue = DispatchQueue(label: "kr.urbanism.whiplash.remote")
+    private let queue = DispatchQueue(label: "com.kade.whiplash.remote")
     static let port: UInt16 = 47777
     static let service = "_whiplash._udp"
 

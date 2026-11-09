@@ -10,7 +10,7 @@ final class RemoteSender: ObservableObject {
 
     private var browser: NWBrowser?
     private var connections: [NWEndpoint: NWConnection] = [:]
-    private let queue = DispatchQueue(label: "kr.urbanism.whiplash.remote.sender")
+    private let queue = DispatchQueue(label: "com.kade.whiplash.remote.sender")
 
     func start() {
         let b = NWBrowser(for: .bonjour(type: "_whiplash._udp", domain: nil), using: .udp)
