@@ -11,7 +11,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    DEVELOPMENT_TEAM: ""           # set your team in Xcode (Signing & Capabilities) before running on a device
+    DEVELOPMENT_TEAM: S79N2P4242   # Kade's team; change it to yours if you fork this
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "0.3"
     CURRENT_PROJECT_VERSION: "1"

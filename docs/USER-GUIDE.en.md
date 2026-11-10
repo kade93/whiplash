@@ -247,7 +247,7 @@ The **megaphone** (⌃⌥B / menu **Megaphone — same message to everyone…**)
 
 ### 6.6 Whip with your body
 
-Turn these on under **Settings ▸ Whip with your body**. Sensors, camera, microphone and network are used only while on, and nothing is recorded. Each trigger whips every idle session (same as ⌃⌥⇧W).
+Turn these on under **Settings ▸ Whip with your body**. They are all off by default. Sensors, camera, microphone and network are used only while the matching switch is on, and nothing is recorded or stored. Each trigger whips **every idle session at once** (the same as ⌃⌥⇧W): the critters jump, the crack plays as a chorus, and in the full edition the whip prompt is delivered to each session. While a trigger is on, the menu shows its state on the line below it ("Listening…", "Camera access denied", and so on).
 
 | Trigger | Gesture | Requirements |
 |---|---|---|
@@ -256,7 +256,22 @@ Turn these on under **Settings ▸ Whip with your body**. Sensors, camera, micro
 | Say "whoosh-crack!" | A short burst that jumps from quiet to loud within 50 ms | Microphone permission; only the level is measured |
 | iPhone / iPad / Apple Watch remote | Flick the phone, snap your wrist with the Watch, or tap the button in the Whiplash Remote app on the same Wi‑Fi | Local network permission; see `WhiplashRemote/` |
 
-The menu shows each trigger's state (listening, permission denied, and so on).
+**AirPods head flick.** The Mac reads the head-motion sensor in the AirPods (the same one Spatial Audio uses). A quick sideways snap of the head is about 6–10 rad/s; nodding along to music is around 2, so it does not trigger. There is a 1.5 s cooldown. If the AirPods are connected to another device at that moment, the Mac cannot read them and the status line says so. On macOS 13 the switch is hidden.
+
+**Camera hand swing.** The camera opens only while the switch is on (the green light stays on the whole time). Vision tracks one hand's wrist; if it crosses 30% of the frame width in 0.35 s, that is a swing. Frames are analysed in memory and thrown away. Cooldown 2 s. Works best with the hand in front of the camera at arm's length.
+
+**Say "whoosh-crack!".** The microphone level is sampled continuously; a crack is a jump from under −34 dBFS to over −14 dBFS within 50 ms, so normal speech, which ramps up slowly, does not trigger. Only the level is measured, never the audio itself. Cooldown 1.5 s.
+
+**iPhone / iPad / Apple Watch remote.** This is a separate app, Whiplash Remote, in the `WhiplashRemote/` folder. Setting it up:
+
+1. On the Mac, turn on **Settings ▸ Whip with your body ▸ Accept iPhone / iPad / Apple Watch remote** and allow "local network" when macOS asks. Whiplash then advertises itself as `_whiplash._udp` on the Wi‑Fi.
+2. Install Whiplash Remote on the iPhone (the Watch app installs with it). It is not on the App Store yet; build it from `WhiplashRemote/` with Xcode (see its README).
+3. Open the app on the phone with the phone on the same Wi‑Fi as the Mac. It lists every Mac running Whiplash and sends to all of them.
+4. Flick the phone like a whip, snap the wrist wearing the Watch, or tap the big button. The phone plays the crack by itself the moment it detects the flick, before the Mac answers, so the feedback is instant.
+
+A flick is a user-acceleration peak over 2.6 g followed by the hand stopping within 150 ms; walking is about 0.3 g and a shake about 1.5 g, so neither triggers it. The Watch relays through the phone with WatchConnectivity, so the phone has to be nearby and awake. The protocol is four plain-text UDP lines on port 47777, so anything on the Wi‑Fi can be a remote: a Shortcut, a Stream Deck, another Mac.
+
+**Tuning and known limits.** The thresholds above were chosen from sensor documentation and typical values, not from a large test group, so they may need adjusting for your head, hand or wrist. They are single constants: `Motion.swift` (head flick), `HandCam.swift` (hand swing), `MouthWhip.swift` (mouth) and `WhiplashRemote/Shared/Flick.swift` (phone and Watch). In the App Store edition the body triggers bring the sessions' windows to the front and play the reaction; the whip prompt itself is delivered only by the direct-download edition (see 2.2).
 
 ### 6.7 Launching Claude
 

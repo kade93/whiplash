@@ -9,15 +9,22 @@ Crack the whip from your pocket. Flick the phone like a whip (the Big Bang Theor
 - The Watch app detects the wrist snap with Core Motion and relays it to the phone with WatchConnectivity; the phone forwards it to the Mac.
 - A flick is a user-acceleration spike over 2.6 g followed by a stop within 150 ms. Shaking or walking does not trigger it.
 
-## Build
+## Setup, step by step
 
-```bash
-brew install xcodegen
-cd WhiplashRemote && xcodegen generate
-open WhiplashRemote.xcodeproj
-```
+1. **Mac:** Whiplash ▸ Settings ▸ Whip with your body ▸ *Accept iPhone / iPad / Apple Watch remote* → on. Allow "local network" when macOS asks. The status line under the switch says "Listening on port 47777" once it is up.
+2. **Build the phone app** (not on the App Store yet):
+   ```bash
+   brew install xcodegen
+   cd WhiplashRemote && xcodegen generate
+   open WhiplashRemote.xcodeproj
+   ```
+   The team is preset in `project.yml`; if Xcode complains, pick yours under Signing & Capabilities for both targets. Select the `WhiplashRemote` scheme, your iPhone as the destination, and Run. The Watch app installs together with it (Watch ▸ My Watch ▸ Whiplash Remote if it does not appear). Requires iOS 17 / watchOS 10. No account inside the app.
+3. **Same Wi‑Fi.** Open the app on the phone; it lists every Mac that is running Whiplash with the remote switched on, and sends to all of them. If the list is empty, check that both devices are on the same network and that the Mac switch is on (AP isolation on guest networks blocks Bonjour).
+4. **Whip.** Flick the phone like a whip, snap the wrist wearing the Watch, or tap the big button. The phone plays the crack itself the moment it detects the flick, so the feedback is instant even before the Mac reacts.
 
-In Xcode set your team under Signing & Capabilities for both targets, then run `WhiplashRemote` on your iPhone (the Watch app installs with it). Requires iOS 17 / watchOS 10. No account is needed inside the app.
+## Tuning
+
+A flick is a user-acceleration (gravity removed) peak over **2.6 g** followed by the hand stopping (under 0.8 g) within **150 ms**, with a 0.9 s cooldown — see `Shared/Flick.swift`. Walking is ~0.3 g and a shake ~1.5 g. These values were chosen from typical sensor figures, not a large test group; if your flicks are missed, lower `threshold` to 2.0; if walking triggers it, raise it. The Watch relays through the phone with WatchConnectivity, so the phone must be nearby and awake.
 
 The project file is generated from `project.yml` and is not committed.
 
@@ -44,4 +51,10 @@ Anything that can send a UDP packet on the local network can be a remote: a Shor
 - 폰 앱은 같은 네트워크의 Whiplash 맥을 전부 찾아 한 번에 보내요.
 - 워치는 손목 스냅을 폰으로 넘기고, 폰이 맥에 전달해요.
 
-빌드는 위 영어 절과 같아요: `xcodegen generate` → Xcode에서 팀 지정 → 아이폰에 설치(워치 앱은 같이 들어감). iOS 17 / watchOS 10 이상.
+준비 순서는 위 영어 절과 같아요.
+1. 맥: Settings ▸ 몸으로 때리기 ▸ 아이폰·아이패드·애플워치 리모트 받기 켜기. "로컬 네트워크" 허용.
+2. 폰 앱 빌드: `cd WhiplashRemote && xcodegen generate` → Xcode에서 아이폰에 Run (워치 앱은 같이 설치, 팀은 project.yml에 들어 있음). iOS 17 / watchOS 10 이상. 아직 앱스토어엔 없어요.
+3. 폰과 맥을 같은 Wi‑Fi에. 앱이 맥을 못 찾으면 맥 쪽 스위치와 네트워크(게스트 와이파이는 Bonjour를 막아요)를 확인.
+4. 폰을 휙, 워치 찬 손목을 튕기거나, 큰 버튼. 폰이 먼저 소리를 내고 맥이 뒤따라요.
+
+휘두름 기준은 2.6g 넘고 150ms 안에 멈추기(`Shared/Flick.swift`). 많은 사람에게 시험한 값은 아니라서 잘 안 잡히면 2.0으로 낮추고, 걷다가 터지면 올리면 돼요.

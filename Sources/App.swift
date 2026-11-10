@@ -966,14 +966,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(menuItem(t("Whip only while holding ⌥ (avoid accidents)"), on: m.whipNeedsOption) { m.whipNeedsOption.toggle() })
         let body = NSMenu()
         func line(_ text: String) { if !text.isEmpty { let i = NSMenuItem(title: "   " + text, action: nil, keyEquivalent: ""); i.isEnabled = false; body.addItem(i) } }
+        // 꺼져 있으면 "어떻게 하는 건지" 한 줄, 켜져 있으면 상태 한 줄
         body.addItem(menuItem(t("AirPods head flick — whip everyone idle"), on: m.headFlickOn) { m.headFlickOn.toggle() })
-        if #available(macOS 14.0, *), let hf = headFlick as? HeadFlick { line(hf.status) } else { line(t("Needs macOS 14 or later")) }
+        if #available(macOS 14.0, *), let hf = headFlick as? HeadFlick {
+            line(m.headFlickOn ? hf.status : t("Wearing AirPods Pro / 3rd gen / Max, snap your head sideways"))
+        } else { line(t("Needs macOS 14 or later")) }
         body.addItem(menuItem(t("Camera hand swing — whip everyone idle"), on: m.handCamOn) { m.handCamOn.toggle() })
-        line(handSwing.status)
+        line(m.handCamOn ? handSwing.status : t("Swing a hand sideways in front of the camera, arm's length away"))
         body.addItem(menuItem(t("Say \"whoosh-crack!\" — microphone"), on: m.mouthOn) { m.mouthOn.toggle() })
-        line(mouth.status)
+        line(m.mouthOn ? mouth.status : t("A short sharp burst after a quiet moment; talking doesn't count"))
         body.addItem(menuItem(t("Accept iPhone / iPad / Apple Watch remote"), on: m.remoteOn) { m.remoteOn.toggle() })
-        line(remote.status)
+        line(m.remoteOn ? remote.status : t("Whiplash Remote app on the same Wi‑Fi: flick the phone, snap the wrist, or tap"))
         body.addItem(.separator())
         let hint = NSMenuItem(title: t("Sensors, camera, microphone and network are used only while on. Nothing is recorded."), action: nil, keyEquivalent: "")
         hint.isEnabled = false
