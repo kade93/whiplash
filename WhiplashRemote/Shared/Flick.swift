@@ -8,7 +8,7 @@ final class Flick: ObservableObject {
     @Published var lastStrength: Double = 0
     var onFlick: ((Double) -> Void)?
 
-    static let threshold = 2.6          // g — a deliberate snap; walking is ~0.3, a shake ~1.5
+    static let threshold = 2.0          // g — a deliberate snap; walking is ~0.3, a shake ~1.5 (was 2.6; missed real wrists)
     static let cooldown: TimeInterval = 0.9
 
     private let motion = CMMotionManager()
@@ -27,14 +27,14 @@ final class Flick: ObservableObject {
             let g = sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
             let now = ProcessInfo.processInfo.systemUptime
             if g > self.peak { self.peak = g; self.peakAt = now }
-            // the crack: a peak over threshold, then the hand stops (acceleration back under 0.8 g within 150 ms)
-            if self.peak >= Self.threshold, g < 0.8, now - self.peakAt < 0.15, now >= self.cooldownUntil {
+            // the crack: a peak over threshold, then the hand stops (acceleration back under 1.0 g within 250 ms)
+            if self.peak >= Self.threshold, g < 1.0, now - self.peakAt < 0.25, now >= self.cooldownUntil {
                 self.cooldownUntil = now + Self.cooldown
                 self.lastStrength = self.peak
                 self.onFlick?(self.peak)
                 self.peak = 0
             }
-            if now - self.peakAt > 0.3 { self.peak = 0 }
+            if now - self.peakAt > 0.4 { self.peak = 0 }
         }
         armed = true
     }

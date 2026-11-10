@@ -1027,12 +1027,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if FloatingPanel.debugMouse { NSLog("EOHANG hand swing %.2f", dx) }
             self?.bodyWhip()
         }
-        remote.onCommand = { [weak self] cmd, strength in
-            if FloatingPanel.debugMouse { NSLog("EOHANG remote %@ %.1f", cmd, strength) }
-            switch cmd {
-            case "whip": m.whipRandom()
-            default: self?.bodyWhip()
-            }
+        remote.onCommand = { [weak self] cmd, arg in
+            if FloatingPanel.debugMouse { NSLog("EOHANG remote %@ %@", cmd, arg) }
+            return self?.handleRemote(cmd, arg)
         }
         mouth.onCrack = { [weak self] db in
             if FloatingPanel.debugMouse { NSLog("EOHANG mouth crack %.0f dB", db) }
@@ -1047,6 +1044,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if model.hidden { model.hidden = false }
         critters.setDodged(false)
         model.whipAll()
+    }
+
+    /// 아이폰·워치 리모트 명령 → 답 한 줄 (Remote.swift 의 프로토콜 주석 참고)
+    private func handleRemote(_ cmd: String, _ arg: String) -> String? {
+        let m = model
+        let groups = m.snapshot.groups.filter { !$0.id.hasPrefix("app:") && $0.id != Model.ghostID }
+        func name(_ g: AgentGroup) -> String { g.session?.name.isEmpty == false ? g.session!.name : g.label }
+        func show() { if m.hidden { m.hidden = false }; critters.setDodged(false) }
+        switch cmd {
+        case "list":
+            let lines = groups.map { g -> String in
+                let state: String
+                if m.onStrike(g) { state = "strike" }
+                else if let s = g.session { state = s.needsYou ? "waiting" : (s.status == .busy ? "working" : "resting") }
+                else { state = g.awake ? "working" : "resting" }
+                return [g.id, name(g), state, g.kind.rawValue].map { $0.replacingOccurrences(of: "\t", with: " ") }.joined(separator: "\t")
+            }
+            return (["list"] + lines).joined(separator: "\n")
+        case "whipall":
+            let targets = groups.filter { m.canWhip($0) && !m.isImmune($0) }
+            show(); m.whipAll()
+            return targets.isEmpty ? "ok nobody to whip" : "ok whipped \(targets.count)"
+        case "whip":
+            if arg.isEmpty {
+                show(); m.whipRandom()
+                return "ok whipped one"
+            }
+            guard let g = groups.first(where: { $0.id == arg }) else { return "err no such session" }
+            guard m.canWhip(g) else { return "ok \(name(g)) is immune" }
+            show(); m.whip(g)
+            return "ok whipped \(name(g))"
+        case "treatall":
+            let targets = groups.filter { $0.awake }
+            show(); m.treatAll()
+            return targets.isEmpty ? "ok nobody to treat" : "ok treated \(targets.count)"
+        case "treat":
+            guard let g = groups.first(where: { $0.id == arg }) else { return "err no such session" }
+            show(); m.treat(g)
+            return "ok treated \(name(g))"
+        case "flick":
+            return nil
+        default:
+            bodyWhip()
+            return "ok"
+        }
     }
 
     private func syncBodyWhips() {
