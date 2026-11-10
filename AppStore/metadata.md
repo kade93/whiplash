@@ -15,8 +15,8 @@ Everything to paste into App Store Connect, plus the checklist. English is the p
 | Price | Free, no in-app purchases |
 | Age rating | 4+ |
 | Copyright | 2026 Kade Yoon |
-| Support URL | https://github.com/kade93/whiplash |
-| Privacy policy URL | https://github.com/kade93/whiplash/blob/main/docs/PRIVACY.md (must be public before submission) |
+| Support URL | https://gist.github.com/kade93/eb5c3fecdc20d771e02641a4684daad8 for now (the repo is private); switch back to https://github.com/kade93/whiplash once it is public |
+| Privacy policy URL | https://gist.github.com/kade93/eb5c3fecdc20d771e02641a4684daad8 (public gist of docs/PRIVACY.md) |
 | Encryption | None (ITSAppUsesNonExemptEncryption = NO in Info.plist) |
 | Minimum macOS | 13.0 (AirPods head flick needs 14.0) |
 | Development region | en |
@@ -125,7 +125,7 @@ You do:
 - [ ] App Store Connect ▸ App Information ▸ privacy policy URL (needs the public page first)
 - [ ] App Store Connect ▸ version 1.0 ▸ App Review contact: **phone number is required** and I do not have it. Name (DongHyun Youn) and the developer-account email were typed but could not be saved without the phone, so enter all three and press Save. "Sign-in required" should be unchecked
 - [x] Xcode signed in; `./release.sh appstore` created Apple Distribution + Mac Installer Distribution (Xcode-managed) and the Mac App Store profile by itself
-- [ ] **Publish docs/PRIVACY.md** (rewritten 2026-11-10 to cover camera, microphone, AirPods motion and local network). I am not allowed to publish it from here. Fastest: `gh gist create docs/PRIVACY.md --public --desc "Whiplash privacy policy"` and paste the URL into App Store Connect ▸ App Information ▸ Privacy Policy URL. Alternatively make the repo public, which also makes the support URL (github.com/kade93/whiplash) reachable; today it is private, so reviewers cannot open it
+- [x] Privacy policy published as a public gist (https://gist.github.com/kade93/eb5c3fecdc20d771e02641a4684daad8) and set in App Store Connect ▸ App Privacy on 2026-11-10. Edit `docs/PRIVACY.md` and `gh gist edit eb5c3fecdc20d771e02641a4684daad8 docs/PRIVACY.md` to update it. The support URL (github.com/kade93/whiplash) is still a private repo; make it public or point support at the gist
 - [x] `./release.sh appstore` — build 1.0 (1) uploaded to App Store Connect on 2026-11-09 20:35 KST; it shows under version 1.0 ▸ Build once Apple finishes processing (an email arrives). `EXPORT_ONLY=1` leaves the .pkg in `build/export/` instead
 - [x] Build 1.0 (2) uploaded 2026-11-10 (adds the gesture hint lines under Settings ▸ Whip with your body); attach it to version 1.0 in place of (1) once processed
 - [x] Build 1.0 (1) processed ("Ready to Submit") and attached to version 1.0 on 2026-11-10; the app icon on App Store Connect comes from the attached build, so it only appears after this step
