@@ -123,10 +123,11 @@ You do:
 - [x] App Store Connect ▸ Pricing and Availability: Free, all 175 regions
 - [x] App Store Connect ▸ App Privacy: "Data Not Collected", published
 - [ ] App Store Connect ▸ App Information ▸ privacy policy URL (needs the public page first)
-- [ ] App Store Connect ▸ version 1.0 ▸ App Review contact: first/last name, phone, email (left blank on purpose)
+- [ ] App Store Connect ▸ version 1.0 ▸ App Review contact: **phone number is required** and I do not have it. Name (DongHyun Youn) and the developer-account email were typed but could not be saved without the phone, so enter all three and press Save. "Sign-in required" should be unchecked
 - [x] Xcode signed in; `./release.sh appstore` created Apple Distribution + Mac Installer Distribution (Xcode-managed) and the Mac App Store profile by itself
-- [ ] Make the privacy policy URL public (make the repo public, or publish docs/PRIVACY.md on GitHub Pages)
+- [ ] **Publish docs/PRIVACY.md** (rewritten 2026-11-10 to cover camera, microphone, AirPods motion and local network). I am not allowed to publish it from here. Fastest: `gh gist create docs/PRIVACY.md --public --desc "Whiplash privacy policy"` and paste the URL into App Store Connect ▸ App Information ▸ Privacy Policy URL. Alternatively make the repo public, which also makes the support URL (github.com/kade93/whiplash) reachable; today it is private, so reviewers cannot open it
 - [x] `./release.sh appstore` — build 1.0 (1) uploaded to App Store Connect on 2026-11-09 20:35 KST; it shows under version 1.0 ▸ Build once Apple finishes processing (an email arrives). `EXPORT_ONLY=1` leaves the .pkg in `build/export/` instead
+- [x] Build 1.0 (2) uploaded 2026-11-10 (adds the gesture hint lines under Settings ▸ Whip with your body); attach it to version 1.0 in place of (1) once processed
 - [x] Build 1.0 (1) processed ("Ready to Submit") and attached to version 1.0 on 2026-11-10; the app icon on App Store Connect comes from the attached build, so it only appears after this step
 - [ ] Press "Add for Review" (blocked until the license agreement is accepted)
 - [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
