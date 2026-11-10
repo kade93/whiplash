@@ -118,7 +118,7 @@ You do:
 - [x] Apple Developer Program (individual team, S79N2P4242)
 - [x] Bundle ID com.kade.whiplash registered in Certificates, Identifiers & Profiles
 - [x] App Store Connect app created (macOS, English (U.S.), full access); description, promotional text, keywords, support URL, copyright, review notes and 5 screenshots entered on version 1.0
-- [ ] **Accept the updated Apple Developer Program License Agreement** (App Store Connect shows a yellow banner; only the account holder can do it, and nothing can be submitted until then)
+- [x] Updated Apple Developer Program License Agreement accepted (banner gone on 2026-11-10)
 - [x] App Store Connect ▸ App Information: subtitle, Utilities + Entertainment, content rights (no third-party content), age rating 4+ (all "none"; if a reviewer objects to the cartoon whip, change "Cartoon or Fantasy Violence" to Infrequent, which makes it 9+)
 - [x] App Store Connect ▸ Pricing and Availability: Free, all 175 regions
 - [x] App Store Connect ▸ App Privacy: "Data Not Collected", published
@@ -127,9 +127,9 @@ You do:
 - [x] Xcode signed in; `./release.sh appstore` created Apple Distribution + Mac Installer Distribution (Xcode-managed) and the Mac App Store profile by itself
 - [x] Privacy policy published as a public gist (https://gist.github.com/kade93/eb5c3fecdc20d771e02641a4684daad8) and set in App Store Connect ▸ App Privacy on 2026-11-10. Edit `docs/PRIVACY.md` and `gh gist edit eb5c3fecdc20d771e02641a4684daad8 docs/PRIVACY.md` to update it. The support URL (github.com/kade93/whiplash) is still a private repo; make it public or point support at the gist
 - [x] `./release.sh appstore` — build 1.0 (1) uploaded to App Store Connect on 2026-11-09 20:35 KST; it shows under version 1.0 ▸ Build once Apple finishes processing (an email arrives). `EXPORT_ONLY=1` leaves the .pkg in `build/export/` instead
-- [x] Build 1.0 (2) uploaded 2026-11-10 (adds the gesture hint lines under Settings ▸ Whip with your body); attach it to version 1.0 in place of (1) once processed
+- [x] Build 1.0 (2) uploaded, processed and attached to version 1.0 on 2026-11-10 (replaces (1); adds the gesture hint lines under Settings ▸ Whip with your body). Support URL on the version page now points at the privacy gist
 - [x] Build 1.0 (1) processed ("Ready to Submit") and attached to version 1.0 on 2026-11-10; the app icon on App Store Connect comes from the attached build, so it only appears after this step
-- [ ] Press "Add for Review" (blocked until the license agreement is accepted)
+- [ ] Press "Add for Review" (button is enabled; Apple may still ask for the review contact phone number at that point)
 - [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
 - [ ] Submit for review
 
