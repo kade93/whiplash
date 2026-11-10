@@ -53,8 +53,8 @@ struct ContentView: View {
                         HStack(spacing: 10) {
                             Text(icon(s.state)).font(.title3)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(s.name).font(.subheadline.weight(.semibold)).lineLimit(1)
-                                Text(stateText(s.state) + " · " + kindText(s.kind)).font(.caption).foregroundStyle(.secondary)
+                                Text(s.name).font(.subheadline.weight(.semibold)).lineLimit(1).foregroundStyle(Color.black)
+                                Text(stateText(s.state) + " · " + kindText(s.kind)).font(.caption).foregroundStyle(Color.black.opacity(0.6))
                             }
                             Spacer(minLength: 4)
                             Button { act("whip " + s.id) } label: { Image(systemName: "bolt.fill").frame(width: 34, height: 30) }
@@ -67,6 +67,7 @@ struct ContentView: View {
                     }
                     .scrollContentBackground(.hidden)
                     .listStyle(.plain)
+                    .environment(\.colorScheme, .light)      // rows are white; keep the text black in dark mode too
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
 
