@@ -130,8 +130,8 @@ struct TrafficLights: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            light(Color(hex: 0xFF5F57), Color(hex: 0xE0443E), "×", t("Hide all — windows and critters (⌃⌥H or the menu bar whip brings them back) · ⌥-click quits")) {
-                if NSEvent.modifierFlags.contains(.option) { NSApp.terminate(nil) } else { model.hidden = true }
+            light(Color(hex: 0xFF5F57), Color(hex: 0xE0443E), "×", t("Quit Whiplash · ⌥-click only hides (⌃⌥H or the menu bar whip brings them back)")) {
+                if NSEvent.modifierFlags.contains(.option) { model.hidden = true } else { NSApp.terminate(nil) }
             }
             light(Color(hex: 0xFEBC2E), Color(hex: 0xDEA123), "−", model.compact ? t("Full view") : t("Compact view")) { model.compact.toggle() }
             light(Color(hex: 0x28C840), Color(hex: 0x1AAB29), "+", model.roaming ? t("Gather into the window") : t("Let loose — roam the screen")) { model.roaming.toggle(); if model.roaming { model.hidden = false } }

@@ -107,7 +107,7 @@ enum L10n {
         "Same message to everyone (⏎ send · esc close)": ("모두에게 같은 말 (⏎ 보내기 · esc 닫기)", "全員に同じ言葉（⏎ 送信 · esc 閉じる）"),
         "Idle sessions read it now, busy ones after their turn": ("쉬는 애는 바로, 일하는 애는 턴이 끝난 뒤 읽어요", "休んでる子はすぐ、働いてる子はターンの後に読みます"),
         "No session to send to (%d/%d)": ("보낼 세션이 없어요 (%d/%d)", "送れるセッションがありません（%d/%d）"),
-        "Hide all — windows and critters (⌃⌥H or the menu bar whip brings them back) · ⌥-click quits": ("모두 숨기기 — 창과 캐릭터 전부 (⌃⌥H 또는 메뉴 막대 채찍으로 다시) · ⌥클릭이면 종료", "すべて隠す — ウィンドウもキャラも（⌃⌥H かメニューバーの鞭で戻す）· ⌥クリックで終了"),
+        "Quit Whiplash · ⌥-click only hides (⌃⌥H or the menu bar whip brings them back)": ("Whiplash 종료 · ⌥ 누르고 클릭하면 숨기기만 (⌃⌥H 또는 메뉴 막대 채찍으로 다시)", "Whiplash を終了 · ⌥+クリックで隠すだけ（⌃⌥H かメニューバーの鞭で戻す）"),
         "Edit whip prompt…": ("채찍 프롬프트 편집…", "鞭プロンプトを編集…"),
         "Edit task list…": ("일감 목록 편집…", "タスク一覧を編集…"),
         "Open results folder": ("결과 폴더 열기", "結果フォルダを開く"),
