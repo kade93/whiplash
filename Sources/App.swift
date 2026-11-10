@@ -960,6 +960,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         // 채찍질 창
         menu.addItem(menuItem(t("Compact view"), on: m.compact) { m.compact.toggle() })
+        let perRow = NSMenu()
+        for n in [5, 8, 10, 15, 20] {
+            perRow.addItem(menuItem(tf("%d per row", n), on: m.compactPerRow == n) { m.compactPerRow = n })
+        }
+        menu.addItem(submenu(t("Critters per row (compact view)"), perRow))
         menu.addItem(menuItem(t("Always on top"), on: m.alwaysOnTop) { m.alwaysOnTop.toggle() })
         menu.addItem(.separator())
         // 채찍

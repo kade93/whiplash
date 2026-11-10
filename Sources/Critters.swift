@@ -356,7 +356,7 @@ final class CritterManager: ObservableObject {
                 if let s = summon, m.target == nil {           // 부르면 커서 둘레 격자 자리로 (겹치지 않게)
                     let ids = windows.keys.sorted()
                     let i = ids.firstIndex(of: id) ?? 0
-                    let cols = ids.count <= 10 ? max(1, ids.count) : max(1, Int(ceil(sqrt(Double(ids.count)))))   // 10마리까지는 한 줄로 (줄 세워 놓고 한 번에 후려치기)
+                    let cols = max(1, min(ids.count, 10))   // 한 줄에 열 마리까지, 넘치면 다음 줄 (줄 세워 놓고 한 번에 후려치기)
                     let col = CGFloat(i % cols) - CGFloat(cols - 1) / 2, row = CGFloat(i / cols)
                     let t = CGPoint(x: min(max(s.point.x + col * (size.width + 6), xr.lowerBound), xr.upperBound),
                                     y: min(max(s.point.y - row * (size.height + 4), yr.lowerBound), yr.upperBound))

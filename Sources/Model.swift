@@ -10,6 +10,8 @@ final class Model: ObservableObject {
     @Published private(set) var disk = DiskInfo()
     @Published private(set) var tick = 0
 
+    /// 작게 보기에서 한 줄에 몇 마리까지 (넘치면 다음 줄)
+    @Published var compactPerRow: Int { didSet { UserDefaults.standard.set(compactPerRow, forKey: "compactPerRow") } }
     @Published var compact: Bool {
         didSet { UserDefaults.standard.set(compact, forKey: "compact") }
     }
@@ -244,7 +246,8 @@ final class Model: ObservableObject {
     private var visible = true
 
     init() {
-        compact = UserDefaults.standard.bool(forKey: "compact")
+        compact = UserDefaults.standard.object(forKey: "compact") == nil ? true : UserDefaults.standard.bool(forKey: "compact")   // 처음엔 작게 보기
+        compactPerRow = UserDefaults.standard.object(forKey: "compactPerRow") == nil ? 10 : max(1, UserDefaults.standard.integer(forKey: "compactPerRow"))
         roaming = UserDefaults.standard.bool(forKey: "roaming")
         critterSmall = UserDefaults.standard.bool(forKey: "critterSmall")
         caged = UserDefaults.standard.bool(forKey: "caged")

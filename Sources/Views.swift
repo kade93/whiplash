@@ -722,52 +722,61 @@ struct EmptyField: View {
 
 struct CompactView: View {
     @ObservedObject var model: Model
-
     var body: some View {
         let s = model.snapshot
-        let n = Double(max(s.ncpu, 1))
-        HStack(spacing: 6) {
+        let per = max(1, model.compactPerRow)   // 한 줄에 최대 몇 마리; 넘치면 다음 줄 (가로로 끝없이 길어지지 않게). Settings ▸ Critters per row
+        let rows = stride(from: 0, to: s.groups.count, by: per).map { Array(s.groups[$0..<min($0 + per, s.groups.count)]) }
+        HStack(alignment: .top, spacing: 6) {
             TrafficLights(model: model, size: 8)
                 .padding(.trailing, 2)
             if s.groups.isEmpty {
                 SpriteTile(kind: .other, awake: false, cell: 2)
                     .help(t("No agents running right now"))
             }
-            ForEach(s.groups) { g in
-                let strike = model.onStrike(g)
-                let st = RowStatus.of(g, job: g.whipJob, memTotal: s.memTotal, immune: model.isImmune(g),
-                                      angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil,
-                                      strike: strike ? (g.session?.strikeUntil ?? Date().addingTimeInterval(3600)) : nil)
-                VStack(spacing: 3) {
-                    let tile = StrikeTile(strike: model.lastStrike[g.id], angryLine: model.isAngry(g.id) ? model.angry[g.id]?.line : nil) {
-                        SpriteTile(kind: g.kind, awake: g.awake,
-                                   bob: g.awake && model.tick % 2 == 1,
-                                   sweat: g.awake && g.cpu >= 1.0, cell: 2, chore: chore(g, strike: strike), hot: st.hot, angry: model.isAngry(g.id))
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack(spacing: 6) {
+                        ForEach(row) { g in critter(g, s) }
                     }
-                    .whipHover(model.hoverWhipID == g.id)
-                    .sentFlash(model.lastSent[g.id])
-                    .treatFlash(model.lastTreat[g.id])
-            .treatFlash(model.lastTreat[g.id])
-                    .overlay(alignment: .topLeading) { WaitBadge(tone: st.tone, small: true).offset(x: -4, y: -5) }
-                    .whipTarget(g.id, on: model.canWhip(g))
-                    .clickTarget(g.id)
-                    if model.canWhip(g) {
-                        Button { model.whip(g) } label: { tile }
-                            .buttonStyle(.plain)
-                            .noDrag()
-                    } else {
-                        tile
-                    }
-                    PixelBar(parts: [BarPart(color: st.hot ? hotColor : g.kind.barColor, value: g.cpu / n)], segments: 6)
-                        .frame(width: 30, height: 3)
-                    PixelBar(parts: [BarPart(color: st.hot ? hotColor : g.kind.barColor,
-                                             value: Double(g.memory) / Double(max(s.memTotal, 1)))],
-                             segments: 6)
-                        .frame(width: 30, height: 3)
                 }
-                .help(compactHelp(g, st))
             }
         }
+    }
+
+    @ViewBuilder
+    private func critter(_ g: AgentGroup, _ s: Snapshot) -> some View {
+        let n = Double(max(s.ncpu, 1))
+        let strike = model.onStrike(g)
+        let st = RowStatus.of(g, job: g.whipJob, memTotal: s.memTotal, immune: model.isImmune(g),
+                              angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil,
+                              strike: strike ? (g.session?.strikeUntil ?? Date().addingTimeInterval(3600)) : nil)
+        VStack(spacing: 3) {
+            let tile = StrikeTile(strike: model.lastStrike[g.id], angryLine: model.isAngry(g.id) ? model.angry[g.id]?.line : nil) {
+                SpriteTile(kind: g.kind, awake: g.awake,
+                           bob: g.awake && model.tick % 2 == 1,
+                           sweat: g.awake && g.cpu >= 1.0, cell: 2, chore: chore(g, strike: strike), hot: st.hot, angry: model.isAngry(g.id))
+            }
+            .whipHover(model.hoverWhipID == g.id)
+            .sentFlash(model.lastSent[g.id])
+            .treatFlash(model.lastTreat[g.id])
+            .overlay(alignment: .topLeading) { WaitBadge(tone: st.tone, small: true).offset(x: -4, y: -5) }
+            .whipTarget(g.id, on: model.canWhip(g))
+            .clickTarget(g.id)
+            if model.canWhip(g) {
+                Button { model.whip(g) } label: { tile }
+                    .buttonStyle(.plain)
+                    .noDrag()
+            } else {
+                tile
+            }
+            PixelBar(parts: [BarPart(color: st.hot ? hotColor : g.kind.barColor, value: g.cpu / n)], segments: 6)
+                .frame(width: 30, height: 3)
+            PixelBar(parts: [BarPart(color: st.hot ? hotColor : g.kind.barColor,
+                                     value: Double(g.memory) / Double(max(s.memTotal, 1)))],
+                     segments: 6)
+                .frame(width: 30, height: 3)
+        }
+        .help(compactHelp(g, st))
     }
 
     private func compactHelp(_ g: AgentGroup, _ st: RowStatus) -> String {
