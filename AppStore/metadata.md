@@ -127,7 +127,8 @@ You do:
 - [x] Xcode signed in; `./release.sh appstore` created Apple Distribution + Mac Installer Distribution (Xcode-managed) and the Mac App Store profile by itself
 - [ ] Make the privacy policy URL public (make the repo public, or publish docs/PRIVACY.md on GitHub Pages)
 - [x] `./release.sh appstore` — build 1.0 (1) uploaded to App Store Connect on 2026-11-09 20:35 KST; it shows under version 1.0 ▸ Build once Apple finishes processing (an email arrives). `EXPORT_ONLY=1` leaves the .pkg in `build/export/` instead
-- [ ] Pick the build on version 1.0 and press "Add for Review" (blocked until the license agreement is accepted)
+- [x] Build 1.0 (1) processed ("Ready to Submit") and attached to version 1.0 on 2026-11-10; the app icon on App Store Connect comes from the attached build, so it only appears after this step
+- [ ] Press "Add for Review" (blocked until the license agreement is accepted)
 - [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
 - [ ] Submit for review
 
