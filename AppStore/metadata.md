@@ -144,6 +144,14 @@ You do:
 - [x] License: decided on 2026-11-11 to keep all rights reserved (no open-source license). The READMEs say so
 - [ ] When the Mac app is approved: replace "in review" in the three READMEs and `docs/PRESS-KIT.md` with the App Store link
 
+## Where things stand (end of 2026-11-11)
+
+- Mac App Store: version 1.0 (build 4) is **Waiting for Review**; automatic release on approval. Apple emails the developer account.
+- If the review asks for something: the answer usually goes in App Store Connect ▸ App Review ▸ reply. A demo video (demo mode, line the critters up, whip them) is the most likely request.
+- Windows / Linux: v1.0 on GitHub Releases still has the jellyfish and the old wording. Tag `v1.0.1` to rebuild from current `main`.
+- iPhone remote: the connection fixes are built but not installed on the phone (it was unplugged). Plug in and run the `WhiplashRemote` scheme.
+- Untested by hand: the hover status line in compact view, corner-drag resizing, Terminal/iTerm tab selection in "Go to the agent", a real Ctrl-C from the overload panel.
+
 ## App Store edition vs direct download
 
 | | App Store (sandbox) | Direct download (Developer ID) |
