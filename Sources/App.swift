@@ -215,6 +215,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var busyTimer: Timer?
     private var cursorFollower: NSPanel?
     private var prompt: PromptPanel?
+    private var alertsPanel: AlertsPanel?
+    private var alertsHost: NSHostingView<AlertsView>?
     private var occlusionObserver: NSObjectProtocol?
     private var modelSub: AnyCancellable?
     private var refitPending = false
@@ -368,6 +370,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
         }
+        if ProcessInfo.processInfo.environment["WHIPLASH_GUARD_TEST"] != nil {         // 개발용: 3초 뒤 가짜 유출 한 건
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.model.injectTestRisk() }
+        }
         if ProcessInfo.processInfo.environment["WHIPLASH_WHIPALL_TEST"] != nil {       // 개발용: 4초 뒤 전부 채찍 (DRY_WHIP 과 같이)
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
                 guard let self = self else { return }
@@ -427,6 +432,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         save(prompt?.contentView, (path as NSString).deletingPathExtension + "-prompt.png")
         save(welcome?.contentView, (path as NSString).deletingPathExtension + "-welcome.png")
+        save(alertsPanel?.isVisible == true ? alertsPanel?.contentView : nil, (path as NSString).deletingPathExtension + "-alerts.png")
+        NSLog("EOHANG alerts=%d panel=%d", model.alerts.count, alertsPanel?.isVisible == true ? 1 : 0)
         if let b = statusItem?.button {
             NSLog("EOHANG status button frame=%@ window=%@ image=%@ template=%d visible=%d",
                   NSStringFromRect(b.frame), b.window.map { NSStringFromRect($0.frame) } ?? "nil",
@@ -531,6 +538,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     /// 확성기: 입력창을 모두에게 보내기 모드로 연다 (커서 자리)
+    // MARK: 알리고 물어보기 창 (과부하 · 유출 감시) — 화면 오른쪽 위, 알림이 없으면 사라진다
+
+    private func syncAlertsPanel() {
+        guard !model.alerts.isEmpty else { alertsPanel?.orderOut(nil); return }
+        if alertsPanel == nil {
+            let panel = AlertsPanel(contentRect: NSRect(x: 0, y: 0, width: 380, height: 90),
+                                    styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+            panel.isFloatingPanel = true
+            panel.level = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue + 5)
+            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+            panel.backgroundColor = .clear
+            panel.isOpaque = false
+            panel.hasShadow = true
+            panel.isReleasedWhenClosed = false
+            panel.hidesOnDeactivate = false
+            panel.isMovableByWindowBackground = true
+            let effect = NSVisualEffectView()
+            effect.material = .popover
+            effect.blendingMode = .behindWindow
+            effect.state = .active
+            effect.wantsLayer = true
+            effect.layer?.cornerRadius = 12
+            effect.layer?.masksToBounds = true
+            let host = NSHostingView(rootView: AlertsView(model: model))
+            host.sizingOptions = [.intrinsicContentSize]
+            host.translatesAutoresizingMaskIntoConstraints = false
+            effect.addSubview(host)
+            NSLayoutConstraint.activate([
+                host.leadingAnchor.constraint(equalTo: effect.leadingAnchor), host.trailingAnchor.constraint(equalTo: effect.trailingAnchor),
+                host.topAnchor.constraint(equalTo: effect.topAnchor), host.bottomAnchor.constraint(equalTo: effect.bottomAnchor),
+            ])
+            panel.contentView = effect
+            alertsPanel = panel
+            alertsHost = host
+        }
+        guard let panel = alertsPanel, let host = alertsHost else { return }
+        DispatchQueue.main.async {                       // SwiftUI 가 새 줄 수를 반영한 다음에 크기를 잰다
+            host.layoutSubtreeIfNeeded()
+            let size = host.fittingSize
+            guard size.width > 1, size.height > 1 else { return }
+            var frame = panel.frame
+            if !panel.isVisible, let s = NSScreen.main?.visibleFrame {
+                frame.origin = NSPoint(x: s.maxX - size.width - 16, y: s.maxY - 16)      // 처음엔 오른쪽 위 (아래 줄에서 높이만큼 내린다)
+            } else {
+                frame.origin.y = frame.maxY                                             // 윗변을 고정
+            }
+            frame.origin.y -= size.height
+            frame.size = size
+            panel.setFrame(frame, display: true)
+            panel.orderFrontRegardless()
+        }
+    }
+
     func openMegaphone() {
         model.hidden = false
         openPrompt(for: Model.broadcastID, near: NSEvent.mouseLocation)
@@ -972,6 +1032,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             perRow.addItem(menuItem(tf("%d per row", n), on: m.compactPerRow == n) { m.compactPerRow = n })
         }
         menu.addItem(submenu(t("Critters per row (compact view)"), perRow))
+        // 과부하일 때: 아무것도 안 함 · 알리고 물어보기(수동) · 알리고 20초 뒤 자동으로 멈추기, 그리고 몇 분 이어지면 물을지
+        let over = NSMenu()
+        over.addItem(menuItem(t("Do nothing (it just turns red)"), on: m.overloadMode == .off) { m.overloadMode = .off })
+        over.addItem(menuItem(t("Alert and ask me what to do"), on: m.overloadMode == .ask) { m.overloadMode = .ask })
+        if !Paths.sandboxed {
+            over.addItem(menuItem(tf("Alert, then stop it automatically after %d s", Int(Model.overloadCountdown)), on: m.overloadMode == .auto) { m.overloadMode = .auto })
+        }
+        over.addItem(.separator())
+        for mins in [1, 3, 5, 10] {
+            over.addItem(menuItem(tf("After %d min of overload", mins), on: Int(m.overloadAfter / 60) == mins) { m.overloadAfter = TimeInterval(mins * 60) })
+        }
+        menu.addItem(submenu(t("When an agent is overloaded"), over))
         menu.addItem(menuItem(t("Always on top"), on: m.alwaysOnTop) { m.alwaysOnTop.toggle() })
         menu.addItem(.separator())
         // 채찍
@@ -1047,6 +1119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if FloatingPanel.debugMouse { NSLog("EOHANG mouth crack %.0f dB", db) }
             self?.bodyWhip()
         }
+        m.onAlertsChanged = { [weak self] in self?.syncAlertsPanel() }
         m.onBodyWhipChange = { [weak self] in self?.syncBodyWhips() }
         syncBodyWhips()
     }

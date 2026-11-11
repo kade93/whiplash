@@ -70,6 +70,35 @@ Working critters swing a tool that matches what the session is doing right now: 
 - Carrot field variants: fish tank, office cubicles, galley oars.
 - A "boss" skin where the critter you whip most often grows a crown.
 
+## Hidden: the leak guard
+
+Not in any menu. Whiplash reads the tail of each Claude Code session's transcript anyway (that is how it knows who is reading or editing), so it also looks at the tool calls an agent just made. If one looks like it is about to leak a secret or personal data, the agent gets caught in the act:
+
+- an angry buzz, the critter takes a whip, and a panel appears at the top right naming the agent and what it did, with the secret itself hidden (only the first six characters are shown);
+- in the direct-download edition the session also receives a stern prompt: stop, undo it, tell the user what happened and whether a key needs rotating;
+- buttons: **Stop it (Ctrl-C)**, **Bring window to front**, **Leave it**.
+
+What trips it:
+
+| It sees | Example |
+|---|---|
+| A secrets file being staged for git | `git add .env`, `git add certs/server.pem`, a service-account JSON, an SSH private key |
+| Something being published | `gh gist create --public`, `gh repo edit --visibility public`, `npm publish` |
+| An upload to a paste or file-drop site | `curl -F f=@dump.sql https://0x0.st` |
+| A private key or Keychain secret being printed | `cat ~/.ssh/id_rsa`, `security find-generic-password … -w` |
+| A token typed straight into a command | an API key inside a `curl` header or a git remote URL |
+| A secret or a resident registration number written into a source file | an API key hard-coded in `config.ts` |
+
+What it leaves alone: text that only mentions such a command (inside quotes, a search term, a heredoc body), `git add -A`, `.env.example`, writing keys into `.env` or `*.local` (that is where they belong), public keys, `npm publish --dry-run`. Only calls from the last five minutes are looked at, each one once. Everything happens on your Mac by matching text; nothing is stored or sent, apart from the warning prompt to the session itself.
+
+It is a tripwire, not a scanner: it sees commands and file writes, not what is inside a commit, so it will miss things and will sometimes cry wolf. Turn it down or off with a hidden setting:
+
+```bash
+defaults write com.kade.whiplash leakGuard alert   # panel only, no prompt to the session
+defaults write com.kade.whiplash leakGuard off     # nothing
+defaults delete com.kade.whiplash leakGuard        # back to the default (panel + prompt)
+```
+
 ---
 
 # Whiplash — 재미 요소 정리
@@ -135,3 +164,17 @@ Claude Code = 꽃게, Claude 앱 = 모래게, Codex = 우파루파, Cursor = 오
 - 다른 채찍 소리(회초리, 젖은 수건, 고무 닭).
 - 당근밭 변형: 어항, 사무실 칸막이, 갤리선 노.
 - 가장 많이 맞은 애가 왕관을 쓰는 「보스」 스킨.
+
+## 숨은 기능: 유출 감시
+
+메뉴 어디에도 없습니다. Whiplash는 원래 각 Claude Code 세션 기록의 끝부분을 읽기 때문에(누가 읽는 중이고 고치는 중인지 그걸로 압니다), 에이전트가 방금 한 도구 호출도 같이 봅니다. 비밀이나 개인정보를 흘릴 것 같은 호출이 보이면 현장에서 잡습니다.
+
+- 「부!」 소리와 함께 캐릭터가 채찍을 맞고, 화면 오른쪽 위에 누가 무엇을 했는지 창이 뜹니다. 비밀 값은 앞 여섯 글자만 남기고 가립니다.
+- 직접 다운로드판에서는 그 세션에 「멈추고, 되돌리고, 무슨 일이 있었는지와 키를 바꿔야 하는지 사용자에게 말해」라는 경고 프롬프트도 보냅니다.
+- 버튼: **멈추기 (Ctrl-C)**, **창 앞으로**, **그냥 두기**.
+
+걸리는 것: 비밀 파일을 깃에 올리기(`git add .env`, `.pem`, 서비스 계정 JSON, SSH 개인 키), 공개 게시(`gh gist create --public`, 레포 공개 전환, `npm publish`), 붙여넣기·파일 공유 사이트 업로드, 개인 키·키체인 비밀 출력, 명령어에 토큰을 그대로 적기, 소스 파일에 비밀이나 주민번호 적기.
+
+안 걸리는 것: 그런 명령을 글자로만 언급한 것(따옴표 안, 검색어, heredoc 본문), `git add -A`, `.env.example`, `.env`·`*.local`에 키 적기(거기가 제자리), 공개 키, `npm publish --dry-run`. 최근 5분 안의 호출만, 한 건당 한 번만 봅니다. 전부 이 맥 안에서 글자만 맞춰 보고, 세션에 보내는 경고 프롬프트 말고는 아무것도 저장하거나 보내지 않습니다.
+
+경보선이지 정밀 검사가 아닙니다. 명령과 파일 쓰기만 보고 커밋 내용은 못 보므로 놓치는 것도 있고 괜히 울리는 것도 있습니다. 끄거나 줄이려면 위 영어 절의 `defaults write com.kade.whiplash leakGuard alert|off` 를 쓰면 됩니다.

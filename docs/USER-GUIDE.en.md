@@ -90,7 +90,7 @@ A borderless window listing sessions and resource usage. Drag anywhere to move i
 
 | Area | Content |
 |---|---|
-| Traffic lights | Red: quit Whiplash (⌥-click only hides) / Yellow: compact view / Green: roaming. In compact view they are larger and stacked down the left edge |
+| Traffic lights | Red: quit Whiplash (⌥-click only hides) / Yellow: minimize to the menu bar; the whip icon or ⌃⌥H brings it back (⌥-click switches compact / full view) / Green: roaming. In compact view they are larger and stacked down the left edge |
 | Header | Session count, working, waiting for you, overloaded, auto-whip end time |
 | CPU / Memory bars | Color = agents, gray = other apps, empty = free |
 | Session row | Character, session title, project folder, running cost, changed lines, current activity, CPU and memory |
@@ -160,6 +160,16 @@ Idle sessions show why they stopped and for how long. States that need your inpu
 ### 5.3 Overload
 
 When a session uses more than 1.5 CPU cores or more than 2 GB (or 10% of total) memory, its row and bars turn red and steam appears above the character. The header counts overloaded sessions.
+
+When overload lasts, Whiplash can also speak up. **Settings ▸ When an agent is overloaded** has three modes and a threshold:
+
+| Mode | What happens |
+|---|---|
+| Do nothing (default) | The critter turns red and steams, nothing else |
+| Alert and ask me what to do | After the threshold a small panel appears at the top right with the agent's name, CPU, memory and how long it has been overloaded, and three buttons: **Stop it (Ctrl-C)**, **Bring window to front**, **Leave it**. It waits for you |
+| Alert, then stop it automatically after 20 s | The same panel with a countdown. If you press nothing for 20 seconds, Whiplash sends Ctrl-C (direct-download edition only) |
+
+The threshold is 1, 3, 5 or 10 minutes of continuous overload (default 3). "Leave it" and "Stop it" both silence that agent until it has cooled down for 20 seconds; if it overloads again later you are asked again. Stopping is the same as pressing Ctrl-C in its terminal: the current step is interrupted and the session stays open. Sessions inside the Claude desktop app, and everything in the App Store edition, cannot be stopped from here; the panel then only offers the other two buttons. A long build or test run is a normal reason to be overloaded, so the automatic mode is best kept for nights and unattended runs.
 
 ### 5.4 Remaining quota (🥕 carrots)
 

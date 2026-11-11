@@ -136,7 +136,9 @@ struct TrafficLights: View {
             light(Color(hex: 0xFF5F57), Color(hex: 0xE0443E), "×", t("Quit Whiplash · ⌥-click only hides (⌃⌥H or the menu bar whip brings them back)")) {
                 if NSEvent.modifierFlags.contains(.option) { model.hidden = true } else { NSApp.terminate(nil) }
             }
-            light(Color(hex: 0xFEBC2E), Color(hex: 0xDEA123), "−", model.compact ? t("Full view") : t("Compact view")) { model.compact.toggle() }
+            light(Color(hex: 0xFEBC2E), Color(hex: 0xDEA123), "−", t("Minimize to the menu bar (the whip icon or ⌃⌥H brings it back) · ⌥-click switches compact / full view")) {
+                if NSEvent.modifierFlags.contains(.option) { model.compact.toggle() } else { model.hidden = true }
+            }
             light(Color(hex: 0x28C840), Color(hex: 0x1AAB29), "+", model.roaming ? t("Gather into the window") : t("Let loose — roam the screen")) { model.roaming.toggle(); if model.roaming { model.hidden = false } }
         }
         .onHover { hovering = $0 }

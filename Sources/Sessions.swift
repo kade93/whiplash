@@ -112,6 +112,7 @@ struct AgentSession: Equatable {
     var linesAdded = 0
     var linesRemoved = 0
     var transcript: URL? = nil
+    var risks: [SessionRisk] = []     // 방금 한 위험한 도구 호출 (유출 감시, Guard.swift)
     var strikeUntil: Date? = nil      // 쿼터 바닥(429) → 파업. 리셋 시각을 모르면 1시간
     var onStrike: Bool { strikeUntil.map { $0 > Date() } ?? false }
 
@@ -139,6 +140,7 @@ final class SessionReader {
         var added = 0
         var removed = 0
         var strikeUntil: Date? = nil
+        var risks: [SessionRisk] = []       // 최근 것 몇 개만
     }
 
     private var tails: [String: Tail] = [:]
@@ -180,6 +182,7 @@ final class SessionReader {
                 let tail = refreshTail(sessionId: sid, url: t)
                 s.lastPrompt = tail.lastPrompt
                 s.lastReply = tail.lastReply
+                s.risks = tail.risks
                 s.question = tail.question
                 s.options = tail.options
                 s.activity = tail.activity
@@ -271,6 +274,14 @@ final class SessionReader {
         return lines.compactMap { (try? JSONSerialization.jsonObject(with: Data($0))) as? [String: Any] }
     }
 
+    private static let isoFraction: ISO8601DateFormatter = { let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]; return f }()
+    private static let isoPlain = ISO8601DateFormatter()
+    /// 기록 한 줄의 시각 ("2026-11-11T05:23:31.123Z"). 못 읽으면 nil.
+    private static func recordDate(_ r: [String: Any]) -> Date? {
+        guard let ts = r["timestamp"] as? String else { return nil }
+        return isoFraction.date(from: ts) ?? isoPlain.date(from: ts)
+    }
+
     /// 마지막 메시지가 무엇이었나
     private enum Last { case none, prompt, toolResult, text, tool(name: String, detail: String) }
 
@@ -336,6 +347,13 @@ final class SessionReader {
                         case "tool_use":
                             let name = (b["name"] as? String) ?? "?"
                             let input = b["input"] as? [String: Any] ?? [:]
+                            // 유출 감시: 방금(5분 안) 한 호출만 본다 — 앱을 켤 때 옛 기록으로 알림이 쏟아지지 않게
+                            if let id = b["id"] as? String, !tail.risks.contains(where: { $0.id == id }),
+                               let when = recordDate(r), Date().timeIntervalSince(when) < 300,
+                               let hit = LeakGuard.inspect(tool: name, input: input) {
+                                tail.risks.append(SessionRisk(id: id, title: hit.title, detail: hit.detail, at: when))
+                                if tail.risks.count > 8 { tail.risks.removeFirst(tail.risks.count - 8) }
+                            }
                             last = .tool(name: name, detail: toolDetail(name, input))
                             if name == "AskUserQuestion", let qs = input["questions"] as? [[String: Any]], let q = qs.first {
                                 tail.question = (q["question"] as? String) ?? ""

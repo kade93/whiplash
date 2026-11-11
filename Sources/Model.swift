@@ -10,6 +10,30 @@ final class Model: ObservableObject {
     @Published private(set) var disk = DiskInfo()
     @Published private(set) var tick = 0
 
+    // MARK: 알림 — 과부하 · 유출 감시 (「알리고 물어보기」 창에 한 줄씩)
+    enum OverloadMode: String { case off, ask, auto }      // 아무것도 안 함 · 알리고 물어보기(수동) · 알리고 답 없으면 자동으로 멈춤
+    struct AgentAlert: Identifiable, Equatable {
+        enum Kind: Equatable { case overload, risk(title: String, detail: String) }
+        let id: String            // "overload:<칸>" / "risk:<도구 호출 id>"
+        let groupID: String
+        let kind: Kind
+        let raisedAt: Date
+        var since: Date           // 과부하가 시작된 때
+    }
+    @Published private(set) var alerts: [AgentAlert] = []
+    var onAlertsChanged: (() -> Void)?
+    @Published var overloadMode: OverloadMode { didSet { UserDefaults.standard.set(overloadMode.rawValue, forKey: "overloadMode"); if overloadMode == .off { dropAlerts { $0.kind == .overload } } } }
+    @Published var overloadAfter: TimeInterval { didSet { UserDefaults.standard.set(overloadAfter, forKey: "overloadAfter") } }   // 과부하가 이만큼 이어지면
+    static let overloadCountdown: TimeInterval = 20        // 자동: 물어보고 이만큼 답이 없으면 멈춘다
+    /// 유출 감시 (숨은 설정, 메뉴에 없다): defaults write com.kade.whiplash leakGuard off|alert|whip. 기본 whip = 알리고 경고 프롬프트도 보냄
+    var leakGuard: String { UserDefaults.standard.string(forKey: "leakGuard") ?? "whip" }
+    private var overloadSince: [String: Date] = [:]
+    private var overloadLastHot: [String: Date] = [:]
+    private var overloadSettled: Set<String> = []          // 그냥 두기·멈춤을 고른 애: 식을 때까지 다시 안 묻는다
+    private var risksSeen: Set<String> = []
+    private var alertTimer: Timer?
+    private static let overloadTest = ProcessInfo.processInfo.environment["WHIPLASH_OVERLOAD_TEST"]
+
     /// 작게 보기에서 한 줄에 몇 마리까지 (넘치면 다음 줄)
     @Published var compactPerRow: Int { didSet { UserDefaults.standard.set(compactPerRow, forKey: "compactPerRow") } }
     @Published var compact: Bool {
@@ -247,6 +271,8 @@ final class Model: ObservableObject {
 
     init() {
         compact = UserDefaults.standard.object(forKey: "compact") == nil ? true : UserDefaults.standard.bool(forKey: "compact")   // 처음엔 작게 보기
+        overloadMode = Self.overloadTest.map { OverloadMode(rawValue: $0) ?? .ask } ?? OverloadMode(rawValue: UserDefaults.standard.string(forKey: "overloadMode") ?? "") ?? .off
+        overloadAfter = Self.overloadTest != nil ? 3 : (UserDefaults.standard.object(forKey: "overloadAfter") as? TimeInterval ?? 180)
         compactPerRow = UserDefaults.standard.object(forKey: "compactPerRow") == nil ? 10 : max(1, UserDefaults.standard.integer(forKey: "compactPerRow"))
         roaming = UserDefaults.standard.bool(forKey: "roaming")
         critterSmall = UserDefaults.standard.bool(forKey: "critterSmall")
@@ -724,6 +750,112 @@ final class Model: ObservableObject {
         awakeMemory = next
         snapshot = merged(s)
         updateAnimation()
+        checkAlerts()
+    }
+
+    // MARK: 알림 판정 (새 표본이 올 때마다)
+
+    private func alertable(_ g: AgentGroup) -> Bool { !g.id.hasPrefix("app:") && g.id != Self.ghostID }
+    func alertName(_ g: AgentGroup) -> String { (g.session?.name).flatMap { $0.isEmpty ? nil : $0 } ?? g.label }
+    /// 여기서 멈출 수 있나 (Ctrl-C = SIGINT). Claude Code 세션은 일하는 중일 때만, 데스크톱 앱 속 세션과 앱스토어판은 안 됨.
+    func canStop(_ g: AgentGroup) -> Bool {
+        guard !Paths.sandboxed, alertable(g), g.rootPID > 0 else { return false }
+        if let s = g.session { return s.status == .busy && !s.isDesktop }
+        return true
+    }
+
+    private func checkAlerts() {
+        let now = Date()
+        let groups = snapshot.groups.filter(alertable)
+        let live = Set(groups.map { $0.id })
+        var next = alerts.filter { live.contains($0.groupID) }                       // 사라진 애의 알림은 지운다
+        next.removeAll { if case .risk = $0.kind { return now.timeIntervalSince($0.raisedAt) > 600 } else { return false } }   // 유출 알림은 10분 뒤 접는다
+
+        // 과부하: overloadAfter 동안 이어지면 한 번 묻는다. 20초 넘게 식어 있으면 처음부터 다시 센다.
+        let watchOverload = overloadMode != .off && (!demo || Self.overloadTest != nil)
+        for g in groups {
+            let hot = watchOverload && g.overloaded(memTotal: snapshot.memTotal)
+            if hot {
+                overloadSince[g.id] = overloadSince[g.id] ?? now
+                overloadLastHot[g.id] = now
+            } else if let last = overloadLastHot[g.id], now.timeIntervalSince(last) > 20 || !watchOverload {
+                overloadSince[g.id] = nil; overloadLastHot[g.id] = nil; overloadSettled.remove(g.id)
+                next.removeAll { $0.id == "overload:" + g.id }
+            }
+            if hot, let since = overloadSince[g.id], now.timeIntervalSince(since) >= overloadAfter,
+               !overloadSettled.contains(g.id), !next.contains(where: { $0.id == "overload:" + g.id }) {
+                next.append(AgentAlert(id: "overload:" + g.id, groupID: g.id, kind: .overload, raisedAt: now, since: since))
+                NSSound(named: "Funk")?.play()
+            }
+        }
+        for id in Array(overloadSince.keys) where !live.contains(id) { overloadSince[id] = nil; overloadLastHot[id] = nil; overloadSettled.remove(id) }
+
+        // 유출 감시: 세션 기록에서 잡힌 새 위험 한 건마다 알리고(+설정에 따라 경고 프롬프트)
+        if leakGuard != "off" {
+            for g in groups {
+                for r in g.session?.risks ?? [] where !risksSeen.contains(r.id) {
+                    risksSeen.insert(r.id)
+                    next.append(AgentAlert(id: "risk:" + r.id, groupID: g.id, kind: .risk(title: r.title, detail: r.detail), raisedAt: now, since: r.at))
+                    Self.playAngry()
+                    if leakGuard == "whip" { warn(g, title: r.title, detail: r.detail) }
+                }
+            }
+            if risksSeen.count > 400 { risksSeen = Set(groups.flatMap { $0.session?.risks.map { $0.id } ?? [] }) }
+        }
+        setAlerts(Array(next.suffix(6)))
+    }
+
+    private func setAlerts(_ next: [AgentAlert]) {
+        guard next != alerts else { return }
+        alerts = next
+        if alerts.isEmpty { alertTimer?.invalidate(); alertTimer = nil }
+        else if alertTimer == nil {                          // 자동 멈춤 카운트다운은 표본 주기(2~15초)보다 촘촘히 본다
+            let t = Timer(timeInterval: 1, repeats: true) { [weak self] _ in self?.alertTick() }
+            RunLoop.main.add(t, forMode: .common)
+            alertTimer = t
+        }
+        onAlertsChanged?()
+    }
+    private func dropAlerts(_ match: (AgentAlert) -> Bool) { setAlerts(alerts.filter { !match($0) }) }
+
+    private func alertTick() {
+        guard overloadMode == .auto else { return }
+        let now = Date()
+        for a in alerts where a.kind == .overload && now.timeIntervalSince(a.raisedAt) >= Self.overloadCountdown {
+            answer(a, stop: true)                            // 답이 없었다 → 멈춘다 (멈출 수 없는 애면 그냥 접는다)
+        }
+    }
+
+    /// 알림 한 줄에 대한 답: stop = 멈추기(Ctrl-C), 아니면 그냥 두기
+    func answer(_ a: AgentAlert, stop: Bool) {
+        if stop, let g = snapshot.groups.first(where: { $0.id == a.groupID }), canStop(g) {
+            if demo || ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil { NSLog("EOHANG stop %@", g.id) }
+            else { kill(g.rootPID, SIGINT) }
+            NSSound(named: "Pop")?.play()
+        }
+        if a.kind == .overload { overloadSettled.insert(a.groupID) }
+        dropAlerts { $0.id == a.id }
+    }
+
+    /// 유출 경고: 채찍 반응 + 「멈추고 되돌려」 프롬프트 (세션에 보낼 수 있을 때만)
+    func warn(_ g: AgentGroup, title: String, detail: String) {
+        lastStrike[g.id] = Date()
+        onStrike?(g.id)
+        if demo || ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil { NSLog("EOHANG guard-warn %@ %@", g.id, title); return }
+        guard let s = g.session, s.socketPath != nil, !Paths.sandboxed else { return }
+        SessionMessenger.send(LeakGuard.warning(title: title, detail: detail), to: s) { [weak self] r in
+            if case .success = r { self?.lastSent[g.id] = Date() }
+        }
+    }
+
+    /// 개발용: 가짜 유출 한 건을 첫 세션에 붙인다 (WHIPLASH_GUARD_TEST)
+    func injectTestRisk() {
+        guard let i = snapshot.groups.firstIndex(where: { $0.session != nil && alertable($0) }) else { return }
+        var s = snapshot
+        s.groups[i].session?.risks.append(SessionRisk(id: "test-\(Int(Date().timeIntervalSince1970))", title: "Staging a secrets file for git",
+                                                      detail: "git add .env && git commit -m \"config\"", at: Date()))
+        snapshot = s
+        checkAlerts()
     }
 
     /// Claude 가 하나도 안 떠 있으면 「자는 클로드」 유령 칸을 하나 보여 준다 (휘두르면 깨움)
