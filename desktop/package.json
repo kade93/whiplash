@@ -1,0 +1,25 @@
+{
+  "name": "whiplash",
+  "productName": "Whiplash",
+  "version": "1.0.0",
+  "description": "Whip your AI coding agents back to work. Pixel critters for Claude Code, Codex, Cursor and Gemini CLI sessions.",
+  "main": "src/main/main.js",
+  "license": "MIT",
+  "author": "Kade",
+  "private": true,
+  "scripts": {
+    "prepare-assets": "node tools/prepare-assets.js",
+    "start": "npm run prepare-assets && electron .",
+    "test": "node --test test/*.test.js",
+    "pack": "npm run prepare-assets && electron-builder --dir",
+    "dist": "npm run prepare-assets && electron-builder",
+    "dist:win": "npm run prepare-assets && electron-builder --win zip --x64",
+    "dist:win:msi": "npm run prepare-assets && electron-builder --win msi --x64",
+    "dist:linux": "npm run prepare-assets && electron-builder --linux AppImage tar.gz --x64",
+    "dist:mac": "npm run prepare-assets && electron-builder --mac zip"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0"
+  }
+}

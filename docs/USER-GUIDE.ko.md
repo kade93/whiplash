@@ -10,7 +10,7 @@ Whiplash는 Mac에서 실행 중인 AI 코딩 에이전트(Claude Code, Codex, C
 
 | 항목 | 요구 사항 |
 |---|---|
-| 운영체제 | macOS 13 Ventura 이상 |
+| 운영체제 | macOS 13 Ventura 이상 · Windows 10/11과 Linux(x64)는 2.3절의 별도 판 |
 | 프로세서 | Apple Silicon 또는 Intel |
 | 지원 에이전트 | Claude Code(터미널·Claude 앱), Codex CLI/앱, Cursor, Gemini CLI, Antigravity, 기타(opencode, aider, goose 등) |
 | 세션 정보 표시 | Claude Code 2.1 이상(세션 파일 `~/.claude/sessions` 생성 버전) |
@@ -46,6 +46,21 @@ App Store 판은 Apple의 앱 샌드박스 안에서 동작합니다. 다음 기
 | 메모리 수치 | 활성 상태 보기와 동일(phys footprint) | resident size(근사치) |
 
 App Store 판을 처음 실행하면 홈 폴더 접근 허용 창이 표시됩니다. **허용**을 선택하면 세션 제목과 상태가 표시되며, 이 설정은 저장되어 다시 묻지 않습니다.
+
+### 2.3 Windows 및 Linux
+
+Whiplash는 Electron으로 만든 별도 앱(소스는 `desktop/`)으로 Windows 10/11과 Linux에서도 동작합니다. 저장소의 GitHub Releases 페이지에서
+내려받으며, 설치는 필요 없습니다.
+
+| 플랫폼 | 파일 | 실행 방법 |
+|---|---|---|
+| Windows | `Whiplash-<버전>-win-x64.zip` | 아무 곳에나 풀고 `Whiplash.exe`를 실행합니다. 처음에는 SmartScreen 경고가 뜰 수 있습니다(추가 정보 → 실행). `.msi` 설치 파일이 함께 올라오는 경우도 있습니다. |
+| Linux | `Whiplash-<버전>-linux-x64.AppImage` | `chmod +x` 후 실행합니다. 일부 배포판은 `libfuse2`가 필요하며, `.tar.gz`에는 일반 `whiplash` 실행 파일이 들어 있습니다. |
+
+Windows·Linux 판에는 세션 감지, 상태 표시, 돌아다니기·목록 보기, 채찍, 간식, 확성기, 단축키, 트레이 메뉴가 있습니다.
+채찍은 Claude Code의 명명 파이프(Windows) 또는 유닉스 소켓(Linux)으로 프롬프트를 전달하며, macOS와 같은 방식입니다.
+제공되지 않는 기능: 당근밭과 남은 쿼터, 자동 채찍, 몸으로 때리기, iPhone / Watch 리모트, 입력 중 숨기기.
+설정은 `%APPDATA%\Whiplash`(Windows) 또는 `~/.config/whiplash`(Linux)에 저장됩니다. 플랫폼별 주의 사항(Wayland, 트레이, WSL)은 `desktop/README.md`를 참고하세요.
 
 ## 3. 시작하기
 

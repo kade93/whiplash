@@ -10,7 +10,7 @@ Whiplash is a desktop utility that monitors and controls AI coding agents runnin
 
 | Item | Requirement |
 |---|---|
-| Operating system | macOS 13 Ventura or later |
+| Operating system | macOS 13 Ventura or later · Windows 10/11 and Linux (x64) with the separate edition in section 2.3 |
 | Processor | Apple Silicon or Intel |
 | Supported agents | Claude Code (Terminal or Claude app), Codex CLI/app, Cursor, Gemini CLI, Antigravity, others (opencode, aider, goose) |
 | Session details | Claude Code 2.1 or later (versions that write `~/.claude/sessions`) |
@@ -46,6 +46,21 @@ The App Store edition runs inside the Apple app sandbox. The following features 
 | Memory figure | Same as Activity Monitor (phys footprint) | Resident size (approximate) |
 
 On first launch the App Store edition asks for access to your home folder. Choose **Allow** to see session titles and status. The choice is remembered.
+
+### 2.3 Windows and Linux
+
+Whiplash also runs on Windows 10/11 and Linux as a separate app built with Electron (source in `desktop/`). Download it from the
+GitHub Releases page of the repository; nothing needs to be installed.
+
+| Platform | File | How to run |
+|---|---|---|
+| Windows | `Whiplash-<version>-win-x64.zip` | Unzip anywhere and start `Whiplash.exe`. SmartScreen may warn the first time (More info → Run anyway). An optional `.msi` installer is attached when available. |
+| Linux | `Whiplash-<version>-linux-x64.AppImage` | `chmod +x` and run. Needs `libfuse2` on some distributions; the `.tar.gz` contains a plain `whiplash` binary instead. |
+
+The Windows and Linux edition has session detection, status, roaming and list views, whip, treats, megaphone, hotkeys and the tray menu.
+The whip delivers the prompt to Claude Code through its named pipe (Windows) or Unix socket (Linux), the same way as on macOS.
+Not available there: the carrot field and remaining quota, auto-whip, whipping with your body, the iPhone / Watch remote and hiding while you type.
+Configuration lives in `%APPDATA%\Whiplash` (Windows) or `~/.config/whiplash` (Linux). See `desktop/README.md` for platform notes (Wayland, tray, WSL).
 
 ## 3. Getting started
 

@@ -13,8 +13,9 @@
 
 사용자용 설명서: [한국어](docs/USER-GUIDE.ko.md) · [English](docs/USER-GUIDE.en.md) · [日本語](docs/USER-GUIDE.ja.md) · [개인정보 처리방침](docs/PRIVACY.md)
 
-배포는 두 갈래예요. **전체 기능판**은 GitHub Releases(태그 `v*` 를 푸시하면 Actions 가 빌드해 zip 을 붙임, 인증서 시크릿이 있으면 서명·공증),
-**관람용**은 Mac App Store(샌드박스라 채찍 메시지·지시 보내기·오토 채찍 없음, 앱 안에서 전체 기능판 링크를 안내).
+배포는 플랫폼별로 갈라요. **macOS** 는 Mac App Store(샌드박스라 채찍 메시지·지시 보내기·오토 채찍 없음), **Windows·Linux** 는
+GitHub Releases(태그 `v*` 를 푸시하면 Actions 가 [desktop/](desktop/README.md) 의 Electron 앱을 빌드해 zip·AppImage 를 붙임).
+저장소가 private 인 동안은 Release 를 남이 못 받으니, 공개 배포하려면 저장소를 public 으로 바꿔야 해요(사용자 결정).
 
 ## 설치 (처음 한 번)
 
@@ -22,6 +23,20 @@
 xcode-select --install        # Swift 컴파일러가 없을 때만
 cd eohang
 ./build.sh --install          # ~/Applications/Whiplash.app 으로 설치하고 실행
+```
+
+## Windows · Linux
+
+[desktop/](desktop/README.md) 에 Electron 으로 만든 별도 앱이 있어요. 같은 캐릭터(`Sources/Sprites.swift` 에서 추출)·같은 소리·같은 번역표를 쓰고,
+Claude Code 세션 감지·상태·채찍·간식·확성기·전역 단축키·트레이 메뉴가 돼요. Windows 에서는 Claude Code 가 명명 파이프(`\\.\pipe\cc-msg-…`)로,
+Linux 에서는 유닉스 소켓(`/tmp/cc-socks/`, `/run/user/<uid>/cc-socks/`)으로 메시지를 받는데 둘 다 Node 의 `net.connect` 하나로 닿아서
+채찍이 진짜로 프롬프트를 넣어요. 스택 선택 이유(Tauri 와 비교)·플랫폼별 주의점·안 되는 기능은 그 README 에.
+
+```bash
+cd desktop && npm install
+npm start              # 내 ~/.claude 세션으로 바로 띄워 보기 (맥에서도 개발용으로 돌아감)
+npm run dist:linux     # AppImage + tar.gz
+npm run dist:win       # zip (Windows 러너에서는 msi 도)
 ```
 
 ## 풀어놓기
@@ -230,7 +245,8 @@ Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) �
 ## 앱스토어·배포
 
 - `./build.sh --sandbox` — 앱스토어판처럼 샌드박스로 묶어 로컬에서 돌려 보기. 처음 실행하면 홈 폴더 허용 창이 떠요.
-- `./release.sh devid` — Developer ID 서명 + 공증 → zip (전 기능, 직접 배포)
+- `./release.sh devid` — Developer ID 서명 + 공증 → zip (전 기능, 직접 배포용. GitHub Releases 에는 안 올림 — 맥은 앱스토어로만)
+- Windows·Linux 는 `.github/workflows/release.yml` 이 태그 푸시 때 `desktop/` 을 빌드해 Release 에 붙여요 (잡이 분리돼 한쪽이 실패해도 다른 쪽은 올라감)
 - `./release.sh appstore` — `project.yml`(xcodegen) 로 Xcode 아카이브 → 앱스토어 서명 → App Store Connect 업로드 (`EXPORT_ONLY=1` 이면 pkg 만). Xcode 에 Apple ID 가 로그인돼 있어야 인증서·프로파일이 자동으로 만들어져요
 - 심사 자료·설명·개인정보 처리방침 초안: [AppStore/metadata.md](AppStore/metadata.md)
 - 샌드박스 안에서는 새 에이전트를 못 띄우니 **채찍 = 창 앞으로 불러오기**로 바뀌고, Ctrl-C 멈추기는 빠져요.

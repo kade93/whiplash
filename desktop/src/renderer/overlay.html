@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' file:; img-src 'self' data:">
+<title>Whiplash</title>
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; width: 100%; height: 100%; user-select: none;
+               font-family: -apple-system, "Segoe UI", system-ui, sans-serif; }
+  #stage { position: absolute; inset: 0; }
+  .critter { position: absolute; left: 0; top: 0; will-change: transform; cursor: default; }
+  .critter canvas { display: block; image-rendering: pixelated; }
+  .critter.hover canvas { filter: drop-shadow(0 0 6px #FFC84A) brightness(1.15); }
+  .critter .tag { position: absolute; left: 50%; transform: translateX(-50%); top: 100%; margin-top: 2px; white-space: nowrap;
+                  font-size: 10px; line-height: 13px; color: #fff; background: rgba(0,0,0,0.62); border-radius: 7px; padding: 1px 6px; text-align: center; max-width: 170px; overflow: hidden; text-overflow: ellipsis; }
+  .critter .tag .act { display: block; font-size: 9px; opacity: 0.85; max-width: 170px; overflow: hidden; text-overflow: ellipsis; }
+  .critter .tag .act.working { color: #FFB08A; font-weight: 600; }
+  .critter .tag .act.waiting { color: #FFC84A; font-weight: 600; }
+  .critter .tag .act.hot { color: #FF6B5B; font-weight: 600; }
+  .critter .badge { position: absolute; left: 50%; transform: translateX(-50%); bottom: 100%; margin-bottom: 1px; font-size: 11px; font-weight: 700;
+                    color: #2A2433; background: #FFC84A; border-radius: 8px; padding: 0 5px; line-height: 14px; }
+  .critter .badge.shield { background: rgba(255,255,255,0.9); }
+  .critter .bubble { position: absolute; left: 60%; bottom: 100%; margin-bottom: 4px; white-space: nowrap; font-size: 11px; font-weight: 700;
+                     color: #2A2433; background: #fff; border: 1.5px solid #2A2433; border-radius: 8px; padding: 2px 7px; pointer-events: none; }
+  .critter .bubble.angry { color: #E04F3A; }
+  .critter .bubble.yum { color: #4E9A57; }
+  .hop { animation: hop 0.45s ease-out; }
+  @keyframes hop { 0% { margin-top: 0 } 40% { margin-top: -14px } 100% { margin-top: 0 } }
+  .shake { animation: shake 0.5s linear; }
+  @keyframes shake { 0%,100% { margin-left: 0 } 20% { margin-left: -4px } 40% { margin-left: 4px } 60% { margin-left: -3px } 80% { margin-left: 3px } }
+  #whipcursor { position: absolute; pointer-events: none; font-size: 18px; display: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5)); }
+  #prompt { position: absolute; width: 320px; display: none; background: rgba(30,30,36,0.96); color: #eee; border-radius: 10px; padding: 10px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.4); font-size: 11px; cursor: default; }
+  #prompt .title { font-weight: 700; font-size: 11px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #prompt .context { font-size: 10.5px; color: #bbb; margin-bottom: 6px; max-height: 42px; overflow: hidden; }
+  #prompt .chips { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+  #prompt .chip { background: rgba(224,122,95,0.18); color: #E07A5F; border-radius: 10px; padding: 1px 8px; font-weight: 600; cursor: pointer; }
+  #prompt .row { display: flex; gap: 6px; align-items: center; }
+  #prompt input { flex: 1; font-size: 12px; padding: 6px 8px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: #fff; outline: none; }
+  #prompt button { border: none; background: #E07A5F; color: #fff; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; }
+  #prompt button:disabled { background: #555; }
+  #prompt .status { margin-top: 5px; font-size: 9px; color: #aaa; min-height: 11px; }
+  #prompt .status.ok { color: #7EE787; font-weight: 700; } #prompt .status.err { color: #FF6B6B; }
+</style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="whipcursor">🪢</div>
+  <div id="prompt">
+    <div class="title"></div>
+    <div class="context"></div>
+    <div class="chips"></div>
+    <div class="row"><input type="text"><button>↑</button></div>
+    <div class="status"></div>
+  </div>
+  <script src="draw.js"></script>
+  <script src="sound.js"></script>
+  <script src="overlay.js"></script>
+</body>
+</html>

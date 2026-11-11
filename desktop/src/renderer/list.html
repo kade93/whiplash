@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' file:; img-src 'self' data:">
+<title>Whiplash</title>
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; user-select: none; font-family: -apple-system, "Segoe UI", system-ui, sans-serif; color: #eee; }
+  #panel { background: rgba(28,28,34,0.92); border-radius: 14px; padding: 8px 10px 8px; -webkit-app-region: drag; display: inline-block; min-width: 230px; box-shadow: 0 8px 28px rgba(0,0,0,0.45); }
+  #head { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+  #lights { display: flex; gap: 5px; -webkit-app-region: no-drag; }
+  #lights span { width: 11px; height: 11px; border-radius: 50%; display: inline-block; cursor: pointer; }
+  #lights .r { background: #ff5f57 } #lights .y { background: #febc2e } #lights .g { background: #28c840 }
+  #count { color: #bbb; font-weight: 500; }
+  #count b { color: #FFC84A; }
+  #grid { display: grid; gap: 6px; -webkit-app-region: no-drag; }
+  .tile { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 9px; cursor: pointer; }
+  .tile:hover, .tile.hover { background: rgba(255,200,74,0.22); }
+  .tile canvas { image-rendering: pixelated; display: block; }
+  .tile .badge { position: absolute; top: -4px; right: -2px; font-size: 10px; font-weight: 700; background: #FFC84A; color: #2A2433; border-radius: 7px; padding: 0 4px; line-height: 13px; }
+  .tile.hot { background: rgba(255,107,91,0.22); }
+  .tile .bubble { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10px; font-weight: 700; background: #fff; color: #E04F3A; border-radius: 7px; padding: 1px 6px; pointer-events: none; }
+  .hop { animation: hop 0.45s ease-out; } @keyframes hop { 0% { margin-top: 0 } 40% { margin-top: -10px } 100% { margin-top: 0 } }
+  #bars { margin-top: 8px; font-size: 9px; color: #bbb; }
+  .bar { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.12); overflow: hidden; display: flex; margin: 2px 0 5px; }
+  .bar i { display: block; height: 100%; }
+  #foot { font-size: 9px; color: #888; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <div id="head"><div id="lights"><span class="r" title="Quit"></span><span class="y" title="Roam"></span><span class="g" title="Roam"></span></div><span id="count"></span></div>
+  <div id="grid"></div>
+  <div id="bars">
+    <div>CPU <span id="cpuText"></span></div><div class="bar" id="cpuBar"></div>
+    <div><span id="memLabel">Memory</span> <span id="memText"></span></div><div class="bar" id="memBar"></div>
+  </div>
+  <div id="foot"></div>
+</div>
+<script src="draw.js"></script>
+<script src="sound.js"></script>
+<script src="list.js"></script>
+</body>
+</html>

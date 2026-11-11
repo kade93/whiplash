@@ -10,7 +10,7 @@ Whiplash は、Mac 上で動作する AI コーディングエージェント（
 
 | 項目 | 要件 |
 |---|---|
-| OS | macOS 13 Ventura 以降 |
+| OS | macOS 13 Ventura 以降 · Windows 10/11 と Linux（x64）は 2.3 節の別版 |
 | プロセッサ | Apple Silicon または Intel |
 | 対応エージェント | Claude Code（ターミナル・Claude アプリ）、Codex CLI/アプリ、Cursor、Gemini CLI、Antigravity、その他（opencode、aider、goose） |
 | セッション詳細 | Claude Code 2.1 以降（`~/.claude/sessions` を書き出すバージョン） |
@@ -46,6 +46,21 @@ App Store 版は Apple のアプリサンドボックス内で動作します。
 | メモリ値 | アクティビティモニタと同じ（phys footprint） | resident size（概算） |
 
 App Store 版を初めて起動するとホームフォルダへのアクセス許可ダイアログが表示されます。**許可** を選ぶとセッション名と状態が表示され、設定は保存されます。
+
+### 2.3 Windows と Linux
+
+Whiplash は Electron で作られた別アプリ（ソースは `desktop/`）として Windows 10/11 と Linux でも動作します。リポジトリの GitHub Releases
+ページからダウンロードしてください。インストールは不要です。
+
+| プラットフォーム | ファイル | 実行方法 |
+|---|---|---|
+| Windows | `Whiplash-<バージョン>-win-x64.zip` | 任意の場所に展開して `Whiplash.exe` を起動します。初回は SmartScreen の警告が出ることがあります（詳細情報 → 実行）。`.msi` インストーラーが添付される場合もあります。 |
+| Linux | `Whiplash-<バージョン>-linux-x64.AppImage` | `chmod +x` して実行します。一部のディストリビューションでは `libfuse2` が必要です。`.tar.gz` には通常の `whiplash` 実行ファイルが入っています。 |
+
+Windows・Linux 版には、セッション検出、状態表示、歩き回り・リスト表示、鞭、おやつ、拡声器、ショートカット、トレイメニューがあります。
+鞭は Claude Code の名前付きパイプ（Windows）または Unix ソケット（Linux）でプロンプトを届けます。macOS と同じ仕組みです。
+提供されない機能：ニンジン畑と残りクォータ、オート鞭、体で鞭を打つ、iPhone / Watch リモート、入力中の非表示。
+設定は `%APPDATA%\Whiplash`（Windows）または `~/.config/whiplash`（Linux）に保存されます。プラットフォーム別の注意点（Wayland、トレイ、WSL）は `desktop/README.md` を参照してください。
 
 ## 3. はじめに
 

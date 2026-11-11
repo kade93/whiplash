@@ -1,0 +1,37 @@
+# Packaging for Windows and Linux. macOS is the Swift app (../build.sh, Mac App Store); the mac target here is dev-only.
+appId: com.kade.whiplash
+productName: Whiplash
+copyright: © 2026 Kade
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - src/**/*
+  - assets/**/*
+  - package.json
+asar: true
+artifactName: Whiplash-${version}-${os}-${arch}.${ext}
+win:
+  target:
+    - target: zip
+      arch: [x64]
+  icon: resources/icon.png
+msi:
+  oneClick: false
+  perMachine: false
+  runAfterFinish: true
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: tar.gz
+      arch: [x64]
+  icon: resources/icon.png
+  category: Utility
+  synopsis: Whip your AI coding agents back to work
+  desktop:
+    entry:
+      StartupWMClass: Whiplash
+mac:
+  target: [zip]
+  icon: resources/icon.png

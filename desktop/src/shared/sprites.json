@@ -1,0 +1,259 @@
+{
+ "ink": "#2A2433",
+ "sprites": {
+  "crab": {
+   "friend": "Crab",
+   "rows": [
+    "KK........KK",
+    "KAK......KAK",
+    "KAAK....KAAK",
+    ".KAK....KAK.",
+    "..KKKKKKKK..",
+    ".KBLBBBBBBK.",
+    "KBBEBBBBEBBK",
+    "KBCBBKKBBCBK",
+    ".KKKKKKKKKK.",
+    ".K.K....K.K."
+   ],
+   "body": "#E07A5F",
+   "light": "#F6B9A3",
+   "accent": "#C4553B",
+   "cheek": "#FFD3C4"
+  },
+  "sandCrab": {
+   "friend": "Sand crab",
+   "rows": [
+    "KK........KK",
+    "KAK......KAK",
+    "KAAK....KAAK",
+    ".KAK....KAK.",
+    "..KKKKKKKK..",
+    ".KBLBBBBBBK.",
+    "KBBEBBBBEBBK",
+    "KBCBBKKBBCBK",
+    ".KKKKKKKKKK.",
+    ".K.K....K.K."
+   ],
+   "body": "#D9A27A",
+   "light": "#F1D3B8",
+   "accent": "#B07A52",
+   "cheek": "#F2A7B8"
+  },
+  "jelly": {
+   "friend": "Jellyfish",
+   "rows": [
+    "...KKKKKK...",
+    "..KLLBBBBK..",
+    ".KLBBBBBBBK.",
+    ".KBBEBBEBBK.",
+    ".KBCBKKBCBK.",
+    ".KKKKKKKKKK.",
+    "..A.A..A.A..",
+    "..A..A.A..A.",
+    "...A.A..A.A.",
+    "..A.A..A.A.."
+   ],
+   "body": "#BFE8EA",
+   "light": "#FFFFFF",
+   "accent": "#7FBFD3",
+   "cheek": "#F2A7B8"
+  },
+  "puffer": {
+   "friend": "Pufferfish",
+   "rows": [
+    "...K.KK.K...",
+    "....KKKK....",
+    "..KKLLBBKK..",
+    ".KLLBBBBBBK.",
+    "AKBBEBBEBBKA",
+    "AKBCBBBBCBKA",
+    ".KLLLKKLLLK.",
+    "..KLLLLLLK..",
+    "...KKKKKK...",
+    "..K..KK..K.."
+   ],
+   "body": "#8FB3F0",
+   "light": "#DCE8FF",
+   "accent": "#5A7FD6",
+   "cheek": "#F2A7B8"
+  },
+  "squid": {
+   "friend": "Squid",
+   "rows": [
+    ".....KK.....",
+    "....KBBK....",
+    "...KBLBBK...",
+    "..KBLBBBBK..",
+    "KAKBBBBBBKAK",
+    ".KBBEBBEBBK.",
+    ".KBCBBBBCBK.",
+    "..KKKKKKKK..",
+    "..K.K..K.K..",
+    ".K..K..K..K."
+   ],
+   "body": "#8C93A3",
+   "light": "#C4C9D4",
+   "accent": "#5D6372",
+   "cheek": "#F2A7B8"
+  },
+  "whale": {
+   "friend": "Whale",
+   "rows": [
+    "..A.A.......",
+    "...A........",
+    "..KKKKKK..KK",
+    ".KLLBBBBKKAK",
+    "KLBBBBBBBBK.",
+    "KBBEBBBBBBK.",
+    "KBCBBBBBBBK.",
+    "KAAAAAAAAK..",
+    ".KKKKKKKK...",
+    "............"
+   ],
+   "body": "#6FA8DC",
+   "light": "#B8D8F2",
+   "accent": "#E8F2FB",
+   "cheek": "#F2A7B8"
+  },
+  "blob": {
+   "friend": "Blob",
+   "rows": [
+    ".....KK.....",
+    "....KLLK....",
+    "...KLBBBK...",
+    "..KLBBBBBK..",
+    ".KBBEBBEBBK.",
+    ".KBCBBBBCBK.",
+    ".KBBBKKBBBK.",
+    "..KBBBBBBK..",
+    "...KKKKKK...",
+    "............"
+   ],
+   "body": "#A8D5A2",
+   "light": "#E0F2DC",
+   "accent": "#7DB676",
+   "cheek": "#F2A7B8"
+  }
+ },
+ "kinds": {
+  "claudeCode": "crab",
+  "claudeApp": "sandCrab",
+  "codex": "jelly",
+  "cursor": "squid",
+  "gemini": "puffer",
+  "antigravity": "whale",
+  "other": "blob"
+ },
+ "barColors": {
+  "claudeCode": "#E07A5F",
+  "claudeApp": "#D9A27A",
+  "codex": "#7FBFD3",
+  "cursor": "#9AA1B0",
+  "gemini": "#5A7FD6",
+  "antigravity": "#6FA8DC",
+  "other": "#7DB676"
+ },
+ "tools": {
+  "read": [
+   ".KKKKK.",
+   "KPPKPPK",
+   "KPPKPPK",
+   "KPPKPPK",
+   "KPPKPPK",
+   ".KKKKK."
+  ],
+  "write": [
+   ".....KK",
+   "....KRK",
+   "...KYK.",
+   "..KYK..",
+   ".KYK...",
+   "KKK...."
+  ],
+  "run": [
+   "KKKKK..",
+   "KMMMMK.",
+   "KKKKK..",
+   "..KWK..",
+   "..KWK..",
+   "..KWK..",
+   "..KKK.."
+  ],
+  "search": [
+   ".KKK...",
+   "KPPPK..",
+   "KPPPK..",
+   "KPPPK..",
+   ".KKKKK.",
+   "....KWK",
+   ".....KK"
+  ],
+  "web": [
+   ".KKKKK.",
+   "KBBGBBK",
+   "KGBBBGK",
+   "KBBGBBK",
+   "KBGBBBK",
+   "KBBBGBK",
+   ".KKKKK."
+  ],
+  "think": [
+   ".KKKKK.",
+   "KPPPPPK",
+   "KPKPKPK",
+   "KPPPPPK",
+   ".KKKKK.",
+   "...KK..",
+   "....K.."
+  ],
+  "answer": [
+   ".KKKKK.",
+   "KPPPPPK",
+   "KPKKKPK",
+   "KPPPPPK",
+   ".KKKKK.",
+   "..KK...",
+   "..K...."
+  ],
+  "strike": [
+   "KKKKKKKKK",
+   "KPPPPPPPK",
+   "KPKKPKKPK",
+   "KPPPPPPPK",
+   "KKKKKKKKK",
+   "....W....",
+   "....W....",
+   "....W...."
+  ]
+ },
+ "chain": [
+  "K.K....",
+  ".K.K...",
+  "...KKK.",
+  "..KMMMK",
+  "..KMMMK",
+  "...KKK."
+ ],
+ "carrot": [
+  "..G..",
+  ".GGG.",
+  "G.G.G",
+  ".OOO.",
+  ".OOO.",
+  ".OOO.",
+  "..O..",
+  "..O.."
+ ],
+ "palette": {
+  "W": "#8B5A2B",
+  "M": "#B8BEC8",
+  "P": "#FFFBEF",
+  "Y": "#F2C14E",
+  "R": "#E98A8A",
+  "B": "#5FA8E0",
+  "G": "#7DB676",
+  "O": "#F28C28",
+  "D": "#8B6B4A",
+  "K": "#2A2433"
+ }
+}

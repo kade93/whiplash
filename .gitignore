@@ -40,3 +40,9 @@ snap*.png
 *.xcodeproj
 xcuserdata/
 DerivedData/
+
+# Windows / Linux app (desktop/) — generated or downloaded
+desktop/node_modules/
+desktop/dist/
+desktop/assets/
+desktop/resources/icon.png
