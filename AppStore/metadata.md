@@ -129,6 +129,7 @@ You do:
 - [x] `./release.sh appstore` — build 1.0 (1) uploaded to App Store Connect on 2026-11-09 20:35 KST; it shows under version 1.0 ▸ Build once Apple finishes processing (an email arrives). `EXPORT_ONLY=1` leaves the .pkg in `build/export/` instead
 - [x] Build 1.0 (2) uploaded, processed and attached to version 1.0 on 2026-11-10 (replaces (1); adds the gesture hint lines under Settings ▸ Whip with your body). Support URL on the version page now points at the privacy gist
 - [x] Build 1.0 (1) processed ("Ready to Submit") and attached to version 1.0 on 2026-11-10; the app icon on App Store Connect comes from the attached build, so it only appears after this step
+- [ ] Build 1.0 (3) is exported and verified locally (`EXPORT_ONLY=1 ./release.sh appstore`, 2026-11-11) but NOT uploaded. It adds what build (2) lacks: red button quits, compact view wraps at 10 per row, critters creep back from the screen edge, remote v2 (session list, whip/treat one). Upload with `./release.sh appstore`, then swap it in for (2) on version 1.0
 - [ ] Press "Add for Review" (button is enabled; Apple may still ask for the review contact phone number at that point)
 - [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
 - [ ] Submit for review
