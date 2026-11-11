@@ -96,6 +96,7 @@ struct AgentSession: Equatable {
     var startedAt: Date?
     var statusSince: Date?
     var entrypoint: String
+    var hostSessionId: String? = nil  // Claude 데스크톱 앱이 붙인 세션 id ("local_…") — 「에이전트에게 가기」 딥링크에 쓴다
     var socketPath: String? = nil    // /tmp/cc-socks/<pid>.sock
     var keyFile: URL? = nil          // ~/.claude/sessions/<pid>.<hash>.key (peerToken)
 
@@ -172,6 +173,7 @@ final class SessionReader {
                 entrypoint: (j["entrypoint"] as? String) ?? "")
             liveIds.insert(sid)
             s.socketPath = j["messagingSocketPath"] as? String
+            s.hostSessionId = j["hostSessionId"] as? String
             if let names = try? fm.contentsOfDirectory(atPath: Self.sessionsDir.path),
                let k = names.first(where: { $0.hasPrefix("\(pid).") && $0.hasSuffix(".key") }) {
                 s.keyFile = Self.sessionsDir.appendingPathComponent(k)

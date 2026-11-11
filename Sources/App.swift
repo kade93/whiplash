@@ -504,7 +504,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     menu.addItem(submenu(t("Whip — pick a task"), tasks))
                 }
                 if g.session != nil { menu.addItem(menuItem(t("🥕 Give a treat (praise)")) { m.treat(g) }) }
-                menu.addItem(menuItem(t("Bring window to front")) { m.bringToFront(g) })
+                menu.addItem(menuItem(t("Go to the agent")) { m.bringToFront(g) })
                 if g.dir != nil || g.session != nil { menu.addItem(menuItem(t("Open folder")) { m.openFolder(g) }) }
                 if let s = g.session {
                     menu.addItem(menuItem(t("Whip immunity"), on: m.isImmune(g)) { m.toggleImmune(g) })

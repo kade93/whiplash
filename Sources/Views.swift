@@ -659,7 +659,7 @@ struct RowMenu: View {
             Text(s.name.isEmpty ? g.label : s.name)
             Button(model.isImmune(g) ? t("Remove whip immunity") : t("Whip immunity (no manual or auto whips)")) { model.toggleImmune(g) }
             Text(t("Click in place → send instruction"))
-            Button(t("Bring window to front")) { model.bringToFront(g) }
+            Button(t("Go to the agent")) { model.bringToFront(g) }
             Button(t("Open folder")) { model.openFolder(g) }
             if !s.lastPrompt.isEmpty { Button(t("Copy last prompt")) { model.copyPrompt(g) } }
             if s.transcript != nil { Button(t("Open transcript file")) { model.openTranscript(g) } }
@@ -668,7 +668,7 @@ struct RowMenu: View {
                 Button(t("Stop current work (Ctrl-C)")) { model.interrupt(g) }
             }
         } else {
-            Button(t("Bring window to front")) { model.bringToFront(g) }
+            Button(t("Go to the agent")) { model.bringToFront(g) }
             if g.dir != nil { Button(t("Open folder")) { model.openFolder(g) } }
         }
         Divider()

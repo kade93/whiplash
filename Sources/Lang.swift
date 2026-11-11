@@ -246,7 +246,7 @@ enum L10n {
         "Idle · reads right away": ("쉬는 중 · 바로 읽어요", "休憩中 · すぐ読みます"),
         "Sending…": ("보내는 중…", "送信中…"),
         "Sent ✓": ("보냈어요 ✓", "送りました ✓"),
-        "Bring window to front": ("창 앞으로", "ウィンドウを前へ"),
+        "Go to the agent": ("에이전트에게 가기", "エージェントのところへ"),
         // 화냄 (존댓말 → 반말)
         "You need to tell me what to do!!": ("말을 해야 하죠!!!", "決めてくださいよ!!!"),
         "Just say something already!!": ("말을 해야 할 거 아냐!!", "お前が決めろよ!!"),

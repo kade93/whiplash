@@ -188,7 +188,7 @@ struct PromptView: View {
                 }
                 Spacer()
                 if g != nil, !broadcast {
-                    Button(t("Bring window to front")) { if let g = g { model.bringToFront(g) }; close() }
+                    Button(t("Go to the agent")) { if let g = g { model.bringToFront(g) }; close() }
                         .buttonStyle(.plain).font(.system(size: 9)).foregroundStyle(.secondary)
                 }
             }

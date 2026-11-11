@@ -52,7 +52,7 @@ struct AlertsView: View {
                     } else if a.kind == .overload {
                         Text(t("Can't be stopped from here")).font(.system(size: 11)).foregroundStyle(.secondary)
                     }
-                    Button(t("Bring window to front")) { model.bringToFront(g) }
+                    Button(t("Go to the agent")) { model.bringToFront(g) }
                     Button(t("Leave it")) { model.answer(a, stop: false) }
                 }
                 .controlSize(.small)

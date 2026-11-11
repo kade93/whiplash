@@ -76,7 +76,7 @@ Not in any menu. Whiplash reads the tail of each Claude Code session's transcrip
 
 - an angry buzz, the critter takes a whip, and a panel appears at the top right naming the agent and what it did, with the secret itself hidden (only the first six characters are shown);
 - in the direct-download edition the session also receives a stern prompt: stop, undo it, tell the user what happened and whether a key needs rotating;
-- buttons: **Stop it (Ctrl-C)**, **Bring window to front**, **Leave it**.
+- buttons: **Stop it (Ctrl-C)**, **Go to the agent**, **Leave it**.
 
 What trips it:
 
@@ -171,7 +171,7 @@ Claude Code = 꽃게, Claude 앱 = 모래게, Codex = 우파루파, Cursor = 오
 
 - 「부!」 소리와 함께 캐릭터가 채찍을 맞고, 화면 오른쪽 위에 누가 무엇을 했는지 창이 뜹니다. 비밀 값은 앞 여섯 글자만 남기고 가립니다.
 - 직접 다운로드판에서는 그 세션에 「멈추고, 되돌리고, 무슨 일이 있었는지와 키를 바꿔야 하는지 사용자에게 말해」라는 경고 프롬프트도 보냅니다.
-- 버튼: **멈추기 (Ctrl-C)**, **창 앞으로**, **그냥 두기**.
+- 버튼: **멈추기 (Ctrl-C)**, **에이전트에게 가기**, **그냥 두기**.
 
 걸리는 것: 비밀 파일을 깃에 올리기(`git add .env`, `.pem`, 서비스 계정 JSON, SSH 개인 키), 공개 게시(`gh gist create --public`, 레포 공개 전환, `npm publish`), 붙여넣기·파일 공유 사이트 업로드, 개인 키·키체인 비밀 출력, 명령어에 토큰을 그대로 적기, 소스 파일에 비밀이나 주민번호 적기.
 

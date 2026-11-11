@@ -38,6 +38,8 @@
     <string>Optional: reads AirPods head motion so a quick head flick cracks the whip.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Optional: listens for a sharp "whoosh-crack!" you make with your mouth to crack the whip. Nothing is recorded.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Optional: "Go to the agent" selects the Terminal or iTerm tab an agent is running in.</string>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Optional: lets the Whiplash Remote app on your iPhone, iPad or Apple Watch crack the whip over the local network.</string>
     <key>NSBonjourServices</key>

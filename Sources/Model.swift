@@ -689,20 +689,94 @@ final class Model: ObservableObject {
     }
 
     /// 세션을 띄운 앱(Claude 앱, 터미널, IDE)을 앞으로 불러온다: 부모를 거슬러 올라가 독에 뜨는 앱을 찾는다
+    /// 「에이전트에게 가기」: 그 세션이 보이는 바로 그 자리로.
+    ///  1) Claude 데스크톱 앱 안의 세션 → 앱의 딥링크 claude://code/continue?session=local_… (앱이 그 세션 화면으로 넘어간다)
+    ///  2) 터미널(Terminal·iTerm) 탭에서 도는 세션 → tty 가 같은 탭을 고르고 그 창을 앞으로 (직접 배포판만, 처음에 「제어 허용」을 묻는다)
+    ///  3) 그 밖 → 그 세션을 돌리는 앱을 앞으로
     func bringToFront(_ g: AgentGroup) {
-        var cur = g.rootPID
+        if let s = g.session, s.isDesktop, let id = s.hostSessionId,
+           id.range(of: "^local_[A-Za-z0-9-]{1,64}$", options: .regularExpression) != nil,
+           let url = URL(string: "claude://code/continue?session=" + id) {
+            NSWorkspace.shared.open(url)
+            return
+        }
+        guard let host = hostApp(of: g.rootPID) else { return }
+        if !Paths.sandboxed, let tty = Self.tty(of: g.rootPID), Self.selectTerminalTab(tty: tty, bundleID: host.bundleIdentifier ?? "") {
+            host.activate(options: [])           // 고른 탭의 창만 앞으로
+            return
+        }
+        host.activate(options: [.activateAllWindows])
+    }
+
+    /// 프로세스 줄기를 거슬러 올라가 처음 만나는 보통 앱 (터미널·에디터·Claude 앱)
+    private func hostApp(of pid: pid_t) -> NSRunningApplication? {
+        var cur = pid
         var hops = 0
         while hops < 16, cur > 1 {
-            if let app = NSRunningApplication(processIdentifier: cur), app.activationPolicy == .regular {
-                app.activate(options: [.activateAllWindows])
-                return
-            }
+            if let app = NSRunningApplication(processIdentifier: cur), app.activationPolicy == .regular { return app }
             var info = proc_bsdinfo()
             let size = Int32(MemoryLayout<proc_bsdinfo>.size)
-            guard proc_pidinfo(cur, PROC_PIDTBSDINFO, 0, &info, size) == size else { return }
+            guard proc_pidinfo(cur, PROC_PIDTBSDINFO, 0, &info, size) == size else { return nil }
             cur = pid_t(bitPattern: info.pbi_ppid)
             hops += 1
         }
+        return nil
+    }
+
+    /// 그 프로세스의 제어 터미널 ("/dev/ttys012"). 터미널 없이 도는 것이면 nil.
+    private static func tty(of pid: pid_t) -> String? {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size, info.e_tdev != 0, info.e_tdev != UInt32.max,
+              let name = devname(dev_t(bitPattern: info.e_tdev), S_IFCHR) else { return nil }
+        let s = String(cString: name)
+        return s.hasPrefix("tty") ? "/dev/" + s : nil
+    }
+
+    /// Terminal·iTerm 에서 tty 가 같은 탭을 골라 그 창을 맨 앞으로. 골랐으면 true.
+    private static func selectTerminalTab(tty: String, bundleID: String) -> Bool {
+        guard tty.range(of: "^/dev/ttys?[0-9a-z]+$", options: .regularExpression) != nil else { return false }
+        let source: String
+        switch bundleID {
+        case "com.apple.Terminal":
+            source = """
+            tell application "Terminal"
+              repeat with w in windows
+                repeat with t in tabs of w
+                  if tty of t is "\(tty)" then
+                    set selected of t to true
+                    set index of w to 1
+                    return true
+                  end if
+                end repeat
+              end repeat
+            end tell
+            return false
+            """
+        case "com.googlecode.iterm2":
+            source = """
+            tell application "iTerm2"
+              repeat with w in windows
+                repeat with t in tabs of w
+                  repeat with s in sessions of t
+                    if tty of s is "\(tty)" then
+                      select w
+                      select t
+                      select s
+                      return true
+                    end if
+                  end repeat
+                end repeat
+              end repeat
+            end tell
+            return false
+            """
+        default:
+            return false
+        }
+        var err: NSDictionary?
+        let r = NSAppleScript(source: source)?.executeAndReturnError(&err)
+        return r?.booleanValue ?? false
     }
 
     /// 터미널에서 Ctrl-C 를 누른 것과 같다. 지금 하던 일만 멈추고 세션은 남는다.

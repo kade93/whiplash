@@ -166,7 +166,7 @@ When overload lasts, Whiplash can also speak up. **Settings ▸ When an agent is
 | Mode | What happens |
 |---|---|
 | Do nothing (default) | The critter turns red and steams, nothing else |
-| Alert and ask me what to do | After the threshold a small panel appears at the top right with the agent's name, CPU, memory and how long it has been overloaded, and three buttons: **Stop it (Ctrl-C)**, **Bring window to front**, **Leave it**. It waits for you |
+| Alert and ask me what to do | After the threshold a small panel appears at the top right with the agent's name, CPU, memory and how long it has been overloaded, and three buttons: **Stop it (Ctrl-C)**, **Go to the agent**, **Leave it**. It waits for you |
 | Alert, then stop it automatically after 20 s | The same panel with a countdown. If you press nothing for 20 seconds, Whiplash sends Ctrl-C (direct-download edition only) |
 
 The threshold is 1, 3, 5 or 10 minutes of continuous overload (default 3). "Leave it" and "Stop it" both silence that agent until it has cooled down for 20 seconds; if it overloads again later you are asked again. Stopping is the same as pressing Ctrl-C in its terminal: the current step is interrupted and the session stays open. Sessions inside the Claude desktop app, and everything in the App Store edition, cannot be stopped from here; the panel then only offers the other two buttons. A long build or test run is a normal reason to be overloaded, so the automatic mode is best kept for nights and unattended runs.
@@ -251,7 +251,7 @@ Delivers the whip message to idle Claude Code sessions at a fixed interval until
 
 | Item | Action |
 |---|---|
-| Bring window to front | Activate the app running the session |
+| Go to the agent | Jump to where that session lives: inside the Claude desktop app it opens that exact session; in Terminal or iTerm it selects that tab (direct-download edition; macOS asks once to let Whiplash control the terminal); otherwise it brings the hosting app to the front |
 | Open folder | Reveal the project folder in Finder |
 | Copy last prompt | Copy the last user prompt to the clipboard |
 | Open transcript file | Open the session log (JSONL) |
