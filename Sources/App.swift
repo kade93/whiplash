@@ -42,7 +42,7 @@ final class FloatingPanel: NSPanel {
     private var downAt: (point: NSPoint, time: TimeInterval)?
 
     private var lastMove: (t: TimeInterval, p: CGPoint)?
-    private var passes: [String: [TimeInterval]] = [:]
+    private var passes: [String: [(t: TimeInterval, axis: Int, dir: Int)]] = [:]     // 가운데 선을 넘은 기록: 축(0 가로질러 감·1 세로질러 감)과 방향
     private var lastSwing: [String: TimeInterval] = [:]
     private var enteredAt: [String: TimeInterval] = [:]   // 캐릭터 근처에 들어온 시각 (머문 뒤에만 채찍)
     var optionHeld = false
@@ -205,10 +205,21 @@ final class FloatingPanel: NSPanel {
                 if Self.debugMouse { NSLog("EOHANG cross %@ rejected: dwell %.2f", id, enteredAt[id].map { t - $0 } ?? -1) }
                 continue
             }
-            var list = (passes[id] ?? []).filter { t - $0 < 0.8 }
-            list.append(t)
-            if Self.debugMouse { NSLog("EOHANG cross %@ ok passes=%d", id, list.count) }
-            if list.count >= 2, t - (lastSwing[id] ?? 0) > 1.5 {
+            // 「휙휙」 = 같은 축에서 갔다가 되돌아오기. 한 번 스쳐 지나가는 건(대각선이면 가로선·세로선을 한 번씩 넘는다) 채찍이 아니다.
+            var list = (passes[id] ?? []).filter { t - $0.t < 0.8 }
+            var swung = false
+            if crossX {
+                let dir = bx >= ax ? 1 : -1
+                if list.contains(where: { $0.axis == 0 && $0.dir == -dir }) { swung = true }
+                list.append((t, 0, dir))
+            }
+            if crossY {
+                let dir = by >= ay ? 1 : -1
+                if list.contains(where: { $0.axis == 1 && $0.dir == -dir }) { swung = true }
+                list.append((t, 1, dir))
+            }
+            if Self.debugMouse { NSLog("EOHANG cross %@ ok passes=%d swung=%d", id, list.count, swung ? 1 : 0) }
+            if swung, t - (lastSwing[id] ?? 0) > 1.5 {
                 lastSwing[id] = t
                 list = []
                 if Self.debugMouse { NSLog("EOHANG swing! %@", id) }
@@ -216,6 +227,15 @@ final class FloatingPanel: NSPanel {
             }
             passes[id] = list
         }
+    }
+
+    /// 개발용: 창 좌표(왼쪽 위 원점)의 점들을 0.03초 간격으로 지나간 것처럼 넣는다. 먼저 근처에 0.3초 머문 것으로 친다.
+    func testPath(_ pts: [CGPoint]) {
+        var t = ProcessInfo.processInfo.systemUptime + 100 * Double.random(in: 1...1000)     // 앞 시험과 안 겹치게
+        lastMove = nil; passes = [:]; lastSwing = [:]; enteredAt = [:]
+        guard let first = pts.first else { return }
+        trackSwing(local: first, time: t); t += 0.3
+        for p in pts { trackSwing(local: p, time: t); t += 0.03 }
     }
 
     private func onButton(_ event: NSEvent) -> Bool {
@@ -493,17 +513,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// 개발용: WHIPLASH_SWING_TEST=1 이면 6초 뒤 첫 쉬는 캐릭터 위로 가짜 마우스 이벤트를 보내 감지만 확인 (채찍은 안 때림)
     private func swingTest() {
-        guard let panel = panel, let (id, r) = panel.whipTargets.first else { NSLog("EOHANG swing-test: 대상 없음"); return }
-        panel.onSwing = { hit in NSLog("EOHANG swing-test: 감지 %@ (기대 %@)", hit, id) }
-        let h = panel.contentView!.bounds.height
-        var t = ProcessInfo.processInfo.systemUptime
-        for x in [r.minX - 20, r.maxX + 20, r.minX - 20, r.maxX + 20] {
-            t += 0.05
-            let e = NSEvent.mouseEvent(with: .mouseMoved, location: NSPoint(x: x, y: h - r.midY), modifierFlags: [],
-                                       timestamp: t, windowNumber: panel.windowNumber, context: nil,
-                                       eventNumber: 0, clickCount: 0, pressure: 0)!
-            panel.sendEvent(e)
+        guard let panel = panel, let (id, r) = panel.whipTargets.sorted(by: { $0.key < $1.key }).first else { NSLog("EOHANG swing-test: 대상 없음"); return }
+        var hits = 0
+        let keep = panel.onSwing
+        panel.onSwing = { _ in hits += 1 }
+        func run(_ name: String, expect: Bool, _ pts: [CGPoint]) {
+            hits = 0
+            panel.testPath(pts)
+            NSLog("EOHANG swing-test %@: %@ (whipped=%d, want %d)", name, (hits > 0) == expect ? "PASS" : "FAIL", hits > 0 ? 1 : 0, expect ? 1 : 0)
         }
+        let L = r.minX - 20, R = r.maxX + 20, T = r.minY - 20, B = r.maxY + 20
+        run("one diagonal pass", expect: false, [CGPoint(x: L, y: T), CGPoint(x: r.midX - 6, y: r.midY + 4), CGPoint(x: r.midX + 8, y: r.midY + 12), CGPoint(x: R, y: B)])
+        run("one horizontal pass", expect: false, [CGPoint(x: L, y: r.midY), CGPoint(x: r.midX + 2, y: r.midY), CGPoint(x: R, y: r.midY)])
+        run("one vertical pass", expect: false, [CGPoint(x: r.midX, y: T), CGPoint(x: r.midX, y: r.midY + 2), CGPoint(x: r.midX, y: B)])
+        run("down then across (L shape)", expect: false, [CGPoint(x: r.midX - 8, y: T), CGPoint(x: r.midX - 8, y: r.midY + 6), CGPoint(x: R, y: r.midY + 6)])
+        run("left-right-left", expect: true, [CGPoint(x: L, y: r.midY), CGPoint(x: R, y: r.midY), CGPoint(x: L, y: r.midY)])
+        run("up-down-up", expect: true, [CGPoint(x: r.midX, y: T), CGPoint(x: r.midX, y: B), CGPoint(x: r.midX, y: T)])
+        panel.onSwing = keep
+        _ = id
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {}

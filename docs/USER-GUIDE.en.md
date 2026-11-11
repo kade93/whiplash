@@ -210,7 +210,7 @@ Tells an idle or busy session to keep working.
 
 **How**
 1. Hover over the character for about 0.25 s. The character highlights and a whip appears next to the pointer.
-2. Swipe the pointer across the character twice within 0.8 seconds, sideways or up and down. For a lined-up row, up-and-down is easiest.
+2. Swipe the pointer across the character and back within 0.8 seconds, sideways or up and down. It has to be a real back-and-forth on the same line: passing over once, even diagonally, does nothing. For a lined-up row, up-and-down is easiest.
 
 Alternatively press ⌃⌥W (random idle session) or right-click → **Whip — pick a task**.
 
