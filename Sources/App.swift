@@ -56,6 +56,7 @@ final class FloatingPanel: NSPanel {
     var canResize: (() -> Bool)?
     var onResizeBegan: (() -> Void)?
     var onResize: ((ResizeZone, CGFloat, CGFloat) -> Void)?      // (어디, 오른쪽으로 간 px, 아래로 간 px) — 누른 자리 기준
+    var onResizeEnded: (() -> Void)?
     static let resizeBand: CGFloat = 11
     private func resizeZone(at p: NSPoint) -> ResizeZone? {
         guard canResize?() == true, let b = contentView?.bounds else { return nil }
@@ -98,15 +99,20 @@ final class FloatingPanel: NSPanel {
             return
         }
         if event.type == .leftMouseDown, !event.modifierFlags.contains(.control), let zone = resizeZone(at: event.locationInWindow) {
-            let start = convertPoint(toScreen: event.locationInWindow)      // 이벤트에 실린 위치를 쓴다 (실제 커서 위치와 같지만, 합성 입력으로도 시험할 수 있게)
+            // 진짜 마우스면 실제 커서 위치를 쓴다 (끄는 동안 창 크기가 바뀌어도 흔들리지 않는다). 합성 입력(시험)은 이벤트에 실린 위치로.
+            let eventStart = convertPoint(toScreen: event.locationInWindow)
+            let cursor = NSEvent.mouseLocation
+            let real = hypot(cursor.x - eventStart.x, cursor.y - eventStart.y) < 4
+            let start = real ? cursor : eventStart
             onResizeBegan?()
             (zone == .bottom ? NSCursor.resizeUpDown : NSCursor.resizeLeftRight).set()
             isDragging = true
             while let e = nextEvent(matching: [.leftMouseDragged, .leftMouseUp]) {     // 버튼을 뗄 때까지 따라간다
                 if e.type == .leftMouseUp { break }
-                let now = convertPoint(toScreen: e.locationInWindow)
+                let now = real ? NSEvent.mouseLocation : convertPoint(toScreen: e.locationInWindow)
                 onResize?(zone, now.x - start.x, start.y - now.y)
             }
+            onResizeEnded?()
             isDragging = false
             NSCursor.arrow.set()
             return
@@ -256,6 +262,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var occlusionObserver: NSObjectProtocol?
     private var modelSub: AnyCancellable?
     private var refitPending = false
+    // 창 크기는 목표를 향해 부드럽게 따라간다 (내용이 바뀌어도, 가장자리를 끌어도)
+    private struct LiveResize { var start: NSSize; var per: Int; var rows: Int; var px: CGFloat; var py: CGFloat; var chromeW: CGFloat; var chromeH: CGFloat
+                                var width: CGFloat? = nil; var height: CGFloat? = nil }
+    private var live: LiveResize?           // 가장자리를 끄는 중
+    private var snugSize: NSSize = .zero    // 내용에 딱 맞는 크기
+    private var easeTimer: Timer?
+    private var didFirstFit = false
 
     static let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
     private static let autosaveName = "WhiplashPanel"
@@ -301,34 +314,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         var root = WidgetView(model: model)
         root.onNoDrag = { [weak panel] rects in panel?.noDragRects = rects }
-        // 작게 보기에서 가장자리를 끌면: 가로 36px 마다 한 줄 마리 수 ±1, 세로 50px 마다 줄 수 ±1 (창은 내용에 맞춰 따라온다)
-        var resizeStart = (per: 10, rows: 1)
+        // 작게 보기에서 가장자리를 끌면 (파인더 창처럼): 끄는 변이 커서를 그대로 따라오고, 그 폭·높이에 들어가는 만큼 캐릭터가 다시 놓인다.
+        // 놓으면 창이 내용에 딱 맞게 스르륵 줄어든다.
         panel.canResize = { [weak self] in
             guard let m = self?.model else { return false }
             return m.compact && !m.hidden && m.snapshot.groups.count > 1
         }
         panel.onResizeBegan = { [weak self] in
-            guard let m = self?.model else { return }
+            guard let self = self else { return }
+            let m = self.model
             let n = max(m.snapshot.groups.count, 1)
             let per = min(max(m.compactPerRow, 1), n)
-            resizeStart = (per, Int((Double(n) / Double(per)).rounded(.up)))
-        }
-        panel.onResize = { [weak self] zone, dx, dy in
-            guard let m = self?.model else { return }
-            let n = max(m.snapshot.groups.count, 1)
+            let rows = Int((Double(n) / Double(per)).rounded(.up))
             let px: CGFloat = (m.compactNames ? CompactView.namedTileWidth : CompactView.tileWidth) + 6      // 한 칸 폭
             let py: CGFloat = 47 + (m.compactNames ? CompactView.nameHeight + 3 : 0)                         // 한 줄 높이
-            let stepsX = Int((dx / px).rounded()), stepsY = Int((dy / py).rounded())
-            let vertical = zone == .bottom || (zone == .corner && abs(dy) / py > abs(dx) / px)
-            var per: Int
-            if vertical {
-                let rows = min(max(resizeStart.rows + stepsY, 1), n)
-                per = Int((Double(n) / Double(rows)).rounded(.up))        // 그 줄 수에 맞는 가장 좁은 폭
-            } else {
-                per = resizeStart.per + stepsX
+            let f = self.panel.frame.size
+            self.live = LiveResize(start: f, per: per, rows: rows, px: px, py: py,
+                                   chromeW: f.width - CGFloat(per) * px, chromeH: f.height - CGFloat(rows) * py)
+        }
+        panel.onResize = { [weak self] zone, dx, dy in
+            guard let self = self, var l = self.live else { return }
+            let m = self.model
+            let n = max(m.snapshot.groups.count, 1)
+            var per = l.per
+            if zone == .bottom {
+                let h = min(max(l.start.height + dy, l.chromeH + l.py), l.chromeH + CGFloat(n) * l.py)
+                l.height = h; l.width = nil
+                let rows = min(max(Int(((h - l.chromeH) / l.py).rounded()), 1), n)
+                per = Int((Double(n) / Double(rows)).rounded(.up))          // 그 줄 수에 맞는 가장 좁은 폭
+            } else {                                                        // 오른쪽 변·모서리: 폭이 커서를 따라온다
+                let w = min(max(l.start.width + dx, l.chromeW + l.px), l.chromeW + CGFloat(min(n, 40)) * l.px)
+                l.width = w; l.height = nil
+                per = min(max(Int((w - l.chromeW + 0.5) / l.px), 1), 40)    // 다 들어가는 칸 수
             }
-            per = min(max(per, 1), 40)
+            self.live = l
             if per != m.compactPerRow { m.compactPerRow = per }
+            self.startEasing()
+        }
+        panel.onResizeEnded = { [weak self] in
+            self?.live = nil                // 내용에 딱 맞는 크기로 돌아간다 (부드럽게)
+            self?.startEasing()
         }
         root.onWhipTargets = { [weak panel] rects in panel?.whipTargets = rects }
         root.onClickTargets = { [weak panel] rects in panel?.clickTargets = rects }
@@ -1260,15 +1285,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// 위쪽 모서리를 고정한 채 내용 크기에 맞춘다
     private func fit(_ size: CGSize) {
-        guard let panel = panel, size.width > 1, size.height > 1 else { return }
+        guard panel != nil, size.width > 1, size.height > 1 else { return }
+        snugSize = NSSize(width: size.width.rounded(.up), height: size.height.rounded(.up))
+        if !didFirstFit { didFirstFit = true; setPanelSize(snugSize); return }      // 처음엔 바로
+        startEasing()
+    }
+
+    /// 윗변·왼쪽 변을 고정한 채 크기만 바꾼다
+    private func setPanelSize(_ size: NSSize) {
+        guard let panel = panel else { return }
         var f = panel.frame
-        let w = size.width.rounded(.up), h = size.height.rounded(.up)
-        guard abs(f.width - w) > 0.5 || abs(f.height - h) > 0.5 else { return }
+        guard abs(f.width - size.width) > 0.01 || abs(f.height - size.height) > 0.01 else { return }
         let top = f.maxY
-        f.size = NSSize(width: w, height: h)
-        f.origin.y = top - h
+        f.size = size
+        f.origin.y = top - size.height
         panel.setFrame(f, display: true)
         panel.invalidateShadow()
+    }
+
+    /// 창 크기를 목표로 조금씩 옮긴다. 끄는 변은 커서를 바로 따라가고(지연 없음), 나머지는 매 틱 남은 거리의 1/3 씩.
+    private func startEasing() {
+        guard easeTimer == nil else { return }
+        let t = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in self?.easeTick() }
+        RunLoop.main.add(t, forMode: .common)
+        easeTimer = t
+        easeTick()
+    }
+    private func easeTick() {
+        guard let panel = panel else { return }
+        let cur = panel.frame.size
+        var next = cur
+        func approach(_ from: CGFloat, _ to: CGFloat) -> CGFloat { abs(to - from) < 0.75 ? to : from + (to - from) * 0.34 }
+        if let w = live?.width { next.width = w } else { next.width = approach(cur.width, snugSize.width) }
+        if let h = live?.height { next.height = h } else { next.height = approach(cur.height, snugSize.height) }
+        setPanelSize(next)
+        let settled = live == nil && abs(next.width - snugSize.width) < 0.01 && abs(next.height - snugSize.height) < 0.01
+        if settled || snugSize == .zero { easeTimer?.invalidate(); easeTimer = nil }
     }
 
     private static func roundedMask(radius r: CGFloat) -> NSImage {

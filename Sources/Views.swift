@@ -731,7 +731,6 @@ struct CompactView: View {
     var body: some View {
         let s = model.snapshot
         let per = max(1, model.compactPerRow)   // 한 줄에 최대 몇 마리; 넘치면 다음 줄 (가로로 끝없이 길어지지 않게). Settings ▸ Critters per row
-        let rows = stride(from: 0, to: s.groups.count, by: per).map { Array(s.groups[$0..<min($0 + per, s.groups.count)]) }
         HStack(alignment: .top, spacing: 6) {
             TrafficLights(model: model, size: 13, vertical: true, hitPad: 2)     // 8pt 가로 줄은 너무 작아 잘 안 눌렸다
                 .padding(.leading, -4)
@@ -741,11 +740,10 @@ struct CompactView: View {
                     .help(t("No agents running right now"))
             }
             VStack(alignment: .leading, spacing: 8) {
-                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                    HStack(alignment: .top, spacing: 6) {
-                        ForEach(row) { g in critter(g, s) }
-                    }
+                TileGrid(per: per, hSpacing: 6, vSpacing: 8) {           // 한 덩어리 격자: 줄이 바뀌어도 같은 칸이 새 자리로 미끄러져 간다
+                    ForEach(s.groups) { g in critter(g, s) }
                 }
+                .animation(.spring(response: 0.32, dampingFraction: 0.86), value: per)
                 // 아래 한 줄: 커서를 올린 애가 「누구 · 어느 폴더 · 지금 뭘 하는 중」인지. 아무도 안 가리키면 전체 요약.
                 // (overlay 라서 글이 길어도 창 폭을 넓히지 않는다)
                 Color.clear.frame(height: 13).overlay(alignment: .leading) { caption(s) }
@@ -827,6 +825,44 @@ struct CompactView: View {
         var text = tf("%@ · %@\n%@\nCPU %@ · Memory %@", name, g.label, st.text, fmtPct(g.cpu / Double(max(model.snapshot.ncpu, 1))), fmtBytes(g.memory))
         if model.canWhip(g) { text += t("\nSwing the mouse or click to whip") }
         return text
+    }
+}
+
+/// 칸들을 한 줄에 per 개씩, 왼쪽 위부터 채우는 격자. (VStack 안의 HStack 들로 나누면 줄이 바뀔 때 칸이 사라졌다 나타난다.
+/// 한 배치 안에 두면 SwiftUI 가 자리 이동을 애니메이션해 준다.)
+struct TileGrid: Layout {
+    var per: Int
+    var hSpacing: CGFloat = 6
+    var vSpacing: CGFloat = 8
+
+    private func rows(_ subviews: Subviews) -> [(height: CGFloat, sizes: [CGSize])] {
+        let per = max(per, 1)
+        var out: [(CGFloat, [CGSize])] = []
+        var i = 0
+        while i < subviews.count {
+            let sizes = subviews[i..<min(i + per, subviews.count)].map { $0.sizeThatFits(.unspecified) }
+            out.append((sizes.map { $0.height }.max() ?? 0, sizes))
+            i += per
+        }
+        return out
+    }
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rs = rows(subviews)
+        let w = rs.map { r in r.sizes.reduce(0) { $0 + $1.width } + hSpacing * CGFloat(max(r.sizes.count - 1, 0)) }.max() ?? 0
+        let h = rs.reduce(0) { $0 + $1.height } + vSpacing * CGFloat(max(rs.count - 1, 0))
+        return CGSize(width: w, height: h)
+    }
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY, i = 0
+        for r in rows(subviews) {
+            var x = bounds.minX
+            for size in r.sizes {
+                subviews[i].place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
+                x += size.width + hSpacing
+                i += 1
+            }
+            y += r.height + vSpacing
+        }
     }
 }
 
