@@ -54,6 +54,7 @@ final class CritterManager: ObservableObject {
     func setDodged(_ on: Bool) {
         guard on != dodged else { return }
         dodged = on
+        if !on, !(model.caged && (cage?.isVisible ?? false)) { startCreep() }     // 돌아올 땐 가장자리에서 기어 나온다
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = on ? 0.5 : 0.35
             for w in windows.values { w.animator().alphaValue = on ? 0 : Self.alpha }
@@ -63,6 +64,43 @@ final class CritterManager: ObservableObject {
         cage?.ignoresMouseEvents = on
         if on, model.hoverWhipID != nil { model.hoverWhipID = nil }
     }
+
+    /// 사람이 손을 놓으면: 제자리에 뿅 나타나지 않고, 가까운 화면 가장자리 밖으로 옮겨 놓고 거기서부터 살금살금 기어 나온다.
+    /// 한 마리씩 시차를 두고, 처음엔 몸을 반쯤 내밀고 눈치를 본 뒤, 몇 걸음 가다 멈추기를 되풀이한다 (tick 의 creep 가지).
+    private func startCreep() {
+        let now = ProcessInfo.processInfo.systemUptime
+        let size = Self.size(small: small)
+        for (id, w) in windows {
+            var m = movers[id] ?? Mover()
+            let home = m.creepHome ?? w.frame.origin               // 기어 나오다 다시 숨었으면 원래 가던 자리로
+            guard let screen = w.screen ?? NSScreen.screens.first(where: { $0.frame.contains(home) }) ?? NSScreen.main else { continue }
+            let f = screen.frame
+            // 왼쪽·오른쪽·아래 가운데 가까운 쪽 (위는 메뉴 막대). 그 바깥이 다른 모니터면 거기 보일 테니 건너뛴다.
+            let edges: [(d: CGFloat, start: CGPoint)] = [
+                (home.x - f.minX + size.width, CGPoint(x: f.minX - size.width, y: home.y)),
+                (f.maxX - home.x, CGPoint(x: f.maxX, y: home.y)),
+                (home.y - f.minY + size.height, CGPoint(x: home.x, y: f.minY - size.height)),
+            ].sorted { $0.d < $1.d }
+            guard let pick = edges.first(where: { e in
+                let r = NSRect(origin: e.start, size: size)
+                return !NSScreen.screens.contains { $0 != screen && $0.frame.intersects(r) }
+            }) else { m.creepHome = nil; movers[id] = m; continue }     // 갈 가장자리가 없으면 그냥 제자리에서 나타난다
+            m.creepHome = home
+            m.creepPos = pick.start
+            m.creepSpeed = min(max(pick.d / 6, 34), 150)           // 멀리서 오는 애는 조금 빨리 (그래도 십몇 초 안에)
+            m.creepBurst = 0
+            m.creepPeeked = false
+            m.creepPauseUntil = now + Double.random(in: 0.2...2.8) // 한꺼번에 말고 하나둘씩
+            m.target = nil
+            movers[id] = m
+            w.setFrameOrigin(pick.start)
+            let left = home.x < pick.start.x
+            if facingLeft[id] != left { facingLeft[id] = left }
+        }
+    }
+    /// 개발용: 지금 기어 나오는 중인 마리 수
+    var creepingCount: Int { movers.values.filter { $0.creepHome != nil }.count }
+    var firstOrigin: NSPoint { windows.sorted { $0.key < $1.key }.first?.value.frame.origin ?? .zero }
 
     @Published private(set) var hungry: Set<String> = []       // 당근 없는 자리에 앉은 애들
     private var lastAlive: Int? = nil
@@ -76,6 +114,13 @@ final class CritterManager: ObservableObject {
         var hopBaseY: CGFloat = 0
         var hopHeight: CGFloat = 12
         var nextHop: TimeInterval = 0
+        // 숨었다 돌아오는 중: 화면 가장자리 밖에서 제자리(creepHome)까지 살금살금
+        var creepHome: CGPoint? = nil
+        var creepPos: CGPoint = .zero        // 소수점까지 든 현재 위치 (창 원점은 정수라 따로 든다)
+        var creepSpeed: CGFloat = 40         // 걸을 때 초당 px
+        var creepBurst: CGFloat = 0          // 이번 걸음에 남은 px
+        var creepPauseUntil: TimeInterval = 0
+        var creepPeeked = false              // 처음에 빼꼼 내밀고 눈치 보기를 했나
     }
 
     private let model: Model
@@ -344,12 +389,43 @@ final class CritterManager: ObservableObject {
         updateCarrots(caged: caged)
 
         for (id, w) in windows {
-            guard !w.isDragging, let g = groups[id] else { continue }
+            if w.isDragging { movers[id]?.creepHome = nil; continue }     // 집어 들면 살금살금은 끝
+            guard let g = groups[id] else { continue }
             if model.hoverWhipID == id { continue }        // 커서가 올라가 있으면 가만히 (채찍 맞을 준비)
             var m = movers[id] ?? Mover()
             let (xr, yr) = currentBounds(for: w, size: size)
             var o = w.frame.origin
             let outside = !(xr.contains(o.x) && yr.contains(o.y))
+
+            if let home = m.creepHome {                    // 숨었다 돌아오는 중: 가장자리에서 살금살금
+                if caged || summon != nil || m.hopStart != nil {
+                    m.creepHome = nil                      // 불려 가거나 맞으면 살금살금은 끝 (아래 보통 가지로)
+                } else {
+                    let dx = home.x - m.creepPos.x, dy = home.y - m.creepPos.y
+                    let d = hypot(dx, dy)
+                    if d <= 0.5 {
+                        m.creepHome = nil
+                        m.pauseUntil = now + Double.random(in: 1...3)
+                    } else if now >= m.creepPauseUntil {
+                        if m.creepBurst <= 0 {             // 새 걸음: 처음엔 몸을 반쯤만 내민다
+                            m.creepBurst = m.creepPeeked ? m.creepSpeed * CGFloat.random(in: 0.45...0.85) : size.width * 0.45
+                        }
+                        let s = min(m.creepSpeed / CGFloat(Self.fps), m.creepBurst, d)
+                        m.creepPos.x += dx / d * s
+                        m.creepPos.y += dy / d * s
+                        m.creepBurst -= s
+                        if m.creepBurst <= 0.01 {          // 멈칫: 처음엔 길게 눈치를 본다
+                            m.creepBurst = 0
+                            m.creepPauseUntil = now + (m.creepPeeked ? Double.random(in: 0.35...1.1) : Double.random(in: 0.9...1.8))
+                            m.creepPeeked = true
+                        }
+                    }
+                    let c = CGPoint(x: m.creepPos.x.rounded(), y: m.creepPos.y.rounded())
+                    if c != w.frame.origin { w.setFrameOrigin(c) }
+                    movers[id] = m
+                    continue
+                }
+            }
 
             func walk(ignorePause: Bool) {
                 if !ignorePause && now < m.pauseUntil { return }

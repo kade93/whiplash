@@ -158,7 +158,7 @@ enum L10n {
         "Yes, do it": ("응, 해", "うん、やって"),
         "Don't": ("하지 마", "やめて"),
         "Keep going": ("계속해", "続けて"),
-        "Hide while I'm busy (fast mouse or typing)": ("일할 때 알아서 숨기 (마우스·타자 바쁘면)", "作業中は自動で隠れる（マウス・タイピングが忙しいと）"),
+        "Hide while I'm busy, creep back out when I rest": ("내가 바쁘면 숨고, 쉬면 슬금슬금 기어 나오기", "忙しいときは隠れ、休むとそろそろ出てくる"),
         // 환영 창
         "The AI agents running on your Mac roam around as critters. See what they do, crack the whip, send instructions.": ("맥에서 돌아가는 AI 에이전트들이 캐릭터로 돌아다녀요. 뭘 하는지 보고, 채찍질하고, 지시를 보내세요.", "Mac で動く AI エージェントがキャラクターになって歩き回ります。何をしているか見て、鞭を打ち、指示を送りましょう。"),
         "Whip": ("채찍질", "鞭"),

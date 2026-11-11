@@ -360,10 +360,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     self?.mouseTrail.append((ProcessInfo.processInfo.systemUptime, 400))
                 }
             }
-            for sec in [2.0, 6.0, 8.0, 12.0, 17.0] {
+            for sec in [2.0, 6.0, 8.0, 12.0, 17.0, 19.0, 21.0, 24.0, 28.0, 34.0, 42.0] {
                 DispatchQueue.main.asyncAfter(deadline: .now() + sec) { [weak self] in
                     guard let self = self else { return }
-                    NSLog("EOHANG dodge-test t=%.0f dodged=%d alpha=%.2f active=%d", sec, self.critters.dodged ? 1 : 0, self.critters.firstAlpha, NSApp.isActive ? 1 : 0)
+                    NSLog("EOHANG dodge-test t=%.0f dodged=%d alpha=%.2f active=%d creeping=%d first=%@", sec, self.critters.dodged ? 1 : 0, self.critters.firstAlpha,
+                          NSApp.isActive ? 1 : 0, self.critters.creepingCount, NSStringFromPoint(self.critters.firstOrigin))
                 }
             }
         }
@@ -956,7 +957,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(menuItem(t("Roam small (no name tags)"), on: m.critterSmall, key: .small) { m.critterSmall.toggle() })
         menu.addItem(menuItem(t("Water tile behind critters"), on: m.critterBox) { m.critterBox.toggle() })
         menu.addItem(menuItem(t("Show list while roaming (both at once)"), on: m.panelWithCritters, key: .panel) { m.panelWithCritters.toggle() })
-        menu.addItem(menuItem(t("Hide while I'm busy (fast mouse or typing)"), on: m.autoDodge) { m.autoDodge.toggle() })
+        menu.addItem(menuItem(t("Hide while I'm busy, creep back out when I rest"), on: m.autoDodge) { m.autoDodge.toggle() })
         menu.addItem(.separator())
         // 채찍질 창
         menu.addItem(menuItem(t("Compact view"), on: m.compact) { m.compact.toggle() })

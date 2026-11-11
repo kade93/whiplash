@@ -107,7 +107,7 @@ Each session becomes a character in its own transparent window and walks around 
 - Sessions that need you show a badge above the head (`!` `?` `✋`) and hop periodically.
 - Characters keep their distance and never overlap.
 - Drag a character to move it. Double-click to bring the app running that session (Claude app or Terminal) to the front.
-- When the mouse moves fast or you keep typing for about 3 seconds, the characters fade out; after 8 quiet seconds they return (**Settings ▸ Hide while I'm busy**, on by default). They stay while the pointer is over a character or while in the carrot field. Only the time of the last key press is checked, never its content, and no permission is needed.
+- When the mouse moves fast or you keep typing for about 3 seconds, the characters fade out; after 8 quiet seconds they creep back out (**Settings ▸ Hide while I'm busy, creep back out when I rest**, on by default). They do not pop back in place: each one starts just outside the nearest screen edge (left, right or bottom), pokes half its body out, waits a moment, then sneaks to where it was a few steps at a time, one after another. Whipping, gathering or dragging one ends the sneaking at once. They stay while the pointer is over a character or while in the carrot field. Only the time of the last key press is checked, never its content, and no permission is needed.
 
 Turn on **Roam small** to show small characters without name tags.
 
@@ -316,7 +316,7 @@ The menu bar icon and the Dock icon (right-click) show the same menu. Frequently
 | Roam small (no name tags) | Small characters without name tags (⌃⌥M) |
 | Water tile behind critters | Background tile for roaming characters |
 | Show list while roaming | Keep the list window during roaming (⌃⌥P) |
-| Hide while I'm busy | Hide characters during fast mouse movement or typing; return when quiet |
+| Hide while I'm busy, creep back out when I rest | Hide characters during fast mouse movement or typing; when you stop, they sneak back in from the screen edge |
 | Compact view / Always on top | Window settings |
 | Whip only while holding ⌥ | Accident prevention |
 | Show remaining quota — remaining quota | Enable quota lookup (a macOS Keychain prompt appears the first time, see 5.4) |
