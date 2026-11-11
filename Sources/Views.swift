@@ -741,6 +741,10 @@ struct CompactView: View {
                 }
             }
         }
+        .padding(.trailing, s.groups.count > 1 ? 8 : 0)
+        .overlay(alignment: .trailing) {
+            if s.groups.count > 1 { CompactResizeGrip(model: model, count: s.groups.count).offset(x: 6) }
+        }
     }
 
     @ViewBuilder
@@ -784,6 +788,43 @@ struct CompactView: View {
         var text = tf("%@ · %@\n%@\nCPU %@ · Memory %@", name, g.label, st.text, fmtPct(g.cpu / Double(max(model.snapshot.ncpu, 1))), fmtBytes(g.memory))
         if model.canWhip(g) { text += t("\nSwing the mouse or click to whip") }
         return text
+    }
+}
+
+/// 작게 보기 오른쪽 가장자리 손잡이: 좌우로 끌면 창 폭이 캐릭터 한 마리 단위로 줄고 늘며, 한 줄 마리 수가 바뀌어 나머지는 아랫줄로 내려간다.
+/// (창은 내용 크기에 맞춰지므로 「한 줄에 몇 마리」만 바꾸면 폭이 따라온다. Settings ▸ Critters per row 와 같은 값.)
+struct CompactResizeGrip: View {
+    @ObservedObject var model: Model
+    let count: Int
+    @State private var startPer: Int? = nil
+    @State private var hovering = false
+    static let pitch: CGFloat = 36              // 타일 30 + 간격 6
+    static let maxPerRow = 20
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(Color.primary.opacity(hovering || startPer != nil ? 0.5 : 0.18))
+            .frame(width: 4)
+            .frame(maxHeight: .infinity)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 4)
+            .contentShape(Rectangle())
+            .onHover { h in
+                hovering = h
+                if h { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+            }
+            .gesture(
+                DragGesture(minimumDistance: 1, coordinateSpace: .global)   // 창 왼쪽 변은 그대로라 창 좌표의 이동량 = 화면 이동량
+                    .onChanged { v in
+                        let base = startPer ?? min(model.compactPerRow, max(count, 1))   // 지금 실제로 한 줄에 놓인 수에서 시작
+                        if startPer == nil { startPer = base }
+                        let n = min(max(base + Int((v.translation.width / Self.pitch).rounded()), 1), Self.maxPerRow)
+                        if n != model.compactPerRow { model.compactPerRow = n }
+                    }
+                    .onEnded { _ in startPer = nil }
+            )
+            .noDrag()
+            .help(t("Drag left or right to change how many critters fit in a row"))
     }
 }
 

@@ -67,6 +67,7 @@ enum L10n {
         "Water tile behind critters": ("캐릭터 뒤 물빛 칸", "キャラの後ろに水色タイル"),
         "Show as window": ("채찍질 창으로 보기", "ウィンドウで表示"),
         "Compact view": ("작게 보기", "コンパクト表示"),
+        "Drag left or right to change how many critters fit in a row": ("좌우로 끌어서 한 줄에 놓일 마리 수 바꾸기", "左右にドラッグして 1 行に並ぶ匹数を変える"),
         "Critters per row (compact view)": ("한 줄에 몇 마리 (작게 보기)", "1 行あたりの匹数（コンパクト表示）"),
         "%d per row": ("한 줄에 %d마리", "1 行に %d 匹"),
         "Full view": ("크게 보기", "フル表示"),
