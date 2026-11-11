@@ -1,294 +1,98 @@
-# Whiplash (위플래쉬)
+<p align="center">
+  <img src="assets/promo/banner.png" alt="Whiplash — whip your AI agents into shape" width="100%">
+</p>
 
-옛 이름: AI 어항 → A장관리 → Whiplash. 폴더는 `~/Desktop/whiplash`(옛 `eohang` 은 심볼릭 링크).
+<p align="center">
+  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a>
+</p>
 
-맥에서 돌아가는 AI 에이전트(Claude Code, Codex, Cursor, Gemini CLI …)가
-**지금 무슨 일을 하고 있는지, 누가 내 답을 기다리는지, CPU·메모리·저장공간을 얼마나 물고 있는지**
-픽셀 바다 친구들로 보여 주는 작은 떠 있는 창.
+# Whiplash
 
-- 일하는 중: 캐릭터가 통통 튐 / 쉬는 중: 눈 감고 z / 코어 하나 이상 쓰면: 땀방울
-- 막대 색 = 에이전트, 회색 = 다른 앱, 빈 칸 = 남은 자원
-- 네이티브 Swift. 2초마다 한 번 재고, 창이 가려지면 15초로 늦춤. 일하는 캐릭터가 없으면 애니메이션 타이머도 꺼짐
-- 맨 아래 「어항 자체」 줄에 이 앱이 쓰는 자원이 그대로 보임
+**Whip your AI agents into shape.**
 
-사용자용 설명서: [한국어](docs/USER-GUIDE.ko.md) · [English](docs/USER-GUIDE.en.md) · [日本語](docs/USER-GUIDE.ja.md) · [개인정보 처리방침](docs/PRIVACY.md)
+Whiplash shows every AI coding agent running on your computer — Claude Code, Codex, Cursor, Gemini CLI, Antigravity — as a pixel critter. You see at a glance who is working, who is waiting for you, and who is eating your CPU. When they slack off, you crack the whip.
 
-배포는 플랫폼별로 갈라요. **macOS** 는 Mac App Store(샌드박스라 채찍 메시지·지시 보내기·오토 채찍 없음), **Windows·Linux** 는
-GitHub Releases(태그 `v*` 를 푸시하면 Actions 가 [desktop/](desktop/README.md) 의 Electron 앱을 빌드해 zip·AppImage 를 붙임).
-저장소가 private 인 동안은 Release 를 남이 못 받으니, 공개 배포하려면 저장소를 public 으로 바꿔야 해요(사용자 결정).
+<p align="center">
+  <img src="assets/promo/demo.gif" alt="Six sleeping critters get whipped and go back to work" width="720">
+</p>
 
-## 설치 (처음 한 번)
+## Why
 
-```bash
-xcode-select --install        # Swift 컴파일러가 없을 때만
-cd eohang
-./build.sh --install          # ~/Applications/Whiplash.app 으로 설치하고 실행
-```
+Run five agents at once and you lose track within minutes. One finished ten minutes ago and is waiting for a "yes". Another has been stuck on a permission prompt since lunch. A third is quietly burning two CPU cores.
 
-## Windows · Linux
+Whiplash puts all of them in one small window, or lets them roam your desktop. The signature move: line them up, sweep the pointer across, and every idle agent gets a "keep going" at once.
 
-[desktop/](desktop/README.md) 에 Electron 으로 만든 별도 앱이 있어요. 같은 캐릭터(`Sources/Sprites.swift` 에서 추출)·같은 소리·같은 번역표를 쓰고,
-Claude Code 세션 감지·상태·채찍·간식·확성기·전역 단축키·트레이 메뉴가 돼요. Windows 에서는 Claude Code 가 명명 파이프(`\\.\pipe\cc-msg-…`)로,
-Linux 에서는 유닉스 소켓(`/tmp/cc-socks/`, `/run/user/<uid>/cc-socks/`)으로 메시지를 받는데 둘 다 Node 의 `net.connect` 하나로 닿아서
-채찍이 진짜로 프롬프트를 넣어요. 스택 선택 이유(Tauri 와 비교)·플랫폼별 주의점·안 되는 기능은 그 README 에.
+## What it does
 
-```bash
-cd desktop && npm install
-npm start              # 내 ~/.claude 세션으로 바로 띄워 보기 (맥에서도 개발용으로 돌아감)
-npm run dist:linux     # AppImage + tar.gz
-npm run dist:win       # zip (Windows 러너에서는 msi 도)
-```
-
-## 풀어놓기
-
-오른쪽 클릭 →「풀어놓기 — 화면 돌아다니기」를 켜면 어항 창이 사라지고, 에이전트마다 작은 캐릭터가 되어
-맥 화면 여기저기를 돌아다녀요. 캐릭터 아래에 세션 제목과 지금 하는 일이 알약으로 붙어요.
-
-- **일하는 애**는 연장을 휘두르며 어슬렁어슬렁 걸어 다니고, **쉬는 애**는 그 자리에서 자요.
-  열에 일곱은 **다른 앱 창(파인더 등)의 윗변을 밟고** 걸어 다녀요. 이름표는 머리 위에 떠요.
-- 캐릭터는 살짝 투명(84%)하고 작아요. 더 작게 보려면 「작게 풀어놓기」.
-- **내 차례인 애**(답·질문·허락 기다림)는 머리 위 말풍선을 달고 2.5초마다 폴짝 뛰어요.
-- **끌어서** 옮길 수 있고(놓으면 거기서부터 다시 어슬렁), **마우스를 휘두르면** 채찍, **오른쪽 클릭**은 관리 메뉴,
-  **두 번 클릭**은 그 세션을 띄운 창(Claude 앱·터미널)을 앞으로.
-- 「항상 맨 위에」를 끄면 바탕화면 위(다른 창 뒤)에서 돌아다녀요.
-- 풀어놓기와 리스트(채찍질 창)는 **둘 중 하나**예요. 풀어놓으면 창이 숨고, 「채찍질 창으로 모으기」(⌃⌥A·초록 버튼·Dock 아이콘)면
-  캐릭터가 창으로 들어와요. 둘 다 보고 싶으면 「풀어놓을 때 채찍질 창도 보기」(⌃⌥P)를 켜세요.
-  돌아다니는 애가 한 마리도 없으면 창이 다시 나타나요.
-- **절대 안 겹쳐요.** 포개지면 서로 밀어내고, 「이리 와」로 모일 땐 커서 둘레 격자 자리를 하나씩 받고, 새 목표를 고를 땐 남들과 가장 먼 자리를 골라요.
-- 오른쪽 클릭 메뉴가 열려 있는 동안은 아무도 안 움직여요.
-- 창마다 초당 15번 자리를 옮기고, 2초마다 다른 앱 창 위치를 다시 봐요. 캐릭터가 열 마리여도 어항 자체 CPU는 코어 하나 기준 몇 % 안쪽.
-
-### 전역 단축키
-
-어느 앱을 쓰고 있어도 먹어요. 바꾸려면 메뉴 막대 채찍 →「단축키 편집…」(`~/Library/Application Support/Eohang/hotkeys.json`),
-고친 뒤 「단축키 다시 읽기」. `"ctrl+alt+h"` 꼴로 적고, 비우면 그 단축키는 꺼져요. 쓸 수 있는 조합키: ctrl, alt(option), cmd, shift.
-
-| 기본 단축키 | 하는 일 |
+| | |
 |---|---|
-| ⌃⌥H | 모두 숨기기 / 보이기 |
-| ⌃⌥A | 풀어놓기 / 어항 창 |
-| ⌃⌥M | 작게 / 크게 (풀어놓았으면 캐릭터, 어항 창이면 작게 보기) |
-| ⌃⌥C | 우리에 가두기 / 풀어주기 |
-| ⌃⌥G | 이리 와 — 다들 커서 자리로 걸어와요 (자던 애도) |
-| ⌃⌥W | 쉬는 애 아무나 채찍 |
-| ⌃⌥P | 풀어놓을 때 채찍질 창도 보기 (둘 다) 켜고 끄기 |
+| <img src="assets/promo/shot-1.jpg" width="420" alt="Critters roaming the desktop"> | <img src="assets/promo/shot-2.jpg" width="420" alt="The list window"> |
+| **One critter per session.** They walk around your desktop or sit in a compact strip with their names underneath. | **Who's working, who's waiting.** CPU, memory, cost, lines changed, and what each one is doing right now. |
+| <img src="assets/promo/shot-4.jpg" width="420" alt="Whip and treat"> | <img src="assets/promo/shot-3.jpg" width="420" alt="The carrot field"> |
+| **Crack the whip, or give a treat.** Swipe back and forth over an idle critter to send it back to work. Stroke it slowly to praise it. | **Carrots are your quota.** Each carrot is a slice of your remaining Claude usage. When they run out, the critters go on strike. |
 
-설치 위치는 `/Applications/Whiplash.app`(파인더 「응용 프로그램」에 보임). 쓸 수 없으면 `~/Applications`.
+More of what is in the box:
 
-### 메뉴 막대 채찍 · Dock
+- **A tool in every hand.** A book while reading, a pencil while editing, a hammer while running commands. Sessions that need you get a yellow bubble.
+- **Go to the agent.** One click opens that exact session in the Claude app. For agents in Terminal or iTerm it tries to select the right tab.
+- **Megaphone.** Send the same message to every agent at once.
+- **Overload watch.** When an agent pins your CPU for minutes, Whiplash can ask what to do, or stop it for you after a countdown.
+- **Leak guard.** If an agent is about to `git add .env`, publish a gist or print a private key, it gets caught in the act and told to undo it.
+- **Whip with your body.** An AirPods head flick, a hand swing in front of the camera, a "whoosh-crack!" into the mic, or a flick of your iPhone or Apple Watch.
+- **Out of your way.** Critters hide while you type and sneak back out when you rest.
+- English, 한국어, 日本語.
 
-메뉴 막대 오른쪽의 꽃게+채찍 아이콘을 누르면 어디서든 조작할 수 있어요. 노치 맥북은 메뉴 막대가 꽉 차면
-오른쪽 항목이 가려질 수 있는데, 그땐 다른 앱의 아이콘을 ⌘-끌어서 빼거나 Dock 아이콘을 쓰세요.
-Dock 에도 아이콘이 떠요(기본). 누르면 채찍질 창이 보이고, 오른쪽 클릭하면 같은 메뉴가 나와요.
-메뉴 막대만 쓰고 싶으면 「Dock 에 아이콘 보이기」를 끄세요.
+<p align="center">
+  <img src="assets/promo/critters.png" alt="Claude Code the crab, Codex the axolotl, Cursor the squid, Gemini CLI the pufferfish, Antigravity the whale, and a blob for anything else" width="100%">
+</p>
 
-| 항목 | 하는 일 |
-|---|---|
-| 모두 숨기기 | 어항도 캐릭터도 다 숨김 (끄기). 다시 누르면 돌아옴 |
-| 풀어놓기 | 화면 돌아다니기 켜고 끄기 |
-| 작게 풀어놓기 | 이름표 없이 작은 캐릭터만 (최소화) |
-| 우리에 가두기 | 화면 한쪽 울타리 안으로 다 걸어 들어가서 그 안에서만 놈. 울타리는 끌어서 옮길 수 있고, 「풀어주기」로 해제 |
-| 이리 와 | 다들 커서 자리로 모여요 |
-| 쉬는 애 아무나 채찍 | 쉬는 애 중 하나를 골라 채찍 |
-| 캐릭터 뒤 물빛 칸 | 끄면(기본) 캐릭터만 바탕에 떠 있고, 켜면 어항에서처럼 물빛 네모 위에 |
-| 채찍질 창으로 보기 | 풀어놓기를 끄고 목록 창으로 모음 |
+## Get it
 
-이름은 채찍 소리 「짝!」에서. 폭군 선생이 드러머를 쥐어짜는 그 영화 맞아요.
-
-## 테마
-
-메뉴 막대 채찍 → 「테마」: **유리(기본)** · **밝은 종이** · **진한 밤** · **당근밭** · **터미널**.
-상태 글자색(일하는 중·내 차례·과부하·파업), 창 배경, 돌아다니는 캐릭터의 이름표 색이 바뀌어요. 캐릭터 몸 색과 종류별 막대 색은 그대로.
-유리 테마의 「일하는 중」 글자는 어두운 유리 위에서 잘 보이도록 밝은 살구색·굵게로 바꿨어요. 테마 추가는 [Sources/Theme.swift](Sources/Theme.swift) 에 한 줄.
-
-## 언어
-
-한국어 · English · 日本語. 처음엔 맥 언어를 따라가고, 메뉴 막대 채찍 → 「언어」에서 바꿔요(바로 반영).
-코드의 문자열은 전부 한국어로 쓰고 `t("…")` / `tf("…%d…", 값)` 로 감싸요. 표는 [Sources/Lang.swift](Sources/Lang.swift) 하나.
-채찍 문구·일감 프롬프트·읽기 전용 규칙도 언어에 맞춰 나가요. 세션 제목·폴더 이름은 사용자가 지은 그대로예요.
-
-## 쓰는 법
-
-| 동작 | 결과 |
-|---|---|
-| 왼쪽 위 신호등 | 빨강 종료(⌥ 누르고 클릭하면 숨기기만) · 노랑 메뉴 막대로 최소화(⌥ 클릭은 작게/크게 보기) · 초록 풀어놓기 |
-| 끌기 | 창 옮기기 (위치 기억) |
-| 두 번 클릭 | 작게 보기 ↔ 크게 보기 |
-| 쉬는 캐릭터 위에서 마우스 휙휙 | 채찍 (아무 일감). 작게 보기에선 클릭해도 됨 |
-| 캐릭터 제자리 클릭 | **지시 입력창**. 쳐서 ⏎ 누르면 그 세션에 바로 들어가요 (Claude 창에서 → 누르는 것과 같음) |
-| 줄 오른쪽 클릭 | 채찍 일감 골라 시키기, 에이전트에게 가기, 폴더 열기, 마지막 지시 복사, 대화 기록 열기, 하던 일 멈추기 |
-| 빈 곳 오른쪽 클릭 | 작게 보기, 앱 아이콘으로 보기, 항상 맨 위에(끄면 바탕화면 위치), 로그인할 때 열기, 저장공간 다시 재기, 채찍 일감 편집, 닫기 |
-| 마우스 올리기 | 마지막 지시, 세션 시작 시각, 먹이값, 고친 줄 수, PID, 폴더 경로 |
-
-## 오토 채찍질 (몇 시까지)
-
-메뉴 막대 채찍 → 「오토 채찍질」 → 1시간 동안 / 3시간 동안 / 퇴근(18시)까지 / 자정까지 / 아침 9시까지.
-그 시각까지 **N분마다**(기본 10분, 3~60분) 쉬고 있는 Claude Code 세션마다 채찍 문구를 넣어요.
-- 허락 기다리는 세션은 메시지로 풀 수 없어서 건너뛰고, 멈춘 지 1분 안 된 세션은 숨 돌리게 둬요.
-- 켜져 있으면 채찍질 창 헤더에 ⚡와 끝나는 시각, 메뉴에 지금까지 때린 횟수가 보여요. 시각이 되면 「딩」 하고 꺼져요.
-- 앱을 껐다 켜도 시각이 안 지났으면 이어서 돌아요.
-- 토큰을 계속 쓰는 기능이에요. 밤새 켜 두면 아침에 결과와 청구서가 같이 와요.
-
-## 당근밭과 파업 (채찍과 당근)
-
-메뉴 막대 채찍 → 「남은 쿼터 보기 — 남은 쿼터」를 켜면 채찍질 창에 **당근밭**이 생겨요. 당근 12개 = 5시간 창의 남은 쿼터.
-쿼터를 쓸수록 오른쪽부터 당근이 뽑혀 흙만 남고, 아래에 7일 창 막대와 리셋 시각이 붙어요. 80%를 넘으면 노랗게, 다 쓰면 빨갛게.
-
-- 조회는 Claude Code 의 `/usage` 와 같은 방식이에요: 키체인의 Claude Code 로그인 토큰으로 `api.anthropic.com/api/oauth/usage` 를 5분마다.
-  켤 때 macOS 가 키체인 접근 허용 창을 띄워요(「항상 허용」을 누르면 다시 안 물어요). 토큰은 저장하지 않아요.
-- **파업**: 당근이 다 뽑히면(5시간 또는 7일 100%) 모든 Claude 캐릭터가 피켓을 들고 「✊ 파업 중 · HH:MM 까지」가 돼요.
-  세션 기록에 429(한도 초과)가 찍힌 세션은 당근밭을 안 켜도 그 세션만 파업해요. 답이 다시 나오면 풀려요.
-- 파업 중에 때리면 메시지는 안 가고 「쿼터가 없어요!!」→「쿼터 없다고!!」 하고 화만 내요. 오토 채찍도 건너뛰어요.
-- 앱스토어판에는 없어요(샌드박스는 키체인·네트워크 불가).
-
-## 지시 보내기 (제자리 클릭)
-
-캐릭터나 줄을 끌지 않고 **제자리에서 클릭**하면 그 위에 작은 입력창이 떠요. 지시를 치고 ⏎ 를 누르면
-그 세션에 사용자 메시지로 들어가요. 쉬는 세션은 바로 읽고, 일하는 세션은 지금 턴이 끝난 뒤에 읽어요. esc 로 닫아요.
-
-어떻게: Claude Code 는 세션마다 `/tmp/cc-socks/<pid>.sock` 유닉스 소켓을 열어 두고
-`{"type":"auth","token":…}` 한 줄 + `{"type":"user","message":{"role":"user","content":"…"}}` 한 줄을 받으면
-그 세션에 넣어요 (Claude Code 가 자기 로그에 적어 둔 형식). 토큰은 `~/.claude/sessions/<pid>.*.key` 에서 읽기만 하고
-어디에도 남기지 않아요. 보내면 초록 테두리가 한 번 반짝이고 「팅」 소리. 앱스토어(샌드박스)판에서는 소켓에 못 닿아서 안 돼요.
-
-## 세션 줄 (Claude Code)
-
-Claude Code는 살아 있는 동안 `~/.claude/sessions/<pid>.json`(제목·busy/idle)과
-`~/.claude/projects/…/<세션>.jsonl`(대화 기록)을 남겨요. 어항은 이 둘을 **읽기만** 해서 줄마다 붙여요.
-
-- **첫 줄**: 세션 제목 (Claude 앱에서 붙인 이름, 없으면 AI가 붙인 제목)
-- **둘째 줄**: 프로젝트 폴더 · 먹이값(이 세션 누적 비용 추정) · 고친 줄 수 `+120 −8`
-- **셋째 줄**: 지금 뭘 하나
-  - 일하는 중이면 도구와 설명: `실행 중 · 테스트 돌리기`, `읽는 중 · Model.swift`, `찾는 중 · TODO`, `생각하는 중`, `답하는 중`
-  - 쉬는 중이면 왜 멈췄나: **답 기다리는 중**(답을 마쳤으니 내 차례), **물어보고 기다림**(질문·계획 승인),
-    **허락 기다리는 중**(도구를 쓰려다 멈춤), 그냥 **쉬는 중** — 뒤에 그 상태로 있은 시간
-- 내 차례인 줄은 노랗게, 캐릭터 머리 위에 `!` `?` `✋` 말풍선. 맨 위에 「2 내 차례」로 합계.
-- **과부하**(코어 1.5개 넘게 쓰거나 메모리 2GB·전체의 10% 넘게 물고 있음)면 줄과 막대가 빨개지고
-  머리에서 김이 나요. 상태 줄엔 「과부하 · CPU 2.0코어 · 3.1GB」, 맨 위에 「1 과부하」. 돌아다닐 때도 상태 알약이 빨개져요.
-- 일하는 중/쉬는 중 판정도 Claude Code가 알려 주는 상태를 그대로 써요 (다른 에이전트는 CPU로 짐작).
-- 기록 파일은 크기가 바뀔 때만 꼬리 64KB를 다시 읽어요. 274MB짜리 기록도 부담 없음.
-
-「하던 일 멈추기」는 터미널에서 띄운 세션에만 보여요 (Ctrl-C 와 같음). Claude 앱이 띄운 세션은 앱에서 멈추세요.
-
-## 채찍
-
-쉬고 있는 캐릭터 옆에 작은 채찍 표시가 떠요.
-
-- **캐릭터 위에 커서를 0.35초쯤 올려 둔 뒤**(캐릭터가 반짝이고 채찍 커서가 따라붙으면) **마우스를 빠르게 좌우로 휙휙** —
-  1초 안에 캐릭터 가운데를 세 번 가로지르면 「후-췻!」. 지나가다 스치는 건 머물지 않았으니 안 맞아요.
-  그래도 자꾸 실수로 맞으면 메뉴 「⌥ 누른 채로만 채찍」을 켜세요.
-- **연타**하면 소리가 달라져요. 8초 안에 1타 「짝·아야」, 2타는 높고 빠른 「짝·아얏」, 3타부터 더블 크랙에 긴 「으아악」.
-- **Claude Code 세션이면 그 세션 본인에게 짧은 메시지를 넣어요** (지시 보내기와 같은 소켓). 기본 문구는
-  `찰싹! (Whiplash) 하던 일 이어서 해. 끝났으면 다음 할 일 하나 골라서 해.` — 누가 시켰는지와 한 마디만.
-  쉬던 세션은 바로 움직이고, 일하던 세션은 지금 턴이 끝난 뒤에 읽어요. 길게 시키면 일 잘하던 세션이 엇나가니 짧게.
-  문구는 메뉴 → 오토 채찍질 → 「채찍 문구 편집…」(`~/Library/Application Support/Whiplash/whip-words.txt`).
-- **화내기**: 내 차례(답·질문·허락 기다림)인 애를 8초 안에 두 번째 때리면 메시지는 안 가고 화를 내요.
-  빨개져서 💢 달고 발 구르며 말풍선. 두 번째는 존댓말, 세 번째부터 반말이에요.
-  「말을 해야 하죠!!!」→「말을 해야 할 거 아냐!!」(질문·허락) / 「할 일을 주셔야죠!!」→「할 일을 줘야지!!」(답 끝내고 쉬는 중) /
-  「왜 때리세요!!」→「왜 때려!!」. 소리는 「부! 부!」 버즈(`Resources/angry.wav`). 8초 뒤 풀려요.
-- **채찍 면역**: 줄·캐릭터 오른쪽 클릭 → 「채찍 면역」. 손 채찍·휘두르기·오토 채찍 모두 안 맞고 상태 줄에 🛡 가 붙어요.
-  잘 돌아가는 세션을 건드리지 않으려면 면역을 켜 두세요. 세션별로 기억해요.
-- **꺼진 Claude**: Claude 가 하나도 안 떠 있으면 반투명 「Claude (꺼짐)」 캐릭터가 나와요. 휘두르면 Claude 앱을 켜고,
-  오른쪽 클릭 → 「터미널에서 claude 열기」에서 최근 프로젝트 폴더를 고르면 터미널이 열리며 거기서 `claude` 가 떠요.
-- 소켓이 없는 애(Codex·Gemini, 앱스토어판)나 못 보냈을 때는 예전처럼
-  그 프로젝트 폴더에서 같은 에이전트를 하나 더 불러 읽기 전용 일감 중 아무거나 시켜요.
-  **채찍 맞은 애가 그대로 망치를 들고 「채찍 맞고 ○○」 하며 일해요.** 뒤에서 뛰는 보조 프로세스는 그 줄에 합쳐져 안 보여요.
-  그냥 한 번 스쳐 지나가는 건 안 맞아요. **일하는 애도 맞아요** (더 빨리!). 이미 채찍 맞고 일하는 중이면 「짝!」 리액션만.
-  마우스 움직임은 앱이 활성이 아니어도 전역으로 받아요 (접근성 권한 필요 없음).
-  채찍 맞을 수 있는 캐릭터 위에 올리면 캐릭터가 살짝 커지며 노랗게 반짝이고, 커서 옆에 작은 채찍이 따라다녀요
-  (맥은 앞에 있지 않은 앱이 시스템 커서를 못 바꿔서 이렇게 해요).
-- 맞으면 「후-췻!」 소리(코드로 합성한 `Resources/whip1~3.wav`: 바람 + 스냅 + 크랙 + 둔탁음, 뒤이어 「아야」 삐익)와 함께
-  펄쩍 뛰고 부들부들 떨고 「아야」 풍선이 떠요. 돌아다니는 중이면 창째로 폴짝. 소리는 `tools/sound.swift` 로 다시 구울 수 있어요.
-- **줄을 오른쪽 클릭**하면 일감을 골라서 시킬 수 있어요.
-- 끝나면 소리가 나고 아래에 「결과」 줄이 생겨요. 누르면 결과 문서(.md)가 열려요.
-- 시킬 수 있는 에이전트: Claude Code(`claude -p`), Codex(`codex exec`), Gemini CLI(`gemini -p`).
-  데스크톱 앱(Claude 앱, Cursor 등)은 [깨우기] 버튼으로 앱을 앞으로 불러내기만 해요.
-- **읽기 전용**이에요. 파일 고치기·명령 실행 도구는 막고, 일감마다 「읽기만 해」 규칙이 붙어요.
-- 한 프로젝트에 채찍 일은 한 번에 하나, 15분 넘으면 멈춰요. 어항을 닫으면 같이 멈춰요.
-- 터미널에서 대화 중인 기존 세션에 끼어드는 게 아니라 **새로 하나 띄우는** 방식이에요.
-- 채찍질할 때마다 해당 서비스 사용량이 차감돼요.
-
-일감 목록: 오른쪽 클릭 →「채찍 일감 편집…」(`~/Library/Application Support/Eohang/whips.json`).
-`title`과 `prompt`만 있으면 돼요. 고친 다음 「채찍 일감 다시 읽기」.
-결과 문서: `~/Library/Application Support/Eohang/whips/`
-
-기본 일감: 다음 할 일 찾아와 · 코드 리뷰해 · TODO 수거해 · 출시 점검해 · 문서 다듬어
-
-## 캐릭터
-
-기본은 픽셀 캐릭터예요 (채찍질은 역시 귀여운 애들한테 해야 맛이 나니까).
-일하는 애들은 **발목에 쇠공**을 차고 **지금 하는 일의 연장**을 들고 박자에 맞춰 휘둘러요.
-읽는 중 📖 책 · 고치는 중 ✏️ 연필 · 실행 중 🔨 망치 · 찾는 중 🔍 돋보기 · 부하 시키는 중 채찍 ·
-웹 보는 중 지구본 · 생각하는 중 「…」 풍선 · 답하는 중 말풍선. 뭘 하는지 모르는 에이전트는 망치.
-오른쪽 클릭 →「앱 아이콘으로 보기」를 켜면 맥에 설치된 앱 아이콘(`/Applications`, `~/Applications`)으로 바뀌어요.
-Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) 아이콘. 쉬는 중이면 흐려지고 z가 떠요.
-
-| 에이전트 | 친구 | 데이터 폴더 (저장공간에 표시) |
+| Platform | Where | Notes |
 |---|---|---|
-| Claude Code | 꽃게 | `~/.claude` |
-| Claude 앱 | 모래게 | `~/Library/Application Support/Claude` |
-| Codex (CLI·앱) | 우파루파 | `~/.codex` |
-| Cursor | 오징어 | `~/.cursor`, `…/Application Support/Cursor` |
-| Gemini CLI | 복어 | `~/.gemini` |
-| Antigravity | 고래 | `~/.antigravity`, `…/Application Support/Antigravity` |
-| 기타 (opencode, aider, goose, amp …) | 물방울 | — |
+| **macOS 13+** | Mac App Store | In review. It will be at `apps.apple.com/app/id6832438273` once approved. The App Store edition runs in the sandbox: it watches, organises and jumps to agents, but cannot type into their sessions. |
+| **macOS, full features** | Build from source (below) | Sends the whip prompt, treats and megaphone messages straight into Claude Code sessions, and shows your remaining quota. |
+| **Windows 10+ / Linux** | [Releases](https://github.com/kade93/whiplash/releases/latest) | Electron build: `.zip` or `.msi` for Windows, `.AppImage` or `.tar.gz` for Linux. Newer and less tested than the Mac app. |
+| **iPhone · iPad · Apple Watch** | Build from [`WhiplashRemote/`](WhiplashRemote/README.md) | A remote: flick the phone like a whip, or pick an agent from the list. Not on the App Store yet. |
 
-## 어떻게 세나
+### Build the Mac app from source
 
-- 에이전트 프로세스를 찾고, 그 아래에서 돌아가는 **하위 프로세스(셸, MCP 서버, 빌드·테스트)까지 합산**해요.
-  Claude Code가 띄운 `npm run dev`도 꽃게 몫으로 잡혀요.
-- CLI는 **세션마다 한 줄**(프로젝트 폴더 이름 표시), 데스크톱 앱은 앱 전체가 한 줄.
-- CPU %는 **맥 전체 대비**예요(활성 상태 보기의 %는 코어 하나 대비라서 숫자가 다름).
-- 메모리는 활성 상태 보기의 「메모리」 열과 같은 값(phys footprint).
-- 저장공간은 30분에 한 번, 가장 낮은 우선순위로 다시 재요.
+You need the Xcode command line tools (`xcode-select --install`). No other dependencies.
 
-## 앱스토어·배포
+```bash
+git clone https://github.com/kade93/whiplash.git
+cd whiplash
+./build.sh --install
+```
 
-- `./build.sh --sandbox` — 앱스토어판처럼 샌드박스로 묶어 로컬에서 돌려 보기. 처음 실행하면 홈 폴더 허용 창이 떠요.
-- `./release.sh devid` — Developer ID 서명 + 공증 → zip (전 기능, 직접 배포용. GitHub Releases 에는 안 올림 — 맥은 앱스토어로만)
-- Windows·Linux 는 `.github/workflows/release.yml` 이 태그 푸시 때 `desktop/` 을 빌드해 Release 에 붙여요 (잡이 분리돼 한쪽이 실패해도 다른 쪽은 올라감)
-- `./release.sh appstore` — `project.yml`(xcodegen) 로 Xcode 아카이브 → 앱스토어 서명 → App Store Connect 업로드 (`EXPORT_ONLY=1` 이면 pkg 만). Xcode 에 Apple ID 가 로그인돼 있어야 인증서·프로파일이 자동으로 만들어져요
-- 심사 자료·설명·개인정보 처리방침 초안: [AppStore/metadata.md](AppStore/metadata.md)
-- 샌드박스 안에서는 새 에이전트를 못 띄우니 **채찍 = 창 앞으로 불러오기**로 바뀌고, Ctrl-C 멈추기는 빠져요.
-- 샌드박스에서 막히는 것: `proc_listallpids`, 남의 `proc_pid_rusage`. 그래서 프로세스 목록은 `sysctl kern.proc`로 읽고,
-  CPU·메모리는 rusage가 안 되면 `PROC_PIDTASKINFO`(resident size)로 재요. 숫자가 활성 상태 보기보다 조금 다를 수 있어요.
-  세션 제목·상태는 처음 한 번 홈 폴더를 허용해야 보여요 (북마크로 기억).
-- 아이콘: `tools/icon.swift` 가 32×32 픽셀 격자에서 `AppIcon.iconset` 과 `assets/` (1024 아이콘, 이모티콘 PNG)를 만들어요.
+That compiles the app with `swiftc`, puts it in `/Applications` and starts it. Look for the whip in the menu bar.
 
-## 개발용
+## How the whip works
 
-- `WHIPLASH_SNAPSHOT=/경로.png` 환경변수로 띄우면 5초 뒤 창 모습을 PNG로 저장해요 (화면 캡처 권한 없이도 확인).
-- `WHIPLASH_SWING_TEST=1` 이면 6초 뒤 첫 쉬는 캐릭터에 가짜 마우스 이벤트를 보내 휘두르기 감지만 로그로 확인해요 (채찍은 안 때림).
-- `WHIPLASH_DRY_WHIP=1` 이면 채찍이 소리·애니메이션만 하고 에이전트는 안 띄워요. `WHIPLASH_DEBUG_MOUSE=1` 은 마우스 이동·감지 로그.
-- `WHIPLASH_FAKE_SOCK=/경로.sock WHIPLASH_FAKE_TOKEN=x WHIPLASH_SEND_TEST="글"` 이면 6초 뒤 첫 세션 대신 그 소켓으로 보내 봐요 (프로토콜 검증용).
-- 샌드박스판을 한 번이라도 띄우면 컨테이너가 생겨서 그 뒤로 `defaults write com.kade.whiplash …` 는 컨테이너 쪽 설정에 써져요.
-  전 기능판 설정을 만질 땐 `defaults write ~/Library/Preferences/com.kade.whiplash.plist …` 처럼 경로로.
+Hover over an idle critter for a moment, then swipe the pointer across it and back, sideways or up and down. Passing over once does nothing; it has to be a real back-and-forth. The critter jumps, yelps, and the session receives a short prompt telling it to continue or pick the next task. You can edit that prompt, or pick a specific task from the right-click menu.
 
-## 한계
+Whip the same one again within a few seconds and it gets louder. Whip an agent that is waiting on *your* answer and it talks back instead.
 
-- 내 맥에서 도는 것만 보여요. claude.ai·Codex 클라우드에서 도는 작업은 맥 자원을 쓰지 않으니 안 나와요.
-- 세션 제목·상태는 Claude Code만 남겨요. Codex·Gemini 줄은 폴더 이름과 CPU만.
-- 「허락 기다리는 중」은 기록 파일에 도구 호출만 있고 결과가 없을 때의 짐작이에요.
-- 「권한 승인 기다리는 중」 같은 상태는 프로세스만 봐서는 알 수 없어 「쉬는 중」으로 보여요.
+Everything else, including hotkeys, themes and settings, is in the user guide: [English](docs/USER-GUIDE.en.md) · [한국어](docs/USER-GUIDE.ko.md) · [日本語](docs/USER-GUIDE.ja.md). The easter eggs have their own page: [docs/FUN.md](docs/FUN.md).
 
-## 에이전트 추가
+## Privacy
 
-`Sources/Monitor.swift`의 `AgentMatcher.match`에 한 줄 넣으면 돼요.
-실행 파일 경로(`path`), 이름(`name`), node·python일 때 명령줄(`args`)로 판별해요.
+Whiplash collects nothing. There is no account, no analytics and no server.
 
-## 몸으로 때리기 · 리모트
+It reads the list of running processes and, for Claude Code, the session files in `~/.claude` on your own machine. The camera, microphone, AirPods motion and local network are used only while you switch the matching feature on, and nothing is recorded. The full text is in [docs/PRIVACY.md](docs/PRIVACY.md).
 
-에어팟 고개 휙, 카메라 손 휘두르기, 입으로 「화츅!」, 아이폰·아이패드·애플워치 리모트(Whiplash Remote 앱, [WhiplashRemote/](WhiplashRemote/README.md)). Settings ▸ 몸으로 때리기에서 켠다.
+## Good to know
 
-## 재미 요소
+- Whiplash is an independent project. It is not made by, endorsed by or affiliated with Anthropic, OpenAI, Anysphere (Cursor) or Google.
+- Sending prompts into sessions works for Claude Code. Other agents are shown, measured and brought to the front, and a whip starts a read-only helper task where their CLI allows it.
+- The whip sends a real prompt to a real agent. It spends tokens.
+- No license has been chosen yet, so for now all rights are reserved. Issues and ideas are welcome.
 
-이스터에그·상황별 반응·데모 장면(줄 세워 놓고 한 번에 후려치기) 목록은 [docs/FUN.md](docs/FUN.md) (영어 먼저, 한국어 뒤).
+## For developers
 
-## 개인정보·비밀 관리
-
-저장소에는 코드·문서·아이콘·소리만 올라간다. 내 맥의 설정(`hotkeys.json`, `whips/`), 로그, Claude 대화 기록(`*.jsonl`), 서명 인증서(`*.p12`, `*.p8`), 키 파일은 `.gitignore` 로 막혀 있다.
-
-- **커밋 전 검사**: `.githooks/pre-commit` 이 올라갈 파일에서 API 키·토큰·개인 키·비밀번호·홈 경로(`/Users/…`)·개인 이메일·금지 파일을 찾으면 커밋을 막는다. `./build.sh` 가 훅을 켜 두며, 직접 켜려면 `git config core.hooksPath .githooks`.
-- **전체 검사**: `tools/secrets-check.sh` (작업 트리), `tools/secrets-check.sh --history` (모든 커밋). 릴리스 워크플로도 빌드 전에 둘 다 돌린다.
-- **앱 자체**: 키체인의 Claude 토큰은 사용량 요청에만 쓰고 저장·로그하지 않는다. 세션 키 파일은 읽기만 한다. 디버그 로그(`EOHANG …`)에 토큰·대화 내용을 찍지 않는다.
-- 커밋 작성자 이메일은 깃 설정을 따른다. 저장소를 공개할 생각이면 `git config user.email <id>@users.noreply.github.com` 으로 바꿔 두는 게 좋다.
+- `Sources/` — the Mac app (Swift, AppKit and SwiftUI, no dependencies). `./build.sh` builds it, `./build.sh --sandbox` builds the App Store flavour locally.
+- `desktop/` — the Windows and Linux app (Electron). See [desktop/README.md](desktop/README.md).
+- `WhiplashRemote/` — the iPhone, iPad and Apple Watch remote. The Mac listens on UDP 47777 for one-line commands, so anything on your Wi-Fi can be a remote; the protocol is in its README.
+- `tools/` — icon, sounds, screenshots and the promo images on this page are all generated by scripts here.
+- A pre-commit hook (`tools/secrets-check.sh`) blocks keys, tokens, home paths and personal emails from being committed.
+- Longer build notes, in Korean: [docs/NOTES.ko.md](docs/NOTES.ko.md).
