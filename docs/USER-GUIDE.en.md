@@ -96,7 +96,7 @@ A borderless window listing sessions and resource usage. Drag anywhere to move i
 | Session row | Character, session title, project folder, running cost, changed lines, current activity, CPU and memory |
 | Footer | Agent data folder sizes, free disk space, Whiplash's own usage |
 
-Double-click the window to switch between **Compact view** (characters and bars only, the default) and the full list. In compact view the critters wrap after 10 per row; drag the grip on the window's right edge left or right to make the window narrower or wider, one critter at a time, and the rest reflow onto the next rows. **Settings ▸ Critters per row** (5, 8, 10, 15 or 20) sets the same number.
+Double-click the window to switch between **Compact view** (characters and bars only, the default) and the full list. In compact view the critters wrap after 10 per row; resize it by its edges: drag the right edge left or right to make it narrower or wider one critter at a time, or drag the bottom edge up or down to change the number of rows; the critters reflow to fit. The window always wraps its contents, so it moves in whole critters and whole rows rather than pixel by pixel. **Settings ▸ Critters per row** (5, 8, 10, 15 or 20) sets the same number.
 
 ### 4.2 Roaming
 

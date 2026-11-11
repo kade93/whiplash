@@ -748,9 +748,14 @@ struct CompactView: View {
                 }
             }
         }
-        .padding(.trailing, s.groups.count > 1 ? 8 : 0)
+        // 가장자리를 잡아 끌어 크기를 바꾼다: 오른쪽 = 한 줄 마리 수, 아래 = 줄 수. (창은 내용에 맞춰지니 캐릭터 한 마리·한 줄 단위로 움직인다)
+        .padding(.trailing, s.groups.count > 1 ? 6 : 0)
+        .padding(.bottom, s.groups.count > 1 ? 4 : 0)
         .overlay(alignment: .trailing) {
-            if s.groups.count > 1 { CompactResizeGrip(model: model, count: s.groups.count).offset(x: 6) }
+            if s.groups.count > 1 { CompactResizeGrip(model: model, count: s.groups.count, axis: .horizontal).offset(x: 10) }
+        }
+        .overlay(alignment: .bottom) {
+            if s.groups.count > 1 { CompactResizeGrip(model: model, count: s.groups.count, axis: .vertical).offset(y: 10) }
         }
     }
 
@@ -798,40 +803,58 @@ struct CompactView: View {
     }
 }
 
-/// 작게 보기 오른쪽 가장자리 손잡이: 좌우로 끌면 창 폭이 캐릭터 한 마리 단위로 줄고 늘며, 한 줄 마리 수가 바뀌어 나머지는 아랫줄로 내려간다.
-/// (창은 내용 크기에 맞춰지므로 「한 줄에 몇 마리」만 바꾸면 폭이 따라온다. Settings ▸ Critters per row 와 같은 값.)
+/// 작게 보기 가장자리 손잡이. 오른쪽 것은 좌우로 끌어 한 줄 마리 수를, 아래 것은 위아래로 끌어 줄 수를 바꾼다.
+/// 창은 내용 크기에 맞춰지므로 「한 줄에 몇 마리」만 바꾸면 폭·높이가 따라온다 (Settings ▸ Critters per row 와 같은 값).
+/// 잡는 자리는 보이는 막대보다 넉넉하다 (가장자리 16pt 띠 전체).
 struct CompactResizeGrip: View {
     @ObservedObject var model: Model
     let count: Int
-    @State private var startPer: Int? = nil
+    var axis: Axis = .horizontal
+    @State private var start: Int? = nil        // 끌기 시작할 때의 한 줄 마리 수(가로) 또는 줄 수(세로)
     @State private var hovering = false
     static let pitch: CGFloat = 36              // 타일 30 + 간격 6
-    static let maxPerRow = 20
+    static let rowPitch: CGFloat = 50           // 한 줄 42 + 줄 간격 8
+    static let maxPerRow = 40
+
+    private var perNow: Int { min(max(model.compactPerRow, 1), max(count, 1)) }      // 지금 실제로 한 줄에 놓인 수
+    private func rows(for per: Int) -> Int { Int((Double(max(count, 1)) / Double(max(per, 1))).rounded(.up)) }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 2)
-            .fill(Color.primary.opacity(hovering || startPer != nil ? 0.5 : 0.18))
-            .frame(width: 4)
-            .frame(maxHeight: .infinity)
-            .padding(.vertical, 6)
-            .padding(.horizontal, 4)
-            .contentShape(Rectangle())
-            .onHover { h in
-                hovering = h
-                if h { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+        let active = hovering || start != nil
+        let bar = RoundedRectangle(cornerRadius: 2.5).fill(Color.primary.opacity(active ? 0.6 : 0.28))
+        Group {
+            if axis == .horizontal {
+                bar.frame(width: 5).frame(maxHeight: .infinity).padding(.vertical, 8).padding(.horizontal, 5.5)
+            } else {
+                bar.frame(height: 5).frame(maxWidth: .infinity).padding(.horizontal, 40).padding(.vertical, 5.5)
             }
-            .gesture(
-                DragGesture(minimumDistance: 1, coordinateSpace: .global)   // 창 왼쪽 변은 그대로라 창 좌표의 이동량 = 화면 이동량
-                    .onChanged { v in
-                        let base = startPer ?? min(model.compactPerRow, max(count, 1))   // 지금 실제로 한 줄에 놓인 수에서 시작
-                        if startPer == nil { startPer = base }
-                        let n = min(max(base + Int((v.translation.width / Self.pitch).rounded()), 1), Self.maxPerRow)
-                        if n != model.compactPerRow { model.compactPerRow = n }
+        }
+        .contentShape(Rectangle())
+        .onHover { h in
+            hovering = h
+            if h { (axis == .horizontal ? NSCursor.resizeLeftRight : NSCursor.resizeUpDown).push() } else { NSCursor.pop() }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 1, coordinateSpace: .global)   // 창의 왼쪽·위 변은 그대로라 창 좌표의 이동량 = 화면 이동량
+                .onChanged { v in
+                    let per: Int
+                    if axis == .horizontal {
+                        let base = start ?? perNow
+                        if start == nil { start = base }
+                        per = base + Int((v.translation.width / Self.pitch).rounded())
+                    } else {
+                        let base = start ?? rows(for: perNow)
+                        if start == nil { start = base }
+                        let r = min(max(base + Int((v.translation.height / Self.rowPitch).rounded()), 1), max(count, 1))
+                        per = Int((Double(max(count, 1)) / Double(r)).rounded(.up))      // 그 줄 수에 맞는 가장 좁은 폭
                     }
-                    .onEnded { _ in startPer = nil }
-            )
-            .noDrag()
-            .help(t("Drag left or right to change how many critters fit in a row"))
+                    let n = min(max(per, 1), Self.maxPerRow)
+                    if n != model.compactPerRow { model.compactPerRow = n }
+                }
+                .onEnded { _ in start = nil }
+        )
+        .noDrag()
+        .help(axis == .horizontal ? t("Drag left or right to change how many critters fit in a row") : t("Drag up or down to change the number of rows"))
     }
 }
 

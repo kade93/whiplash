@@ -67,6 +67,7 @@ enum L10n {
         "Water tile behind critters": ("캐릭터 뒤 물빛 칸", "キャラの後ろに水色タイル"),
         "Show as window": ("채찍질 창으로 보기", "ウィンドウで表示"),
         "Compact view": ("작게 보기", "コンパクト表示"),
+        "Drag up or down to change the number of rows": ("위아래로 끌어서 줄 수 바꾸기", "上下にドラッグして行数を変える"),
         "Drag left or right to change how many critters fit in a row": ("좌우로 끌어서 한 줄에 놓일 마리 수 바꾸기", "左右にドラッグして 1 行に並ぶ匹数を変える"),
         "Minimize to the menu bar (the whip icon or ⌃⌥H brings it back) · ⌥-click switches compact / full view": ("메뉴 막대로 최소화 (채찍 아이콘이나 ⌃⌥H 로 다시) · ⌥ 누르고 클릭하면 작게/크게 보기 전환", "メニューバーに最小化（鞭アイコンか ⌃⌥H で戻す）· ⌥+クリックでコンパクト／全体表示の切り替え"),
         "When an agent is overloaded": ("에이전트가 과부하일 때", "エージェントが過負荷のとき"),
