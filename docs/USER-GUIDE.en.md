@@ -90,7 +90,7 @@ A borderless window listing sessions and resource usage. Drag anywhere to move i
 
 | Area | Content |
 |---|---|
-| Traffic lights | Red: quit Whiplash (⌥-click only hides) / Yellow: compact view / Green: roaming |
+| Traffic lights | Red: quit Whiplash (⌥-click only hides) / Yellow: compact view / Green: roaming. In compact view they are larger and stacked down the left edge |
 | Header | Session count, working, waiting for you, overloaded, auto-whip end time |
 | CPU / Memory bars | Color = agents, gray = other apps, empty = free |
 | Session row | Character, session title, project folder, running cost, changed lines, current activity, CPU and memory |

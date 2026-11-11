@@ -77,6 +77,8 @@ enum AgentMatcher {
         if name == "claude" { return (.claudeCode, false) }
 
         if path.contains("/Codex.app/") { return (.codex, true) }
+        // ChatGPT 앱에 든 Codex (Codex Framework·codex-cli): CLI 세션이 아니라 앱 한 마리로 묶는다
+        if path.contains("/ChatGPT.app/") && (path.contains("/Codex Framework.framework/") || path.contains("/codex-cli/")) { return (.codex, true) }
         if name == "codex" || name.hasPrefix("codex-") || path.contains("@openai/codex")
             || args.contains("@openai/codex") || args.contains("/bin/codex") {
             return (.codex, false)

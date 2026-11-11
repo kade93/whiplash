@@ -126,10 +126,13 @@ struct SettingsMenu: View {
 struct TrafficLights: View {
     @ObservedObject var model: Model
     var size: CGFloat = 11
+    var vertical = false          // 작게 보기: 왼쪽에 세로로 쌓는다 (크게, 폭은 덜 먹게)
+    var hitPad: CGFloat = 0       // 보이는 동그라미 둘레로 눌리는 자리를 넓힌다
     @State private var hovering = false
 
     var body: some View {
-        HStack(spacing: 7) {
+        let layout = vertical ? AnyLayout(VStackLayout(spacing: max(2, 5 - hitPad * 2))) : AnyLayout(HStackLayout(spacing: max(2, 7 - hitPad * 2)))
+        layout {
             light(Color(hex: 0xFF5F57), Color(hex: 0xE0443E), "×", t("Quit Whiplash · ⌥-click only hides (⌃⌥H or the menu bar whip brings them back)")) {
                 if NSEvent.modifierFlags.contains(.option) { model.hidden = true } else { NSApp.terminate(nil) }
             }
@@ -151,7 +154,8 @@ struct TrafficLights: View {
                     .opacity(hovering ? 1 : 0)
             }
             .frame(width: size, height: size)
-            .contentShape(Circle())
+            .padding(hitPad)
+            .contentShape(Rectangle())        // 동그라미 밖 여백까지 눌린다
         }
         .buttonStyle(.plain)
         .help(help)
@@ -727,8 +731,9 @@ struct CompactView: View {
         let per = max(1, model.compactPerRow)   // 한 줄에 최대 몇 마리; 넘치면 다음 줄 (가로로 끝없이 길어지지 않게). Settings ▸ Critters per row
         let rows = stride(from: 0, to: s.groups.count, by: per).map { Array(s.groups[$0..<min($0 + per, s.groups.count)]) }
         HStack(alignment: .top, spacing: 6) {
-            TrafficLights(model: model, size: 8)
-                .padding(.trailing, 2)
+            TrafficLights(model: model, size: 13, vertical: true, hitPad: 2)     // 8pt 가로 줄은 너무 작아 잘 안 눌렸다
+                .padding(.leading, -4)
+                .padding(.top, -3)
             if s.groups.isEmpty {
                 SpriteTile(kind: .other, awake: false, cell: 2)
                     .help(t("No agents running right now"))

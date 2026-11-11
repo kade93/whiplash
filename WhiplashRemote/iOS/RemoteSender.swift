@@ -19,7 +19,8 @@ final class RemoteSender: ObservableObject {
     @Published var sessions: [RemoteSession] = []
 
     private var browser: NWBrowser?
-    private var connections: [NWEndpoint: NWConnection] = [:]
+    private var connections: [NWEndpoint: NWConnection] = [:]   // only touched on `queue`
+    private var known: Set<NWEndpoint> = []                      // endpoints Bonjour currently advertises (on `queue`)
     private let queue = DispatchQueue(label: "com.kade.whiplash.remote.sender")
     private var listTimer: Timer?
 
@@ -28,6 +29,7 @@ final class RemoteSender: ObservableObject {
         b.browseResultsChangedHandler = { [weak self] results, _ in
             guard let self = self else { return }
             let endpoints = Set(results.map { $0.endpoint })
+            self.known = endpoints
             for (ep, c) in self.connections where !endpoints.contains(ep) { c.cancel(); self.connections[ep] = nil }
             for ep in endpoints where self.connections[ep] == nil { self.connect(to: ep) }
             let names = results.compactMap { r -> String? in if case .service(let n, _, _, _) = r.endpoint { return n } else { return nil } }.sorted()
@@ -41,27 +43,41 @@ final class RemoteSender: ObservableObject {
     func stop() {
         listTimer?.invalidate(); listTimer = nil
         browser?.cancel(); browser = nil
-        for c in connections.values { c.cancel() }
-        connections = [:]
+        queue.async {
+            for c in self.connections.values { c.cancel() }
+            self.connections = [:]
+            self.known = []
+        }
         DispatchQueue.main.async { self.connected = false; self.sessions = [] }
     }
 
     /// Ask the Mac(s) for the current session list.
     func refresh() { if connected { send("list") } }
 
+    /// Called on `queue`.
     private func connect(to endpoint: NWEndpoint) {
         let c = NWConnection(to: endpoint, using: .udp)
-        c.stateUpdateHandler = { [weak self] state in
-            DispatchQueue.main.async {
-                switch state {
-                case .ready: self?.connected = true; self?.send("ping"); self?.send("list")
-                case .failed, .cancelled: self?.connected = !(self?.connections.isEmpty ?? true)
-                default: break
+        c.stateUpdateHandler = { [weak self, weak c] state in
+            guard let self = self else { return }
+            switch state {
+            case .ready:
+                DispatchQueue.main.async { self.connected = true; self.send("ping"); self.send("list") }
+            case .failed, .cancelled:
+                // forget it; if Bonjour still advertises the Mac, try again in a moment instead of talking to a dead connection
+                if let c = c, self.connections[endpoint] === c { self.connections[endpoint] = nil }
+                let anyLeft = !self.connections.isEmpty
+                DispatchQueue.main.async { if !anyLeft { self.connected = false } }
+                if case .failed = state {
+                    self.queue.asyncAfter(deadline: .now() + 2) { [weak self] in
+                        guard let self = self, self.known.contains(endpoint), self.connections[endpoint] == nil else { return }
+                        self.connect(to: endpoint)
+                    }
                 }
+            default: break
             }
         }
-        c.start(queue: queue)
         connections[endpoint] = c
+        c.start(queue: queue)
         receive(c)
     }
 
@@ -90,8 +106,10 @@ final class RemoteSender: ObservableObject {
     }
 
     func send(_ line: String) {
-        for c in connections.values {
-            c.send(content: (line + "\n").data(using: .utf8), completion: .contentProcessed { _ in })
+        queue.async {
+            for c in self.connections.values {
+                c.send(content: (line + "\n").data(using: .utf8), completion: .contentProcessed { _ in })
+            }
         }
     }
 }

@@ -39,24 +39,24 @@
    "accent": "#B07A52",
    "cheek": "#F2A7B8"
   },
-  "jelly": {
-   "friend": "Jellyfish",
+  "axolotl": {
+   "friend": "Axolotl",
    "rows": [
-    "...KKKKKK...",
-    "..KLLBBBBK..",
+    "A.A......A.A",
+    ".AAKKKKKKAA.",
+    "AAKLLBBBBKAA",
     ".KLBBBBBBBK.",
-    ".KBBEBBEBBK.",
-    ".KBCBKKBCBK.",
-    ".KKKKKKKKKK.",
-    "..A.A..A.A..",
-    "..A..A.A..A.",
-    "...A.A..A.A.",
-    "..A.A..A.A.."
+    "AKBEBBBBEBKA",
+    ".KCBBKKBBCK.",
+    "..KBBBBBBK..",
+    "..KKBBBBKK..",
+    "...KBKKBK...",
+    "...KK..KK..."
    ],
-   "body": "#BFE8EA",
+   "body": "#FBEFF3",
    "light": "#FFFFFF",
-   "accent": "#7FBFD3",
-   "cheek": "#F2A7B8"
+   "accent": "#F08FAE",
+   "cheek": "#F7B5C4"
   },
   "puffer": {
    "friend": "Pufferfish",
@@ -138,7 +138,7 @@
  "kinds": {
   "claudeCode": "crab",
   "claudeApp": "sandCrab",
-  "codex": "jelly",
+  "codex": "axolotl",
   "cursor": "squid",
   "gemini": "puffer",
   "antigravity": "whale",
@@ -147,7 +147,7 @@
  "barColors": {
   "claudeCode": "#E07A5F",
   "claudeApp": "#D9A27A",
-  "codex": "#7FBFD3",
+  "codex": "#F08FAE",
   "cursor": "#9AA1B0",
   "gemini": "#5A7FD6",
   "antigravity": "#6FA8DC",

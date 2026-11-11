@@ -43,6 +43,7 @@ UDP to port 47777 on the Mac, one line per datagram:
 | `list` | Session list | `list` then one line per session: `<id>␉<name>␉<state>␉<kind>` (state: working / resting / waiting / strike) |
 | `flick 4.2` | Log the flick strength (g); send `whipall` after it | none |
 | `ping` | Connection check | `pong` |
+| anything else | Ignored | `err unknown command` |
 
 Anything that can send a UDP packet on the local network can be a remote: a Shortcut, a Stream Deck, a second Mac.
 

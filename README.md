@@ -227,7 +227,7 @@ Claude Code는 Claude 앱 아이콘, Codex는 Codex 앱(없으면 ChatGPT 앱) �
 |---|---|---|
 | Claude Code | 꽃게 | `~/.claude` |
 | Claude 앱 | 모래게 | `~/Library/Application Support/Claude` |
-| Codex (CLI·앱) | 해파리 | `~/.codex` |
+| Codex (CLI·앱) | 우파루파 | `~/.codex` |
 | Cursor | 오징어 | `~/.cursor`, `…/Application Support/Cursor` |
 | Gemini CLI | 복어 | `~/.gemini` |
 | Antigravity | 고래 | `~/.antigravity`, `…/Application Support/Antigravity` |

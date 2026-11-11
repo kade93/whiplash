@@ -1098,8 +1098,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case "flick":
             return nil
         default:
-            bodyWhip()
-            return "ok"
+            return "err unknown command"      // 모르는 줄은 무시 (전엔 아무 글자나 와도 전부 채찍이었다)
         }
     }
 

@@ -19,6 +19,7 @@ final class RemoteReceiver {
     private(set) var status = ""
     private(set) var lastSender = ""
     private var listener: NWListener?
+    private var connections: [ObjectIdentifier: NWConnection] = [:]     // queue 에서만 만진다
     private let queue = DispatchQueue(label: "com.kade.whiplash.remote")
     static let port: UInt16 = 47777
     static let service = "_whiplash._udp"
@@ -52,9 +53,22 @@ final class RemoteReceiver {
     func stop() {
         listener?.cancel(); listener = nil
         running = false; status = ""
+        queue.async { [weak self] in                     // 이미 붙어 있던 리모트도 끊는다 (끄면 정말 꺼지게)
+            guard let self = self else { return }
+            for c in self.connections.values { c.cancel() }
+            self.connections = [:]
+        }
     }
 
     private func accept(_ conn: NWConnection) {
+        let key = ObjectIdentifier(conn)
+        connections[key] = conn
+        conn.stateUpdateHandler = { [weak self] state in
+            switch state {
+            case .failed, .cancelled: self?.connections[key] = nil
+            default: break
+            }
+        }
         conn.start(queue: queue)
         receive(conn)
     }
@@ -66,11 +80,11 @@ final class RemoteReceiver {
                 let cmd = line.split(separator: " ", maxSplits: 1).first.map { String($0).lowercased() } ?? ""
                 let arg = line.split(separator: " ", maxSplits: 1).count > 1 ? String(line.split(separator: " ", maxSplits: 1)[1]) : ""
                 if case .hostPort(let host, _) = conn.endpoint { self.lastSender = "\(host)" }
-                if cmd == "ping" {
+                if cmd == "ping" {      // (receive 는 queue 에서 돈다)
                     conn.send(content: "pong\n".data(using: .utf8), completion: .contentProcessed { _ in })
                 } else {
                     DispatchQueue.main.async {
-                        guard let reply = self.onCommand?(cmd, arg) else { return }
+                        guard self.running, let reply = self.onCommand?(cmd, arg) else { return }   // 꺼진 뒤에 도착한 명령은 버린다
                         conn.send(content: (reply + "\n").data(using: .utf8), completion: .contentProcessed { _ in })
                     }
                 }

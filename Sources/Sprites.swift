@@ -27,7 +27,7 @@ enum AgentKind: String, CaseIterable, Identifiable {
         switch self {
         case .claudeCode:  return Color(hex: 0xE07A5F)
         case .claudeApp:   return Color(hex: 0xD9A27A)
-        case .codex:       return Color(hex: 0x7FBFD3)
+        case .codex:       return Color(hex: 0xF08FAE)
         case .cursor:      return Color(hex: 0x9AA1B0)
         case .gemini:      return Color(hex: 0x5A7FD6)
         case .antigravity: return Color(hex: 0x6FA8DC)
@@ -39,7 +39,7 @@ enum AgentKind: String, CaseIterable, Identifiable {
         switch self {
         case .claudeCode:  return Sprite.crab
         case .claudeApp:   return Sprite.sandCrab
-        case .codex:       return Sprite.jelly
+        case .codex:       return Sprite.axolotl
         case .cursor:      return Sprite.squid
         case .gemini:      return Sprite.puffer
         case .antigravity: return Sprite.whale
@@ -120,19 +120,20 @@ struct Sprite {
         body: Color(hex: 0xD9A27A), light: Color(hex: 0xF1D3B8),
         accent: Color(hex: 0xB07A52), cheek: Color(hex: 0xF2A7B8))
 
-    static let jelly = Sprite(friend: "Jellyfish", rows: [
-        "...KKKKKK...",
-        "..KLLBBBBK..",
+    /// Codex: 우파루파 (분홍 아가미 여섯 갈래). 전엔 해파리였다.
+    static let axolotl = Sprite(friend: "Axolotl", rows: [
+        "A.A......A.A",
+        ".AAKKKKKKAA.",
+        "AAKLLBBBBKAA",
         ".KLBBBBBBBK.",
-        ".KBBEBBEBBK.",
-        ".KBCBKKBCBK.",
-        ".KKKKKKKKKK.",
-        "..A.A..A.A..",
-        "..A..A.A..A.",
-        "...A.A..A.A.",
-        "..A.A..A.A..",
-    ], body: Color(hex: 0xBFE8EA), light: Color(hex: 0xFFFFFF),
-       accent: Color(hex: 0x7FBFD3), cheek: Color(hex: 0xF2A7B8))
+        "AKBEBBBBEBKA",
+        ".KCBBKKBBCK.",
+        "..KBBBBBBK..",
+        "..KKBBBBKK..",
+        "...KBKKBK...",
+        "...KK..KK...",
+    ], body: Color(hex: 0xFBEFF3), light: Color(hex: 0xFFFFFF),
+       accent: Color(hex: 0xF08FAE), cheek: Color(hex: 0xF7B5C4))
 
     static let puffer = Sprite(friend: "Pufferfish", rows: [
         "...K.KK.K...",

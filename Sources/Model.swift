@@ -486,7 +486,9 @@ final class Model: ObservableObject {
 
     /// 보조 에이전트를 하나 띄워 읽기 전용 일감을 시킨다. 이미 채찍 일이 돌고 있으면 「짝!」만.
     private func whipHelper(_ g: AgentGroup, task: WhipTask?) {
-        guard let dir = g.dir, WhipRunner.canRun(g.kind), g.whipJob == nil, !isBusy(kind: g.kind, dir: dir),
+        // 홈 폴더나 / 에서는 보조 에이전트를 안 띄운다 (ChatGPT 앱 속 codex 처럼 작업 폴더가 ~ 인 프로세스가 맞았을 때 홈 전체를 읽히지 않게)
+        guard let dir = g.dir, dir != "/", dir != Paths.home, dir != NSHomeDirectory(),
+              WhipRunner.canRun(g.kind), g.whipJob == nil, !isBusy(kind: g.kind, dir: dir),
               let t = task ?? tasks.randomElement() else { return }
 
         let key = g.kind.rawValue + dir

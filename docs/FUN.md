@@ -33,7 +33,7 @@ Four more ways to crack it, all opt-in under Settings ▸ Whip with your body, a
 |---|---|
 | Claude Code (terminal) | Crab |
 | Claude app | Sand crab |
-| Codex | Jellyfish |
+| Codex | Axolotl |
 | Cursor | Squid |
 | Gemini CLI | Pufferfish |
 | Antigravity | Whale |
@@ -103,7 +103,7 @@ Settings ▸ 몸으로 때리기에서 켜는 네 가지. 전부 쉬는 애 전�
 
 ## 캐릭터와 들고 있는 것
 
-Claude Code = 꽃게, Claude 앱 = 모래게, Codex = 해파리, Cursor = 오징어, Gemini CLI = 복어, Antigravity = 고래, 그 외 = 물방울.
+Claude Code = 꽃게, Claude 앱 = 모래게, Codex = 우파루파, Cursor = 오징어, Gemini CLI = 복어, Antigravity = 고래, 그 외 = 물방울.
 
 일하는 캐릭터는 지금 하는 일에 맞는 연장을 휘둘러요: 읽는 중엔 책, 고치는 중엔 연필, 명령 실행은 망치, 검색은 돋보기, 웹은 지구본, 생각 중엔 생각 풍선, 답하는 중엔 말풍선. 부하 에이전트를 부리는 세션은 자기도 작은 채찍을 들어요. 일하는 애들은 전부 발목에 쇠공을 달고 있어요.
 
