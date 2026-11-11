@@ -123,7 +123,6 @@ You do:
 - [x] App Store Connect ▸ Pricing and Availability: Free, all 175 regions
 - [x] App Store Connect ▸ App Privacy: "Data Not Collected", published
 - [ ] App Store Connect ▸ App Information ▸ privacy policy URL (needs the public page first)
-- [ ] App Store Connect ▸ version 1.0 ▸ App Review contact: **phone number is required** and I do not have it. Name (DongHyun Youn) and the developer-account email were typed but could not be saved without the phone, so enter all three and press Save. "Sign-in required" should be unchecked
 - [x] Xcode signed in; `./release.sh appstore` created Apple Distribution + Mac Installer Distribution (Xcode-managed) and the Mac App Store profile by itself
 - [x] Privacy policy published as a public gist (https://gist.github.com/kade93/eb5c3fecdc20d771e02641a4684daad8) and set in App Store Connect ▸ App Privacy on 2026-11-10. Edit `docs/PRIVACY.md` and `gh gist edit eb5c3fecdc20d771e02641a4684daad8 docs/PRIVACY.md` to update it. The support URL (github.com/kade93/whiplash) is still a private repo; make it public or point support at the gist
 - [x] `./release.sh appstore` — build 1.0 (1) uploaded to App Store Connect on 2026-11-09 20:35 KST; it shows under version 1.0 ▸ Build once Apple finishes processing (an email arrives). `EXPORT_ONLY=1` leaves the .pkg in `build/export/` instead
@@ -132,10 +131,10 @@ You do:
 - [x] Build 1.0 (3) uploaded to App Store Connect on 2026-11-11 18:57 KST. On top of (2): red button quits, compact view wraps at 10 per row with a drag grip to change it, critters creep back from the screen edge, whip-all paces deliveries 3 s apart and skips busy sessions, remote v2 (session list, whip/treat one)
 - [x] Build (3) attached to version 1.0 in place of (2) and saved (2026-11-11)
 - [x] Build 1.0 (4) uploaded 2026-11-11: adds the ask panel for overloaded agents, the hidden leak guard, "Go to the agent" (opens the exact Claude app session), edge resizing with names and a status line in compact view, the axolotl for Codex, yellow button = minimize, and the whip gesture fix (a single pass no longer whips)
-- [ ] Swap build (4) in for (3) on version 1.0 once Apple finishes processing it
-- [ ] Press "Add for Review" (button is enabled; Apple may still ask for the review contact phone number at that point)
+- [x] Build (4) attached to version 1.0 in place of (3) (2026-11-11)
+- [x] App Review contact saved (name, phone, developer-account email); "Sign-in required" unchecked
+- [x] **Submitted for review on 2026-11-11 20:29 KST** — status "Waiting for Review". Release option: automatic after approval (change to manual on the version page before approval if you want to pick the day)
 - [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
-- [ ] Submit for review
 
 ## App Store edition vs direct download
 
