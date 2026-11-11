@@ -141,7 +141,7 @@ You do:
 - [x] Repository is public; README (EN/KO/JA), promo images and press kit are in place; v1.0 release notes rewritten
 - [ ] Support URL in App Store Connect still points at the privacy gist. Switch it to https://github.com/kade93/whiplash with the next version (the current one is waiting for review, so leave it)
 - [ ] GitHub ▸ Settings ▸ Social preview: upload `assets/promo/banner.png` (needs a signed-in browser)
-- [ ] Choose a license (none yet, so all rights reserved)
+- [x] License: decided on 2026-11-11 to keep all rights reserved (no open-source license). The READMEs say so
 - [ ] When the Mac app is approved: replace "in review" in the three READMEs and `docs/PRESS-KIT.md` with the App Store link
 
 ## App Store edition vs direct download

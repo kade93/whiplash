@@ -86,7 +86,7 @@ It reads the list of running processes and, for Claude Code, the session files i
 - Whiplash is an independent project. It is not made by, endorsed by or affiliated with Anthropic, OpenAI, Anysphere (Cursor) or Google.
 - Sending prompts into sessions works for Claude Code. Other agents are shown, measured and brought to the front, and a whip starts a read-only helper task where their CLI allows it.
 - The whip sends a real prompt to a real agent. It spends tokens.
-- No license has been chosen yet, so for now all rights are reserved. Issues and ideas are welcome.
+- All rights reserved. The source is public so you can read it and build the app for your own use; please ask before redistributing it or shipping a modified version. Issues and ideas are welcome.
 
 ## For developers
 
