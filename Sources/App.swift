@@ -369,7 +369,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
         if ProcessInfo.processInfo.environment["WHIPLASH_WHIPALL_TEST"] != nil {       // 개발용: 4초 뒤 전부 채찍 (DRY_WHIP 과 같이)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in self?.model.whipAll() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+                guard let self = self else { return }
+                let n = self.model.whipAllTargets().count, all = self.model.snapshot.groups.count
+                let t0 = CFAbsoluteTimeGetCurrent()
+                self.model.whipAll()
+                NSLog("EOHANG whipall-test targets=%d of %d main=%.1fms queued=%d", n, all, (CFAbsoluteTimeGetCurrent() - t0) * 1000, self.model.pendingDeliveries)
+            }
         }
         if ProcessInfo.processInfo.environment["WHIPLASH_PROMPT_TEST"] != nil {        // 개발용: 4초 뒤 첫 세션 입력창 열기
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
@@ -1069,7 +1075,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return (["list"] + lines).joined(separator: "\n")
         case "whipall":
-            let targets = groups.filter { m.canWhip($0) && !m.isImmune($0) }
+            let targets = m.whipAllTargets().filter { $0.id != Model.ghostID }
             show(); m.whipAll()
             return targets.isEmpty ? "ok nobody to whip" : "ok whipped \(targets.count)"
         case "whip":

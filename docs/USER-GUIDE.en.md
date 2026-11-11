@@ -210,7 +210,7 @@ Alternatively press ⌃⌥W (random idle session) or right-click → **Whip — 
 
 **Several at once**
 - Press ⌃⌥G (Come here) to line the critters up, then swing the pointer once across the row quickly (about 700 px/s or faster). Every critter you pass is whipped at the same time, and the sounds are layered per critter.
-- ⌃⌥⇧W or the menu item **Whip everyone idle** sends the whip message to every idle session. Immune sessions are skipped.
+- ⌃⌥⇧W or the menu item **Whip everyone idle** sends the whip message to every idle session. Immune sessions are skipped. Sessions that are working or waiting for a permission are skipped too, so a busy session does not pile up "keep going" messages. Everyone reacts at once, but the messages go out one session at a time, 3 seconds apart, so a dozen agents do not all start a turn in the same instant and bog the Mac down. The same pacing applies when you sweep the mouse over several critters. In a multi-whip at most one helper agent is launched.
 
 **What happens**
 - Claude Code sessions receive a short message (default: `Whack! (Whiplash) Keep going with what you were doing. If you're done, pick the next thing and do it.`). Change it under **Auto-whip → Edit whip prompt…**.

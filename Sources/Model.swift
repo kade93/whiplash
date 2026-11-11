@@ -384,7 +384,9 @@ final class Model: ObservableObject {
     }
 
     /// task 가 nil 이면 아무 일이나 골라서 시킨다
-    func whip(_ g: AgentGroup, task: WhipTask? = nil, silent: Bool = false) {
+    /// staggered: 여러 마리를 한 번에 칠 때 — 반응(소리·펄쩍)은 바로, 메시지 전달은 줄 세워 하나씩 (deliveryGap 간격)
+    /// allowHelper: 세션에 못 보냈을 때 보조 에이전트를 띄워도 되나 (여러 마리일 땐 한꺼번에 뜨지 않게 막는다)
+    func whip(_ g: AgentGroup, task: WhipTask? = nil, silent: Bool = false, staggered: Bool = false, allowHelper: Bool = true) {
         if isImmune(g) { if !silent { NSSound(named: "Tink")?.play() }; return }      // 면역: 맞지 않는다
         let streak = hit(g.id)
         if onStrike(g) {                                                // 파업: 쿼터가 없는데 때리면 화만 낸다
@@ -416,10 +418,22 @@ final class Model: ObservableObject {
         lastStrike[g.id] = Date()
         if !silent { Self.playWhip(streak); Self.haptic(1) }
         onStrike?(g.id)
+        // 여기까지가 반응. 아래는 전달: 여러 마리면 줄 세워 하나씩 (세션 아홉이 한순간에 턴을 시작하면 맥 전체가 버벅인다)
+        let id = g.id
+        let work = { [weak self] in
+            guard let self = self else { return }
+            self.deliver(self.snapshot.groups.first(where: { $0.id == id }) ?? g, task: task, allowHelper: allowHelper)
+        }
+        if staggered && !Paths.sandboxed { enqueueDelivery(work) } else { work() }
+    }
+
+    /// 채찍의 실제 전달 (세션에 프롬프트 넣기·앱 앞으로·보조 에이전트)
+    private func deliver(_ g: AgentGroup, task: WhipTask?, allowHelper: Bool) {
         if demo || ProcessInfo.processInfo.environment["WHIPLASH_DRY_WHIP"] != nil {   // 데모·개발용: 소리만
             NSLog("EOHANG whip %@", g.id)
             return
         }
+        if isImmune(g) { return }                 // 줄 서 있는 사이 면역이 됐으면 건너뛴다
         if g.id == Self.ghostID {                 // 꺼진 클로드: 채찍으로 깨운다
             wakeClaude(dir: nil)
             return
@@ -442,12 +456,32 @@ final class Model: ObservableObject {
                 guard let self = self else { return }
                 switch r {
                 case .success: self.lastSent[g.id] = Date()
-                case .failure: self.whipHelper(g, task: nil)
+                case .failure: if allowHelper { self.whipHelper(g, task: nil) }
                 }
             }
             return
         }
-        whipHelper(g, task: task)
+        if allowHelper { whipHelper(g, task: task) }
+    }
+
+    // MARK: 전달 줄 — 여러 마리를 한 번에 쳤을 때 메시지를 deliveryGap 간격으로 하나씩
+    static let deliveryGap: TimeInterval = 3
+    private var deliveryQueue: [() -> Void] = []
+    private var deliveryTimer: Timer?
+    var pendingDeliveries: Int { deliveryQueue.count }
+    private func enqueueDelivery(_ work: @escaping () -> Void) {
+        deliveryQueue.append(work)
+        if deliveryTimer == nil { pumpDelivery() }      // 첫 번째는 바로, 다음부터 간격을 둔다
+    }
+    private func pumpDelivery() {
+        guard !deliveryQueue.isEmpty else { return }
+        deliveryQueue.removeFirst()()
+        let t = Timer(timeInterval: Self.deliveryGap, repeats: false) { [weak self] _ in
+            self?.deliveryTimer = nil
+            self?.pumpDelivery()
+        }
+        RunLoop.main.add(t, forMode: .common)
+        deliveryTimer = t
     }
 
     /// 보조 에이전트를 하나 띄워 읽기 전용 일감을 시킨다. 이미 채찍 일이 돌고 있으면 「짝!」만.
@@ -526,19 +560,40 @@ final class Model: ObservableObject {
         }
     }
 
+    /// 「전부 채찍」이 치는 애들: 쉬는 애만. 일하는 중이거나 허락을 기다리는 세션은 뺀다
+    /// (일하는 세션에 「계속해」가 쌓이면 턴이 끝날 때마다 덤으로 또 돈다 — 자동 채찍과 같은 기준).
+    /// 한 마리를 골라 치는 건 여전히 일하는 애도 맞는다.
+    func whipAllTargets() -> [AgentGroup] {
+        snapshot.groups.filter { g in
+            guard canWhip(g), !g.id.hasPrefix("app:"), !isImmune(g) else { return false }
+            if g.id == Self.ghostID { return true }
+            if let s = g.session {
+                guard s.waiting != .permission else { return false }
+                return s.status == .idle || (s.status == .unknown && !g.awake)
+            }
+            return !g.awake
+        }
+    }
+
     /// 줄 세워 놓고 한 번에: 쉬는 애 전부 (소리는 겹쳐서 한 번)
     func whipAll() {
-        let targets = snapshot.groups.filter { canWhip($0) && !$0.id.hasPrefix("app:") && !isImmune($0) }
+        let targets = whipAllTargets()
         guard !targets.isEmpty else { NSSound(named: "Basso")?.play(); return }
         whipMany(targets.map { $0.id })
     }
 
-    /// 마우스를 한 번 휘둘러 지나간 애들 전부
+    /// 여러 마리를 한 번에 (전부 채찍·마우스로 휘둘러 지나간 애들). 반응은 다 같이 바로, 메시지는 한 세션씩 간격을 두고.
+    /// 보조 에이전트는 통틀어 하나까지만: 소켓이 있는 세션은 전송이 실패해도 안 띄우고, 소켓 없는 애는 첫 번째만.
     func whipMany(_ ids: [String]) {
         var n = 0
+        var helperLeft = 1
         for id in ids {
             guard let g = snapshot.groups.first(where: { $0.id == id }), canWhip(g), !isImmune(g) else { continue }
-            whip(g, silent: true); n += 1
+            let direct = g.session?.socketPath != nil
+            let helper = !direct && helperLeft > 0
+            if helper { helperLeft -= 1 }
+            whip(g, silent: true, staggered: ids.count > 1, allowHelper: helper)
+            n += 1
         }
         if n > 0 { Self.playWhipChorus(n) }
     }
