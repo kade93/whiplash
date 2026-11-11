@@ -81,7 +81,7 @@ Follow-ups for a thread:
 
 **Title:** I turned my AI coding agents into desktop pets and gave myself a whip
 
-> Free and open source: github.com/kade93/whiplash
+> Free, and the source is public: github.com/kade93/whiplash
 >
 > Every Claude Code / Codex / Cursor / Gemini CLI session becomes a pixel critter. You can see who is working, who has been waiting for your answer for ten minutes, and who is pinning the CPU. Swipe over an idle one to send it back to work, or stroke it slowly for a treat.
 >
@@ -145,6 +145,7 @@ Follow-ups for a thread:
 
 ## Things not to say
 
+- That it is "open source". The source is public to read and to build for your own use, but all rights are reserved. Say "source available" or "the source is public".
 - That it is made by, endorsed by or partnered with Anthropic, OpenAI, Anysphere or Google.
 - That it is "on the Mac App Store" before the review is approved. Until then: "in review" or "coming to the Mac App Store".
 - That the App Store edition sends prompts to agents. It watches, organises and jumps to sessions; sending needs the build from source.
