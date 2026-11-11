@@ -742,20 +742,38 @@ struct CompactView: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                    HStack(spacing: 6) {
+                    HStack(alignment: .top, spacing: 6) {
                         ForEach(row) { g in critter(g, s) }
                     }
                 }
+                // 아래 한 줄: 커서를 올린 애가 「누구 · 어느 폴더 · 지금 뭘 하는 중」인지. 아무도 안 가리키면 전체 요약.
+                // (overlay 라서 글이 길어도 창 폭을 넓히지 않는다)
+                Color.clear.frame(height: 13).overlay(alignment: .leading) { caption(s) }
             }
         }
-        // 가장자리를 잡아 끌어 크기를 바꾼다: 오른쪽 = 한 줄 마리 수, 아래 = 줄 수. (창은 내용에 맞춰지니 캐릭터 한 마리·한 줄 단위로 움직인다)
-        .padding(.trailing, s.groups.count > 1 ? 6 : 0)
-        .padding(.bottom, s.groups.count > 1 ? 4 : 0)
-        .overlay(alignment: .trailing) {
-            if s.groups.count > 1 { CompactResizeGrip(model: model, count: s.groups.count, axis: .horizontal).offset(x: 10) }
+        // 크기 조절은 창이 직접 한다 (FloatingPanel: 오른쪽·아래 가장자리와 모서리를 잡아 끌기). 여기서는 모서리에 작은 표시만.
+        .overlay(alignment: .bottomTrailing) {
+            if s.groups.count > 1 { ResizeCorner().offset(x: 9, y: 9).allowsHitTesting(false) }
         }
-        .overlay(alignment: .bottom) {
-            if s.groups.count > 1 { CompactResizeGrip(model: model, count: s.groups.count, axis: .vertical).offset(y: 10) }
+    }
+
+    static let tileWidth: CGFloat = 30, namedTileWidth: CGFloat = 58, nameHeight: CGFloat = 21
+
+    @ViewBuilder
+    private func caption(_ s: Snapshot) -> some View {
+        if let id = model.hoverInfoID, let g = s.groups.first(where: { $0.id == id }) {
+            let strike = model.onStrike(g)
+            let st = RowStatus.of(g, job: g.whipJob, memTotal: s.memTotal, immune: model.isImmune(g),
+                                  angry: model.isAngry(g.id) ? model.angry[g.id]?.line : nil,
+                                  strike: strike ? (g.session?.strikeUntil ?? Date().addingTimeInterval(3600)) : nil)
+            let name = (g.session?.name).flatMap { $0.isEmpty ? nil : $0 } ?? g.kind.title
+            (Text(name).fontWeight(.semibold) + Text("  ·  " + g.label + "  ·  ").foregroundColor(.secondary) + Text(st.text).foregroundColor(st.color ?? .secondary))
+                .font(.system(size: 10.5)).lineLimit(1).truncationMode(.tail)
+        } else {
+            let working = s.groups.filter { $0.awake }.count
+            let need = s.groups.filter { $0.session?.needsYou == true }.count
+            Text(tf("%d critters · %d working", s.groups.count, working) + (need > 0 ? " " + tf("· %d need you", need) : ""))
+                .font(.system(size: 10.5)).foregroundStyle(.secondary).lineLimit(1)
         }
     }
 
@@ -791,7 +809,16 @@ struct CompactView: View {
                                      value: Double(g.memory) / Double(max(s.memTotal, 1)))],
                      segments: 6)
                 .frame(width: 30, height: 3)
+            if model.compactNames {                     // 이름 두 줄까지 (세션 이름, 없으면 폴더 이름)
+                Text((g.session?.name).flatMap { $0.isEmpty ? nil : $0 } ?? (g.id.hasPrefix("app:") ? g.kind.title : g.label))
+                    .font(.system(size: 8.5, weight: .medium))
+                    .foregroundStyle(st.color ?? Color.primary.opacity(0.75))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2).truncationMode(.tail)
+                    .frame(width: Self.namedTileWidth, height: Self.nameHeight, alignment: .top)
+            }
         }
+        .frame(width: model.compactNames ? Self.namedTileWidth : nil)
         .help(compactHelp(g, st))
     }
 
@@ -803,58 +830,19 @@ struct CompactView: View {
     }
 }
 
-/// 작게 보기 가장자리 손잡이. 오른쪽 것은 좌우로 끌어 한 줄 마리 수를, 아래 것은 위아래로 끌어 줄 수를 바꾼다.
-/// 창은 내용 크기에 맞춰지므로 「한 줄에 몇 마리」만 바꾸면 폭·높이가 따라온다 (Settings ▸ Critters per row 와 같은 값).
-/// 잡는 자리는 보이는 막대보다 넉넉하다 (가장자리 16pt 띠 전체).
-struct CompactResizeGrip: View {
-    @ObservedObject var model: Model
-    let count: Int
-    var axis: Axis = .horizontal
-    @State private var start: Int? = nil        // 끌기 시작할 때의 한 줄 마리 수(가로) 또는 줄 수(세로)
-    @State private var hovering = false
-    static let pitch: CGFloat = 36              // 타일 30 + 간격 6
-    static let rowPitch: CGFloat = 50           // 한 줄 42 + 줄 간격 8
-    static let maxPerRow = 40
-
-    private var perNow: Int { min(max(model.compactPerRow, 1), max(count, 1)) }      // 지금 실제로 한 줄에 놓인 수
-    private func rows(for per: Int) -> Int { Int((Double(max(count, 1)) / Double(max(per, 1))).rounded(.up)) }
-
+/// 창 오른쪽 아래 모서리의 크기 조절 표시 (빗금 세 줄). 보이기만 하고, 끌기는 FloatingPanel 이 받는다.
+struct ResizeCorner: View {
     var body: some View {
-        let active = hovering || start != nil
-        let bar = RoundedRectangle(cornerRadius: 2.5).fill(Color.primary.opacity(active ? 0.6 : 0.28))
-        Group {
-            if axis == .horizontal {
-                bar.frame(width: 5).frame(maxHeight: .infinity).padding(.vertical, 8).padding(.horizontal, 5.5)
-            } else {
-                bar.frame(height: 5).frame(maxWidth: .infinity).padding(.horizontal, 40).padding(.vertical, 5.5)
+        Canvas { ctx, size in
+            for i in 0..<3 {
+                let d = CGFloat(i) * 3.5 + 2
+                var p = Path()
+                p.move(to: CGPoint(x: size.width - d, y: size.height))
+                p.addLine(to: CGPoint(x: size.width, y: size.height - d))
+                ctx.stroke(p, with: .color(Color.primary.opacity(0.35)), lineWidth: 1)
             }
         }
-        .contentShape(Rectangle())
-        .onHover { h in
-            hovering = h
-            if h { (axis == .horizontal ? NSCursor.resizeLeftRight : NSCursor.resizeUpDown).push() } else { NSCursor.pop() }
-        }
-        .gesture(
-            DragGesture(minimumDistance: 1, coordinateSpace: .global)   // 창의 왼쪽·위 변은 그대로라 창 좌표의 이동량 = 화면 이동량
-                .onChanged { v in
-                    let per: Int
-                    if axis == .horizontal {
-                        let base = start ?? perNow
-                        if start == nil { start = base }
-                        per = base + Int((v.translation.width / Self.pitch).rounded())
-                    } else {
-                        let base = start ?? rows(for: perNow)
-                        if start == nil { start = base }
-                        let r = min(max(base + Int((v.translation.height / Self.rowPitch).rounded()), 1), max(count, 1))
-                        per = Int((Double(max(count, 1)) / Double(r)).rounded(.up))      // 그 줄 수에 맞는 가장 좁은 폭
-                    }
-                    let n = min(max(per, 1), Self.maxPerRow)
-                    if n != model.compactPerRow { model.compactPerRow = n }
-                }
-                .onEnded { _ in start = nil }
-        )
-        .noDrag()
-        .help(axis == .horizontal ? t("Drag left or right to change how many critters fit in a row") : t("Drag up or down to change the number of rows"))
+        .frame(width: 11, height: 11)
     }
 }
 

@@ -34,6 +34,9 @@ final class Model: ObservableObject {
     private var alertTimer: Timer?
     private static let overloadTest = ProcessInfo.processInfo.environment["WHIPLASH_OVERLOAD_TEST"]
 
+    /// 작게 보기에서 캐릭터 밑에 이름을 적을지 (아이콘만으로는 누가 누군지 모르니 기본 켜짐)
+    @Published var compactNames: Bool { didSet { UserDefaults.standard.set(compactNames, forKey: "compactNames") } }
+    @Published var hoverInfoID: String? = nil          // 커서가 올라간 칸 (작게 보기 아래 줄에 「누가 · 뭘 하는 중」)
     /// 작게 보기에서 한 줄에 몇 마리까지 (넘치면 다음 줄)
     @Published var compactPerRow: Int { didSet { UserDefaults.standard.set(compactPerRow, forKey: "compactPerRow") } }
     @Published var compact: Bool {
@@ -273,6 +276,7 @@ final class Model: ObservableObject {
         compact = UserDefaults.standard.object(forKey: "compact") == nil ? true : UserDefaults.standard.bool(forKey: "compact")   // 처음엔 작게 보기
         overloadMode = Self.overloadTest.map { OverloadMode(rawValue: $0) ?? .ask } ?? OverloadMode(rawValue: UserDefaults.standard.string(forKey: "overloadMode") ?? "") ?? .off
         overloadAfter = Self.overloadTest != nil ? 3 : (UserDefaults.standard.object(forKey: "overloadAfter") as? TimeInterval ?? 180)
+        compactNames = UserDefaults.standard.object(forKey: "compactNames") as? Bool ?? true
         compactPerRow = UserDefaults.standard.object(forKey: "compactPerRow") == nil ? 10 : max(1, UserDefaults.standard.integer(forKey: "compactPerRow"))
         roaming = UserDefaults.standard.bool(forKey: "roaming")
         critterSmall = UserDefaults.standard.bool(forKey: "critterSmall")

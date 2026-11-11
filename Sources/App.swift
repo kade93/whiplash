@@ -51,6 +51,21 @@ final class FloatingPanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
+    // 가장자리를 잡아 끌어 크기 바꾸기 (작게 보기). 테두리 없는 창이라 직접 한다: 오른쪽 띠 = 가로, 아래 띠 = 세로, 모서리 = 둘 다.
+    enum ResizeZone { case right, bottom, corner }
+    var canResize: (() -> Bool)?
+    var onResizeBegan: (() -> Void)?
+    var onResize: ((ResizeZone, CGFloat, CGFloat) -> Void)?      // (어디, 오른쪽으로 간 px, 아래로 간 px) — 누른 자리 기준
+    static let resizeBand: CGFloat = 11
+    private func resizeZone(at p: NSPoint) -> ResizeZone? {
+        guard canResize?() == true, let b = contentView?.bounds else { return nil }
+        let right = p.x >= b.width - Self.resizeBand, bottom = p.y <= Self.resizeBand
+        if right && bottom { return .corner }
+        if right && p.y <= b.height - 24 { return .right }          // 위쪽 모서리는 창 옮기기에 남겨 둔다
+        if bottom && p.x >= 40 { return .bottom }                   // 신호등 아래쪽은 뺀다
+        return nil
+    }
+
     static let debugMouse = ProcessInfo.processInfo.environment["WHIPLASH_DEBUG_MOUSE"] != nil
 
     /// 전역 마우스 모니터가 화면 좌표로 넣어 준다 (키 창이 아니어도 받게)
@@ -59,6 +74,13 @@ final class FloatingPanel: NSPanel {
         // 위에 다른 창(어느 앱이든)이 덮여 있으면 그 자리는 안 맞는다
         if frame.contains(p), NSWindow.windowNumber(at: p, belowWindowWithWindowNumber: 0) != windowNumber { lastMove = nil; return }
         trackSwing(local: CGPoint(x: p.x - frame.minX, y: frame.maxY - p.y), time: t)
+    }
+
+    /// 지금 커서가 어느 캐릭터 칸 위에 있나 (채찍 대상이 아니어도)
+    func infoTargetID(screen p: NSPoint) -> String? {
+        guard isVisible, frame.contains(p), NSWindow.windowNumber(at: p, belowWindowWithWindowNumber: 0) == windowNumber else { return nil }
+        let local = CGPoint(x: p.x - frame.minX, y: frame.maxY - p.y)
+        return clickTargets.first { $0.value.insetBy(dx: -3, dy: -3).contains(local) }?.key
     }
 
     /// 지금 커서가 채찍 맞을 캐릭터 위에 있으면 그 칸 id
@@ -73,6 +95,20 @@ final class FloatingPanel: NSPanel {
         if event.type == .rightMouseDown || (event.type == .leftMouseDown && event.modifierFlags.contains(.control)),
            let handler = onContextMenu {
             handler(hitTarget(event.locationInWindow), event)
+            return
+        }
+        if event.type == .leftMouseDown, !event.modifierFlags.contains(.control), let zone = resizeZone(at: event.locationInWindow) {
+            let start = convertPoint(toScreen: event.locationInWindow)      // 이벤트에 실린 위치를 쓴다 (실제 커서 위치와 같지만, 합성 입력으로도 시험할 수 있게)
+            onResizeBegan?()
+            (zone == .bottom ? NSCursor.resizeUpDown : NSCursor.resizeLeftRight).set()
+            isDragging = true
+            while let e = nextEvent(matching: [.leftMouseDragged, .leftMouseUp]) {     // 버튼을 뗄 때까지 따라간다
+                if e.type == .leftMouseUp { break }
+                let now = convertPoint(toScreen: e.locationInWindow)
+                onResize?(zone, now.x - start.x, start.y - now.y)
+            }
+            isDragging = false
+            NSCursor.arrow.set()
             return
         }
         if event.type == .leftMouseDown && !event.modifierFlags.contains(.control) && !onButton(event) {
@@ -265,6 +301,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         var root = WidgetView(model: model)
         root.onNoDrag = { [weak panel] rects in panel?.noDragRects = rects }
+        // 작게 보기에서 가장자리를 끌면: 가로 36px 마다 한 줄 마리 수 ±1, 세로 50px 마다 줄 수 ±1 (창은 내용에 맞춰 따라온다)
+        var resizeStart = (per: 10, rows: 1)
+        panel.canResize = { [weak self] in
+            guard let m = self?.model else { return false }
+            return m.compact && !m.hidden && m.snapshot.groups.count > 1
+        }
+        panel.onResizeBegan = { [weak self] in
+            guard let m = self?.model else { return }
+            let n = max(m.snapshot.groups.count, 1)
+            let per = min(max(m.compactPerRow, 1), n)
+            resizeStart = (per, Int((Double(n) / Double(per)).rounded(.up)))
+        }
+        panel.onResize = { [weak self] zone, dx, dy in
+            guard let m = self?.model else { return }
+            let n = max(m.snapshot.groups.count, 1)
+            let px: CGFloat = (m.compactNames ? CompactView.namedTileWidth : CompactView.tileWidth) + 6      // 한 칸 폭
+            let py: CGFloat = 47 + (m.compactNames ? CompactView.nameHeight + 3 : 0)                         // 한 줄 높이
+            let stepsX = Int((dx / px).rounded()), stepsY = Int((dy / py).rounded())
+            let vertical = zone == .bottom || (zone == .corner && abs(dy) / py > abs(dx) / px)
+            var per: Int
+            if vertical {
+                let rows = min(max(resizeStart.rows + stepsY, 1), n)
+                per = Int((Double(n) / Double(rows)).rounded(.up))        // 그 줄 수에 맞는 가장 좁은 폭
+            } else {
+                per = resizeStart.per + stepsX
+            }
+            per = min(max(per, 1), 40)
+            if per != m.compactPerRow { m.compactPerRow = per }
+        }
         root.onWhipTargets = { [weak panel] rects in panel?.whipTargets = rects }
         root.onClickTargets = { [weak panel] rects in panel?.clickTargets = rects }
         panel.onSwing = { [weak self] id in self?.model.whip(id: id) }
@@ -288,6 +353,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             panel.setFrameTopLeftPoint(NSPoint(x: v.maxX - panel.frame.width - 16, y: v.maxY - 16))
         }
         panel.setFrameAutosaveName(Self.autosaveName)
+        if model.hidden { model.hidden = false }        // 최소화한 채 끝냈어도, 다시 켜면 보이게
         panel.orderFrontRegardless()
 
         panel.onDoubleClick = { [weak self] in self?.model.compact.toggle() }
@@ -458,6 +524,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let self = self else { return }
             self.refitPending = false
             self.critters.sync(level: self.level)
+            self.refreshVisibility()            // 숨김·풀어놓기 같은 설정이 바뀌면 창도 바로 따라간다 (전엔 캐릭터 수가 바뀔 때만 불려서, 창 보기에서는 「숨기기」가 안 먹었다)
             guard self.panel.isVisible else { return }
             self.host.layoutSubtreeIfNeeded()
             self.fit(self.host.intrinsicContentSize)
@@ -715,6 +782,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             fp.trackSwing(screen: p, time: t)
             if overID == nil, let id = fp.whipTargetID(screen: p) { overID = id }
         }
+        let infoID = panel?.infoTargetID(screen: p)
+        if model.hoverInfoID != infoID { model.hoverInfoID = infoID }
         // 비활성 앱은 시스템 커서를 못 바꾼다. 대신 커서 옆에 채찍을 띄우고 캐릭터를 반짝이게 한다.
         if model.hoverWhipID != overID {
             model.hoverWhipID = overID
@@ -1027,6 +1096,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         // 채찍질 창
         menu.addItem(menuItem(t("Compact view"), on: m.compact) { m.compact.toggle() })
+        menu.addItem(menuItem(t("Show names under critters (compact view)"), on: m.compactNames) { m.compactNames.toggle() })
         let perRow = NSMenu()
         for n in [5, 8, 10, 15, 20] {
             perRow.addItem(menuItem(tf("%d per row", n), on: m.compactPerRow == n) { m.compactPerRow = n })
