@@ -131,6 +131,8 @@ You do:
 - [x] Build 1.0 (1) processed ("Ready to Submit") and attached to version 1.0 on 2026-11-10; the app icon on App Store Connect comes from the attached build, so it only appears after this step
 - [x] Build 1.0 (3) uploaded to App Store Connect on 2026-11-11 18:57 KST. On top of (2): red button quits, compact view wraps at 10 per row with a drag grip to change it, critters creep back from the screen edge, whip-all paces deliveries 3 s apart and skips busy sessions, remote v2 (session list, whip/treat one)
 - [x] Build (3) attached to version 1.0 in place of (2) and saved (2026-11-11)
+- [x] Build 1.0 (4) uploaded 2026-11-11: adds the ask panel for overloaded agents, the hidden leak guard, "Go to the agent" (opens the exact Claude app session), edge resizing with names and a status line in compact view, the axolotl for Codex, yellow button = minimize, and the whip gesture fix (a single pass no longer whips)
+- [ ] Swap build (4) in for (3) on version 1.0 once Apple finishes processing it
 - [ ] Press "Add for Review" (button is enabled; Apple may still ask for the review contact phone number at that point)
 - [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
 - [ ] Submit for review
