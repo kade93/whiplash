@@ -14,7 +14,7 @@ settings:
     DEVELOPMENT_TEAM: S79N2P4242          # Kade's individual team
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "4"
+    CURRENT_PROJECT_VERSION: "5"
 targets:
   Whiplash:
     type: application
@@ -29,7 +29,7 @@ targets:
       base:
         # NOTE: not `info:`/`entitlements:` — xcodegen would *generate* those files over the hand-written ones.
         INFOPLIST_FILE: Info.plist                   # the same plist build.sh copies; Xcode only fills in the version keys
-        CODE_SIGN_ENTITLEMENTS: Whiplash.entitlements # sandbox + camera + audio-input + network (App Store edition)
+        CODE_SIGN_ENTITLEMENTS: Whiplash.entitlements # sandbox + camera + audio-input, no network (App Store edition)
         PRODUCT_BUNDLE_IDENTIFIER: com.kade.whiplash
         PRODUCT_NAME: Whiplash
         ENABLE_HARDENED_RUNTIME: YES
@@ -45,6 +45,13 @@ targets:
           iconutil -c icns "$SRCROOT/AppIcon.iconset" -o "$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/AppIcon.icns"
         inputFiles: ["$(SRCROOT)/AppIcon.iconset"]
         outputFiles: ["$(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/AppIcon.icns"]
+    postBuildScripts:
+      - name: Drop local-network keys (the App Store edition has no remote)
+        script: |
+          PLIST="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+          /usr/libexec/PlistBuddy -c "Delete :NSLocalNetworkUsageDescription" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Delete :NSBonjourServices" "$PLIST" 2>/dev/null || true
+        basedOnDependencyAnalysis: false
 schemes:
   Whiplash:
     build:

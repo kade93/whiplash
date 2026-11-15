@@ -34,15 +34,21 @@ case "$MODE" in
     ARCHIVE="build/Whiplash.xcarchive"
     rm -rf "$ARCHIVE" build/export
     echo "▸ 아카이브 v$VERSION…"
+    # Xcode 계정 로그인이 풀려 있으면("Failed to Use Accounts") App Store Connect API 열쇠로 서명·올리기:
+    #   ASC_KEY_ID=<키 ID> ASC_ISSUER_ID=<발급자 ID> ./release.sh appstore   (열쇠 파일은 ~/.appstoreconnect/private_keys/AuthKey_<키 ID>.p8)
+    AUTH=()
+    if [[ -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" ]]; then
+      AUTH=(-authenticationKeyPath "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+    fi
     xcodebuild -project Whiplash.xcodeproj -scheme Whiplash -configuration Release \
-      -derivedDataPath build/DerivedData -archivePath "$ARCHIVE" -allowProvisioningUpdates archive -quiet
+      -derivedDataPath build/DerivedData -archivePath "$ARCHIVE" -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"} archive -quiet
     OPTS=ExportOptions.plist
     if [[ -n "${EXPORT_ONLY:-}" ]]; then
       sed 's#<string>upload</string>#<string>export</string>#' ExportOptions.plist > build/ExportOptions-local.plist
       OPTS=build/ExportOptions-local.plist
     fi
     echo "▸ 앱스토어 서명 + $([[ -n "${EXPORT_ONLY:-}" ]] && echo '.pkg 내보내기' || echo 'App Store Connect 업로드')…"
-    xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportOptionsPlist "$OPTS" -exportPath build/export -allowProvisioningUpdates
+    xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportOptionsPlist "$OPTS" -exportPath build/export -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"}
     [[ -n "${EXPORT_ONLY:-}" ]] && echo "▸ 완료: build/export/" || echo "▸ 올라갔어요. App Store Connect ▸ 버전 1.0 ▸ 빌드 에서 고르고 심사에 추가."
     ;;
   devid)

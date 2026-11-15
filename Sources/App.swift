@@ -1181,10 +1181,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         line(m.handCamOn ? handSwing.status : t("Swing a hand sideways in front of the camera, arm's length away"))
         body.addItem(menuItem(t("Say \"whoosh-crack!\" — microphone"), on: m.mouthOn) { m.mouthOn.toggle() })
         line(m.mouthOn ? mouth.status : t("A short sharp burst after a quiet moment; talking doesn't count"))
-        body.addItem(menuItem(t("Accept iPhone / iPad / Apple Watch remote"), on: m.remoteOn) { m.remoteOn.toggle() })
-        line(m.remoteOn ? remote.status : t("Whiplash Remote app on the same Wi‑Fi: flick the phone, snap the wrist, or tap"))
+        // 리모트는 들어오는 연결을 받는 기능이라 앱스토어판(샌드박스)에는 없다 — 네트워크 권한을 아예 안 싣는다
+        if !Paths.sandboxed {
+            body.addItem(menuItem(t("Accept iPhone / iPad / Apple Watch remote"), on: m.remoteOn) { m.remoteOn.toggle() })
+            line(m.remoteOn ? remote.status : t("Whiplash Remote app on the same Wi‑Fi: flick the phone, snap the wrist, or tap"))
+        }
         body.addItem(.separator())
-        let hint = NSMenuItem(title: t("Sensors, camera, microphone and network are used only while on. Nothing is recorded."), action: nil, keyEquivalent: "")
+        let hint = NSMenuItem(title: Paths.sandboxed ? t("Sensors, camera and microphone are used only while on. Nothing is recorded.") : t("Sensors, camera, microphone and network are used only while on. Nothing is recorded."), action: nil, keyEquivalent: "")
         hint.isEnabled = false
         body.addItem(hint)
         menu.addItem(submenu(t("Whip with your body"), body))
@@ -1300,7 +1303,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func syncBodyWhips() {
         if #available(macOS 14.0, *), let hf = headFlick as? HeadFlick { model.headFlickOn ? hf.start() : hf.stop() }
         model.handCamOn ? handSwing.start() : handSwing.stop()
-        model.remoteOn ? remote.start() : remote.stop()
+        model.remoteOn && !Paths.sandboxed ? remote.start() : remote.stop()      // 앱스토어판은 듣지 않는다
         model.mouthOn ? mouth.start() : mouth.stop()
     }
     private func reloadHotKeysIfChanged() {

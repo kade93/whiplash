@@ -103,14 +103,15 @@ shot("4-whip.png") {
 
 // 5. Body whips
 shot("5-body.png") {
-    caption("Whip with your body", "AirPods head flick · camera hand swing · say \"whoosh-crack!\" · iPhone & Apple Watch remote", y: 1480)
+    // 앱스토어판에는 아이폰·워치 리모트가 없다 (네트워크 권한을 안 싣는다) — 세 가지만 보여 준다
+    caption("Whip with your body", "AirPods head flick · camera hand swing · say \"whoosh-crack!\"", y: 1480)
     let para = NSMutableParagraphStyle(); para.alignment = .center
     let f: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 260), .paragraphStyle: para]
-    for (i, e) in ["🎧", "📷", "🎤", "⌚️"].enumerated() {
-        NSString(string: e).draw(in: NSRect(x: 240 + CGFloat(i) * 620, y: 620, width: 500, height: 320), withAttributes: f)
+    for (i, e) in ["🎧", "📷", "🎤"].enumerated() {
+        NSString(string: e).draw(in: NSRect(x: 490 + CGFloat(i) * 700, y: 620, width: 500, height: 320), withAttributes: f)
     }
     let s: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 48, weight: .semibold), .foregroundColor: NSColor.white, .paragraphStyle: para]
-    for (i, e) in ["Head flick", "Hand swing", "Whoosh-crack!", "Wrist snap"].enumerated() {
-        NSString(string: e).draw(in: NSRect(x: 240 + CGFloat(i) * 620, y: 520, width: 500, height: 70), withAttributes: s)
+    for (i, e) in ["Head flick", "Hand swing", "Whoosh-crack!"].enumerated() {
+        NSString(string: e).draw(in: NSRect(x: 490 + CGFloat(i) * 700, y: 520, width: 500, height: 70), withAttributes: s)
     }
 }

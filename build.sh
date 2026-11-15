@@ -31,7 +31,9 @@ cp PrivacyInfo.xcprivacy "$APP/Contents/Resources/"
 cp Resources/*.wav "$APP/Contents/Resources/"
 iconutil -c icns AppIcon.iconset -o "$APP/Contents/Resources/AppIcon.icns"
 if [[ "${1:-}" == "--sandbox" ]]; then
-  # 앱스토어판처럼 샌드박스 안에서 돌려 보기 (임시 서명)
+  # 앱스토어판처럼 샌드박스 안에서 돌려 보기 (임시 서명). 앱스토어판에는 리모트가 없어 로컬 네트워크 키도 뺀다 (project.yml 과 같게)
+  /usr/libexec/PlistBuddy -c "Delete :NSLocalNetworkUsageDescription" "$APP/Contents/Info.plist" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Delete :NSBonjourServices" "$APP/Contents/Info.plist" 2>/dev/null || true
   codesign --force --sign "${SIGN_ID:--}" --entitlements Whiplash.entitlements "$APP"
   echo "▸ 샌드박스 서명함 (로컬 테스트용)"
 else

@@ -9,14 +9,12 @@
     <true/>
     <key>com.apple.security.files.bookmarks.app-scope</key>
     <true/>
-    <!-- 몸으로 때리기: 카메라 손 휘두르기 · 아이폰/워치 리모트 (켤 때만) -->
+    <!-- 몸으로 때리기: 카메라 손 휘두르기 · 입으로 「화츅」 (켤 때만) -->
     <key>com.apple.security.device.camera</key>
     <true/>
     <key>com.apple.security.device.audio-input</key>
     <true/>
-    <key>com.apple.security.network.server</key>
-    <true/>
-    <key>com.apple.security.network.client</key>
-    <true/>
+    <!-- 네트워크 권한은 싣지 않는다. 앱스토어판은 밖으로 나가는 연결도, 들어오는 연결도 없다
+         (아이폰/워치 리모트와 남은 쿼터 조회는 소스 빌드판에만 있다). 2026-11 심사에서 network.server 가 걸렸다. -->
 </dict>
 </plist>

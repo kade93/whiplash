@@ -145,6 +145,7 @@ enum L10n {
         "Accept iPhone / iPad / Apple Watch remote": ("아이폰·아이패드·애플워치 리모트 받기", "iPhone・iPad・Apple Watch のリモートを受ける"),
         "Say \"whoosh-crack!\" — microphone": ("입으로 「화츅!」 — 마이크", "口で「ヒュッ！」 — マイク"),
         "Sensors, camera, microphone and network are used only while on. Nothing is recorded.": ("켠 동안만 센서·카메라·마이크·네트워크를 써요. 녹화·녹음은 없어요.", "オンの間だけセンサー・カメラ・マイク・ネットワークを使います。録画・録音はしません。"),
+        "Sensors, camera and microphone are used only while on. Nothing is recorded.": ("켠 동안만 센서·카메라·마이크를 써요. 녹화·녹음은 없어요.", "オンの間だけセンサー・カメラ・マイクを使います。録画・録音はしません。"),
         "Checking microphone permission…": ("마이크 권한 확인 중…", "マイクの権限を確認中…"),
         "Microphone access denied — System Settings › Privacy › Microphone": ("마이크 권한이 거부됐어요 — 시스템 설정 › 개인정보 보호 › 마이크", "マイクのアクセスが拒否されました — システム設定 › プライバシー › マイク"),
         "Couldn't open the microphone": ("마이크를 못 열었어요", "マイクを開けませんでした"),
