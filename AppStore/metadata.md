@@ -14,7 +14,7 @@ Everything to paste into App Store Connect, plus the checklist. English is the p
 | Primary category | Utilities (secondary: Entertainment) |
 | Price | Free, no in-app purchases |
 | Age rating | 4+ |
-| Copyright | 2026 Kade Yoon |
+| Copyright | 2026 DongHyun Youn |
 | Support URL | https://gist.github.com/kade93/eb5c3fecdc20d771e02641a4684daad8 for now (the repo is private); switch back to https://github.com/kade93/whiplash once it is public |
 | Privacy policy URL | https://gist.github.com/kade93/eb5c3fecdc20d771e02641a4684daad8 (public gist of docs/PRIVACY.md) |
 | Encryption | None (ITSAppUsesNonExemptEncryption = NO in Info.plist) |

@@ -20,7 +20,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 TEAM_ID="${TEAM_ID:-S79N2P4242}"
-DEVID_IDENTITY="${DEVID_IDENTITY:-Developer ID Application: Kade Yoon ($TEAM_ID)}"
+DEVID_IDENTITY="${DEVID_IDENTITY:-Developer ID Application: DongHyun Youn ($TEAM_ID)}"   # 인증서를 만들면 실제 이름으로 확인 (아직 없음)
 NOTARY_PROFILE="${NOTARY_PROFILE:-whiplash}"               # devid 전용 (notarytool store-credentials 이름)
 
 MODE="${1:-}"

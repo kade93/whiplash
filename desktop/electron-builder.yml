@@ -1,7 +1,7 @@
 # Packaging for Windows and Linux. macOS is the Swift app (../build.sh, Mac App Store); the mac target here is dev-only.
 appId: com.kade.whiplash
 productName: Whiplash
-copyright: © 2026 Kade
+copyright: © 2026 DongHyun Youn
 directories:
   buildResources: resources
   output: dist
