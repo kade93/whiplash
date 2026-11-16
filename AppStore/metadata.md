@@ -159,6 +159,7 @@ You do:
 - What changed for the App Store edition: no iPhone / Apple Watch remote (switch hidden, listener never started when sandboxed), no network entitlements, local-network keys stripped from its Info.plist. The store description and screenshot 5 no longer mention the remote (only en-US exists on the store). The build from source is unchanged.
 - Checked on the sandboxed build 5 code (`./build.sh --sandbox`, remote preference forced on): `sandboxed=1`, nothing listening on UDP 47777, no sockets, no Bonjour service, no sandbox denials in the system log. Not looked at by eye: the Settings menu without the remote row.
 - Bringing the remote back to the store edition later: publish Whiplash Remote on the App Store first, then restore `network.server` and explain it in the review notes from the first submission.
+- Expedited review requested and accepted on 2026-11-16 ("We'll expedite review for Whiplash: AI Agent Critters"). The form at developer.apple.com/contact/app-store/?topic=expedite only takes the app name and platform; a later resubmission returns to the expedited queue by itself.
 - If the review asks for something: the answer goes in App Store Connect ▸ App Review ▸ the submission ▸ Reply.
 - Windows / Linux: v1.0 on GitHub Releases still has the jellyfish and the old wording. Tag `v1.0.1` to rebuild from current `main`.
 - iPhone remote: the connection fixes are built but not installed on the phone (it was unplugged). Plug in and run the `WhiplashRemote` scheme.
