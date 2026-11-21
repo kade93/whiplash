@@ -50,9 +50,9 @@ Whiplash는 이들을 작은 창 하나에 모으거나 바탕화면에 풀어�
 
 | 플랫폼 | 어디서 | 참고 |
 |---|---|---|
-| **macOS 13 이상** | Mac App Store | 심사 중입니다. 승인되면 `apps.apple.com/app/id6832438273`에 올라옵니다. 앱스토어판은 샌드박스 안에서 돌아서, 보고 정리하고 에이전트에게 가는 것까지 되고 세션에 직접 입력하지는 못합니다. |
+| **macOS 13 이상** | [Mac App Store](https://apps.apple.com/app/id6832438273) | 무료입니다. 앱스토어 버전은 보고 정리하고 에이전트에게 가는 것까지 됩니다. 샌드박스 안에서 돌아서 세션에 직접 입력하지는 못합니다. |
 | **macOS 전체 기능** | 소스에서 빌드 (아래) | 채찍 프롬프트·간식·확성기 메시지를 Claude Code 세션에 바로 넣고, 남은 쿼터를 보여 줍니다. |
-| **Windows 10 이상 / Linux** | [Releases](https://github.com/kade93/whiplash/releases/latest) | Electron 판. Windows는 `.zip`·`.msi`, Linux는 `.AppImage`·`.tar.gz`. 맥 앱보다 새롭고 덜 검증됐습니다. |
+| **Windows 10 이상 / Linux** | [Releases](https://github.com/kade93/whiplash/releases/latest) | Electron 버전입니다. Windows는 `.zip`·`.msi`, Linux는 `.AppImage`·`.tar.gz`. 맥 앱보다 나중에 만들었고 시험도 덜 했습니다. |
 | **아이폰 · 아이패드 · 애플워치** | [`WhiplashRemote/`](WhiplashRemote/README.md)에서 빌드 | 리모트입니다. 폰을 채찍처럼 휘두르거나 목록에서 골라 때립니다. 아직 앱스토어에는 없습니다. |
 
 ### 맥 앱을 소스에서 빌드하기
@@ -90,7 +90,7 @@ Whiplash는 아무것도 수집하지 않습니다. 계정도, 분석 도구도,
 
 ## 개발자용
 
-- `Sources/`: 맥 앱(Swift, AppKit·SwiftUI, 의존성 없음). `./build.sh`로 빌드하고, `./build.sh --sandbox`로 앱스토어판을 로컬에서 만듭니다.
+- `Sources/`: 맥 앱(Swift, AppKit·SwiftUI, 의존성 없음). `./build.sh`로 빌드하고, `./build.sh --sandbox`로 앱스토어 버전을 로컬에서 만듭니다.
 - `desktop/`: Windows·Linux 앱(Electron). [desktop/README.md](desktop/README.md) 참고.
 - `WhiplashRemote/`: 아이폰·아이패드·애플워치 리모트. 맥은 UDP 47777에서 한 줄짜리 명령을 받으므로 같은 Wi‑Fi의 무엇이든 리모트가 될 수 있습니다. 프로토콜은 해당 README에 있습니다.
 - `tools/`: 아이콘, 소리, 스크린샷, 이 페이지의 홍보 이미지를 전부 여기 스크립트로 만듭니다.

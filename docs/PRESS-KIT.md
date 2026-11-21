@@ -10,7 +10,7 @@ Everything needed to write about Whiplash or to post about it. English first, Ko
 | One line | Whip your AI agents into shape. |
 | What it is | A small desktop app that shows the AI coding agents running on your computer as pixel critters, and lets you whip the idle ones back to work. |
 | Works with | Claude Code (full control), Codex, Cursor, Gemini CLI, Antigravity (shown and measured) |
-| Platforms | macOS 13+ (Mac App Store, in review as of 2026-11-11; or build from source), Windows and Linux (GitHub Releases), iPhone / iPad / Apple Watch remote (build from source) |
+| Platforms | macOS 13+ (Mac App Store since 2026-11-20, apps.apple.com/app/id6832438273; or build from source), Windows and Linux (GitHub Releases), iPhone / iPad / Apple Watch remote (build from source) |
 | Price | Free |
 | Privacy | Collects nothing. No account, no analytics, no server. |
 | Maker | Kade, an independent developer. Not affiliated with Anthropic, OpenAI, Anysphere or Google. |
@@ -85,7 +85,7 @@ Follow-ups for a thread:
 >
 > Every Claude Code / Codex / Cursor / Gemini CLI session becomes a pixel critter. You can see who is working, who has been waiting for your answer for ten minutes, and who is pinning the CPU. Swipe over an idle one to send it back to work, or stroke it slowly for a treat.
 >
-> Mac (App Store review pending, or build from source), Windows and Linux. Nothing is collected and there is no account.
+> Mac (on the Mac App Store, or build from source), Windows and Linux. Nothing is collected and there is no account.
 >
 > Would love to hear which agents you want supported next.
 
@@ -134,9 +134,9 @@ Follow-ups for a thread:
 >
 > 장난으로 넣었다가 제일 쓸모 있어진 기능이 채찍입니다. 쉬는 캐릭터 위에서 마우스를 휙휙 왕복하면 그 세션에 "하던 일 이어서 해, 끝났으면 다음 할 일 골라서 해"가 들어갑니다. 줄 세워 놓고 한 번 훑으면 전부 깨어납니다.
 >
-> - 맥 앱은 Swift 하나로 만들었고 의존성이 없습니다. 윈도우·리눅스 판은 Electron입니다.
+> - 맥 앱은 Swift 하나로 만들었고 의존성이 없습니다. 윈도우·리눅스 버전은 Electron입니다.
 > - 수집하는 정보가 없습니다. 계정도 서버도 없습니다.
-> - 맥 앱스토어판은 심사 중이고, 전체 기능판은 소스에서 세 줄로 빌드됩니다.
+> - 맥 앱스토어에서 받을 수 있습니다. 세션에 직접 입력하는 기능까지 쓰려면 소스에서 세 줄로 빌드하면 됩니다.
 > - 무료입니다.
 >
 > github.com/kade93/whiplash
@@ -147,6 +147,6 @@ Follow-ups for a thread:
 
 - That it is "open source". The source is public to read and to build for your own use, but all rights are reserved. Say "source available" or "the source is public".
 - That it is made by, endorsed by or partnered with Anthropic, OpenAI, Anysphere or Google.
-- That it is "on the Mac App Store" before the review is approved. Until then: "in review" or "coming to the Mac App Store".
+- That the iPhone / iPad / Apple Watch remote is on the App Store. Only the Mac app is (version 1.0, since 2026-11-20).
 - That the App Store edition sends prompts to agents. It watches, organises and jumps to sessions; sending needs the build from source.
 - That the leak guard prevents leaks. It is a tripwire that warns; it can miss things.

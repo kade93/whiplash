@@ -50,7 +50,7 @@ Whiplash はそれらを小さなウィンドウひとつにまとめるか、�
 
 | プラットフォーム | 場所 | 補足 |
 |---|---|---|
-| **macOS 13 以降** | Mac App Store | 審査中です。承認されると `apps.apple.com/app/id6832438273` に公開されます。App Store 版はサンドボックス内で動くため、見る・整理する・エージェントのところへ行くまでで、セッションへの入力はできません。 |
+| **macOS 13 以降** | [Mac App Store](https://apps.apple.com/app/id6832438273) | 無料です。App Store 版はサンドボックス内で動くため、見る・整理する・エージェントのところへ行くまでで、セッションへの入力はできません。 |
 | **macOS フル機能** | ソースからビルド（下記） | 鞭プロンプト・おやつ・メガホンのメッセージを Claude Code セッションに直接送り、残りのクォータを表示します。 |
 | **Windows 10 以降 / Linux** | [Releases](https://github.com/kade93/whiplash/releases/latest) | Electron 版。Windows は `.zip`・`.msi`、Linux は `.AppImage`・`.tar.gz`。Mac アプリより新しく、検証はまだ少なめです。 |
 | **iPhone · iPad · Apple Watch** | [`WhiplashRemote/`](WhiplashRemote/README.md) からビルド | リモコンです。iPhone を鞭のように振るか、一覧から選んで打ちます。App Store にはまだありません。 |

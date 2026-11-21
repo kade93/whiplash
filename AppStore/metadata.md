@@ -147,22 +147,23 @@ You do:
 - [x] **Submitted for review on 2026-11-11 20:29 KST** — status "Waiting for Review". Release option: automatic after approval (change to manual on the version page before approval if you want to pick the day)
 - [x] Build 1.0 (5) uploaded 2026-11-15 22:32 KST and attached in place of (4): no `network.server` / `network.client`, no remote switch or listener when sandboxed. Uploaded with the App Store Connect API key because the Xcode account login had expired (`ASC_KEY_ID` / `ASC_ISSUER_ID`, see `release.sh`).
 - [x] **Resubmitted on 2026-11-15 22:34 KST** with build (5) — status "Waiting for Review"
+- [x] **Approved and released on 2026-11-20** — version 1.0 (build 5), "Ready for Distribution", live at https://apps.apple.com/app/id6832438273 (checked 2026-11-21: the page opens in the US, KR and JP stores, price free)
 - [ ] Attach the demo video (line up the critters, whip them all with one sweep, type the next job)
 
 ## After the repository went public (2026-11-11)
 
 - [x] Repository is public; README (EN/KO/JA), promo images and press kit are in place; v1.0 release notes rewritten
-- [ ] Support URL in App Store Connect still points at the privacy gist. Switch it to https://github.com/kade93/whiplash with the next version (the current one is waiting for review, so leave it)
+- [ ] Support URL in App Store Connect still points at the privacy gist. Switch it to https://github.com/kade93/whiplash with the next version (1.0 is live, so it can only change with a new version)
 - [ ] GitHub ▸ Settings ▸ Social preview: upload `assets/promo/banner.png` (needs a signed-in browser)
 - [x] License: decided on 2026-11-11 to keep all rights reserved (no open-source license). The READMEs say so
-- [ ] When the Mac app is approved: replace "in review" in the three READMEs and `docs/PRESS-KIT.md` with the App Store link
+- [x] Mac app approved: "in review" in the three READMEs and `docs/PRESS-KIT.md` replaced with the App Store link (2026-11-21)
 
-## Where things stand (2026-11-19)
+## Where things stand (2026-11-21)
 
-- Mac App Store: version 1.0 (build 5) shows **Rejected / Unresolved Issues** while App Review waits for information. A reply was sent on 2026-11-19; no new binary was asked for and "Resubmit to App Review" stays disabled, so the next move is Apple's.
+- Mac App Store: **version 1.0 (build 5) is live** since 2026-11-20 at https://apps.apple.com/app/id6832438273. The submission is "Complete". It went through after the 2026-11-19 reply about the camera entitlement, with build 5 unchanged (Apple's last message in the thread was not read).
 - History of this submission: (1) 2026-11-12 automated check on `com.apple.security.network.server` in build 4; explained on 11-13, no answer; (2) 11-15 build 5 without the remote and without network entitlements, resubmitted; (3) 11-16 expedited review accepted; (4) 11-18 a reviewer (guideline 2.4.5(i), MacBook Pro) asked how and where the app uses `com.apple.security.device.camera`; (5) 11-19 reply with the menu path, how it works, steps to see it, and the same for audio-input and the two file entitlements. The App Review notes carry the same text ("WHERE EACH ENTITLEMENT IS USED").
-- If Apple still objects to the camera: the fallback is build 6 without camera hand swing in the App Store edition (entitlement, menu row, screenshot 5 and the description line), which needs "Developer Reject" first. Build 6 would also pick up the corrected copyright string in Info.plist.
-- App Store edition as submitted: no iPhone / Apple Watch remote, no network entitlements, local-network keys stripped from its Info.plist. Store description and screenshot 5 do not mention the remote. Copyright on the store: "2026 DongHyun Youn" (the binary of build 5 still says "© 2026 Kade").
+- The camera fallback (a build without camera hand swing) was not needed. The next build will pick up the corrected copyright string in Info.plist.
+- App Store edition as released: no iPhone / Apple Watch remote, no network entitlements, local-network keys stripped from its Info.plist. Store description and screenshot 5 do not mention the remote. Copyright on the store: "2026 DongHyun Youn" (the binary of build 5 still says "© 2026 Kade").
 - Checked on 2026-11-19 with the sandboxed build: with camera hand swing switched on, the sandboxed process asks TCC for the camera (`kTCCServiceCamera` request from the app's pid in the TCC log). Not seen: the permission prompt and a real hand swing, because the binary was started from a shell and macOS attributes the request to the launching process.
 
 How to test the sandboxed build without bothering the owner:

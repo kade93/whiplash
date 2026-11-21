@@ -50,7 +50,7 @@ More of what is in the box:
 
 | Platform | Where | Notes |
 |---|---|---|
-| **macOS 13+** | Mac App Store | In review. It will be at `apps.apple.com/app/id6832438273` once approved. The App Store edition runs in the sandbox: it watches, organises and jumps to agents, but cannot type into their sessions. |
+| **macOS 13+** | [Mac App Store](https://apps.apple.com/app/id6832438273) | Free. The App Store edition runs in the sandbox: it watches, organises and jumps to agents, but cannot type into their sessions. |
 | **macOS, full features** | Build from source (below) | Sends the whip prompt, treats and megaphone messages straight into Claude Code sessions, and shows your remaining quota. |
 | **Windows 10+ / Linux** | [Releases](https://github.com/kade93/whiplash/releases/latest) | Electron build: `.zip` or `.msi` for Windows, `.AppImage` or `.tar.gz` for Linux. Newer and less tested than the Mac app. |
 | **iPhone · iPad · Apple Watch** | Build from [`WhiplashRemote/`](WhiplashRemote/README.md) | A remote: flick the phone like a whip, or pick an agent from the list. Not on the App Store yet. |
